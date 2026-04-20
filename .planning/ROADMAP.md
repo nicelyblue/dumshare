@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — Implement local SQLite append-only event storage contracts and blocking schema push.
-- [ ] 01-02-PLAN.md — Implement deterministic replay projection and reconstruction tests.
+- [x] 01-02-PLAN.md — Implement deterministic replay projection and reconstruction tests.
 
 ### Phase 2: Ledger Setup and Participants
 **Goal**: Organizer can start a trip ledger and maintain participant names fully offline.
@@ -45,7 +45,11 @@ Plans:
   1. Organizer can create a new trip ledger with title and settlement context without internet access.
   2. Organizer can add participant names to the ledger for shared expense allocation.
   3. Added participants persist and remain available for later expense/split actions.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Extend deterministic replay contracts to support offline ledger creation metadata.
+- [ ] 02-02-PLAN.md — Add deterministic participant roster replay and persistence coverage for offline organizer management.
 
 ### Phase 3: Contributor Onboarding and Authority Model
 **Goal**: Organizer can onboard contributors by QR invitation while preserving single-device identity and organizer-only authority.
