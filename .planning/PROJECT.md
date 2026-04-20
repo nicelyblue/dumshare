@@ -1,0 +1,84 @@
+# Dumshare v1
+
+## What This Is
+
+Dumshare v1 is a local-first, offline expense-sharing app for small travel groups. It lets one organizer manage a shared ledger while invited contributors record expenses on their own device and sync changes in person. The product experience stays simple and non-technical even though it runs on local replicas, event logs, and approval-gated synchronization.
+
+## Core Value
+
+A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
+
+## Requirements
+
+### Validated
+
+(None yet — ship to validate)
+
+### Active
+
+- [ ] Groups can create and use a shared trip ledger fully offline on Android and iOS.
+- [ ] Organizer can manage participants and promote selected participants to single-device contributors via QR invitation.
+- [ ] Organizer and contributors can create and amend multi-payer, mixed-currency expenses with equal/exact/percentage splits.
+- [ ] Contributors can sync pending changes with organizer using QR bootstrap + Bluetooth delta exchange.
+- [ ] Organizer must approve or reject every contributor-submitted expense/amendment before it becomes approved ledger state.
+- [ ] App can compute and display participant balances per currency without forced cross-currency merging.
+
+### Out of Scope
+
+- Cloud sync, remote storage, and account systems — v1 is intentionally local-only and offline-first.
+- Background or automatic synchronization — sync is manual and in-person by design.
+- Contributor-to-contributor sync — topology is organizer-centric star only.
+- Multi-device identity for a contributor — each contributor maps to one device in v1.
+- Recovery guarantees for lost devices — local copies may be unrecoverable after device loss.
+- Financial-grade cryptographic hardening — v1 security remains lightweight to preserve usability.
+- Automatic conflict resolution — organizer remains human arbiter for conflicting proposals.
+
+## Context
+
+- Product is optimized for real-world travel conditions where internet access is unreliable or unavailable.
+- User roles are explicit: organizer (authority + hub), contributor (single-device participant), passive participant (name-only ledger member).
+- Data model constraint is append-only event log with deterministic projection to user-visible state.
+- Sync flow is fixed for v1: contributor prepares sync request QR, organizer scans, Bluetooth transfer exchanges unseen events, organizer reviews pending changes, organizer sends missing organizer-side events back.
+- UX language must stay plain and action-oriented (for example: "Show code", "Scan code", "Sending changes", "Receiving changes") and avoid distributed-systems terminology.
+- Open technical choices to resolve in later specs include exact mobile stack, event ordering strategy, approved-expense edit rules, invitation verification details, and mixed-currency settlement UX.
+
+## Constraints
+
+- **Platform**: Android and iOS — product decisions lock mobile support for both ecosystems.
+- **Connectivity**: Fully offline operation — users must complete core flows without internet.
+- **Storage**: Local-only on-device persistence — no cloud dependency is allowed.
+- **Sync topology**: Organizer as sole hub — simplifies consistency and approval governance.
+- **Transport**: QR bootstrap plus Bluetooth transfer — fixed v1 session establishment and data channel.
+- **Consistency model**: Append-only event log with checkpoint-based delta sync — supports deterministic replay and bounded transfer.
+- **Governance**: Mandatory organizer approval on contributor submissions — ensures trusted approved ledger state.
+- **Currency handling**: Per-currency balance accounting — no automatic currency merging.
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| No cloud/server architecture for v1 | Preserve offline reliability, reduce infra complexity, and align with local-first product promise | — Pending |
+| Organizer-only approval and sync hub model | Keeps conflict handling understandable and centralizes trust decisions | — Pending |
+| Single-device contributor identity | Simplifies identity, replication edges, and invitation semantics in MVP | — Pending |
+| Expense model includes multi-payer + exact + percentage splits in v1 | Required for real travel expense scenarios; equal-only splits are insufficient | — Pending |
+| Mixed currencies allowed in one ledger with per-currency balances | Reflects real group travel behavior while avoiding fragile implicit conversions | — Pending |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+*Last updated: 2026-04-20 after initialization*
