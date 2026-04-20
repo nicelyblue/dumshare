@@ -9,6 +9,29 @@ type ExpenseCreatedPayload = {
   currency: string;
 };
 
+type LedgerCreatedPayload = {
+  title: string;
+  settlementContext: string;
+};
+
+function parseLedgerCreatedPayload(payloadJson: string): LedgerCreatedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<LedgerCreatedPayload>;
+
+  if (
+    typeof parsed.title !== "string" ||
+    parsed.title.trim().length === 0 ||
+    typeof parsed.settlementContext !== "string" ||
+    parsed.settlementContext.trim().length === 0
+  ) {
+    throw new Error("Invalid payload for eventType ledger.created");
+  }
+
+  return {
+    title: parsed.title,
+    settlementContext: parsed.settlementContext,
+  };
+}
+
 function parseExpenseCreatedPayload(payloadJson: string): ExpenseCreatedPayload {
   const parsed = JSON.parse(payloadJson) as Partial<ExpenseCreatedPayload>;
 
@@ -52,6 +75,8 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       lastSequence: 0,
       appliedEventIds: [],
       entries: [],
+      title: "",
+      settlementContext: "",
     };
   }
 
@@ -60,6 +85,8 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
     lastSequence: 0,
     appliedEventIds: [],
     entries: [],
+    title: "",
+    settlementContext: "",
   };
 
   for (const event of ordered) {
@@ -70,6 +97,12 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
     }
 
     switch (event.eventType) {
+      case "ledger.created": {
+        const payload = parseLedgerCreatedPayload(event.payloadJson);
+        projection.title = payload.title;
+        projection.settlementContext = payload.settlementContext;
+        break;
+      }
       case "expense.created": {
         projection.entries.push(toLedgerEntry(event));
         break;
