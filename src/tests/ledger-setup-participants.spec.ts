@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 import { replayLedger } from "../domain/projections";
@@ -5,6 +7,26 @@ import { replayLedger } from "../domain/projections";
 describe("ledger-setup-participants", () => {
   const ledgerId = "ledger-trip-setup-001";
   const organizerDeviceId = "device-organizer-1";
+
+  test("participant.added contract requires participantId and displayName payload fields", () => {
+    const eventsTypesSource = readFileSync(
+      resolve(process.cwd(), "src/domain/events/types.ts"),
+      "utf8",
+    );
+
+    expect(eventsTypesSource).toContain('"participant.added"');
+    expect(eventsTypesSource).toContain("participantId");
+    expect(eventsTypesSource).toContain("displayName");
+  });
+
+  test("ledger projection contract exposes participants list for roster flows", () => {
+    const projectionTypesSource = readFileSync(
+      resolve(process.cwd(), "src/domain/projections/types.ts"),
+      "utf8",
+    );
+
+    expect(projectionTypesSource).toContain("participants");
+  });
 
   test("replayLedger applies ledger.created into ledger metadata projection", () => {
     const projection = replayLedger([
