@@ -12,7 +12,7 @@ This roadmap delivers Dumshare v1 in dependency order: establish deterministic l
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Local Data Backbone** - Reliable local persistence and deterministic event replay are in place.
+- [x] **Phase 1: Local Data Backbone** - Reliable local persistence and deterministic event replay are in place. (completed 2026-04-20)
 - [ ] **Phase 2: Ledger Setup and Participants** - Organizer can create a ledger and manage participant roster offline.
 - [ ] **Phase 3: Contributor Onboarding and Authority Model** - Organizer invites one-device contributors and remains sole hub/authority.
 - [ ] **Phase 4: Expense Capture Foundations** - Organizer and contributors can record complete offline expense basics.
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Data Backbone | 1/2 | In Progress | 2026-04-20 |
+| 1. Local Data Backbone | 2/2 | Complete   | 2026-04-20 |
 | 2. Ledger Setup and Participants | 0/TBD | Not started | - |
 | 3. Contributor Onboarding and Authority Model | 0/TBD | Not started | - |
 | 4. Expense Capture Foundations | 0/TBD | Not started | - |
