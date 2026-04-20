@@ -13,4 +13,6 @@ export type LedgerProjection = {
   lastSequence: number;
   appliedEventIds: string[];
   entries: LedgerEntry[];
+  title: string;
+  settlementContext: string;
 };
