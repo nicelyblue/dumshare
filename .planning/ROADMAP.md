@@ -31,7 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. User can close and reopen the app offline and all previously recorded ledger data is still present on the same device.
   2. User actions are preserved as immutable history rather than destructive overwrites.
   3. The app produces the same ledger outcome every time the same event history is replayed.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Implement local SQLite append-only event storage contracts and blocking schema push.
+- [ ] 01-02-PLAN.md — Implement deterministic replay projection and reconstruction tests.
 
 ### Phase 2: Ledger Setup and Participants
 **Goal**: Organizer can start a trip ledger and maintain participant names fully offline.
@@ -116,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Data Backbone | 0/TBD | Not started | - |
+| 1. Local Data Backbone | 0/2 | Planned | - |
 | 2. Ledger Setup and Participants | 0/TBD | Not started | - |
 | 3. Contributor Onboarding and Authority Model | 0/TBD | Not started | - |
 | 4. Expense Capture Foundations | 0/TBD | Not started | - |
