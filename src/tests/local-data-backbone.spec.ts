@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 
 import { clearLedgerDb, closeLedgerDb, openLedgerDb } from "../data/sqlite/client";
 import { createEventRepository } from "../domain/events/repository";
+import { replayLedger } from "../domain/projections";
 
 describe("local-data-backbone", () => {
   const dbName = "local-data-backbone-test-db";
@@ -108,5 +109,96 @@ describe("local-data-backbone", () => {
     const events = await repository.listEventsByLedger(ledgerId);
     expect(events.map((event) => event.sequence)).toEqual([1, 2]);
     expect(events.map((event) => event.id)).toEqual(["evt-order-2", "evt-order-1"]);
+  });
+
+  test("replayLedger returns identical output for identical ordered event arrays", async () => {
+    const db = openLedgerDb(dbName);
+    const repository = createEventRepository(db);
+
+    await repository.appendEvent({
+      id: "evt-replay-1",
+      ledgerId,
+      eventType: "expense.created",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:20:00.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        expenseId: "expense-1",
+        description: "Train",
+        amountMinor: 2500,
+        currency: "EUR",
+      }),
+    });
+
+    await repository.appendEvent({
+      id: "evt-replay-2",
+      ledgerId,
+      eventType: "expense.created",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:21:00.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        expenseId: "expense-2",
+        description: "Lunch",
+        amountMinor: 1800,
+        currency: "EUR",
+      }),
+    });
+
+    const events = await repository.listEventsByLedger(ledgerId);
+
+    const firstReplay = replayLedger(events);
+    const secondReplay = replayLedger(events);
+
+    expect(secondReplay).toEqual(firstReplay);
+  });
+
+  test("replays persisted events identically after reopen reconstruction", async () => {
+    const db = openLedgerDb(dbName);
+    const repository = createEventRepository(db);
+
+    await repository.appendEvent({
+      id: "evt-reopen-replay-1",
+      ledgerId,
+      eventType: "expense.created",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:30:00.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        expenseId: "expense-a",
+        description: "Museum",
+        amountMinor: 3200,
+        currency: "USD",
+      }),
+    });
+
+    const beforeCloseEvents = await repository.listEventsByLedger(ledgerId);
+    const projectionBeforeClose = replayLedger(beforeCloseEvents);
+
+    closeLedgerDb(db);
+
+    const reopened = openLedgerDb(dbName);
+    const reopenedRepository = createEventRepository(reopened);
+    const afterReopenEvents = await reopenedRepository.listEventsByLedger(ledgerId);
+    const projectionAfterReopen = replayLedger(afterReopenEvents);
+
+    expect(projectionAfterReopen).toEqual(projectionBeforeClose);
+  });
+
+  test("throws explicit error for unsupported eventType", () => {
+    expect(() =>
+      replayLedger([
+        {
+          id: "evt-unknown-1",
+          ledgerId,
+          eventType: "expense.unknown",
+          eventVersion: 1,
+          occurredAt: "2026-04-20T16:40:00.000Z",
+          actorDeviceId: deviceId,
+          payloadJson: JSON.stringify({ some: "payload" }),
+          sequence: 1,
+        },
+      ]),
+    ).toThrow(/Unsupported eventType/);
   });
 });
