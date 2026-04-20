@@ -1,5 +1,6 @@
 export type KnownEventType =
   | "ledger.created"
+  | "participant.added"
   | "expense.created"
   | "expense.note-added";
 
@@ -8,6 +9,11 @@ export type EventType = KnownEventType | string;
 export type LedgerCreatedPayload = {
   title: string;
   settlementContext: string;
+};
+
+export type ParticipantAddedPayload = {
+  participantId: string;
+  displayName: string;
 };
 
 export type EventInput = {
