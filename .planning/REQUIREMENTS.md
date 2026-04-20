@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Ledger and Roles
 
 - [x] **LEDR-01**: Organizer can create a new trip ledger with title and settlement context on device without internet.
-- [ ] **LEDR-02**: Organizer can add participants as passive names inside the ledger.
+- [x] **LEDR-02**: Organizer can add participants as passive names inside the ledger.
 - [ ] **LEDR-03**: Organizer can promote a passive participant to contributor by generating a one-time invitation QR.
 - [ ] **LEDR-04**: Invited contributor can join the specific ledger on exactly one device by scanning organizer invitation QR.
 - [ ] **LEDR-05**: Organizer remains the only approval authority and only sync hub for contributor devices.
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | LEDR-01 | Phase 2 | Complete |
-| LEDR-02 | Phase 2 | Pending |
+| LEDR-02 | Phase 2 | Complete |
 | LEDR-03 | Phase 3 | Pending |
 | LEDR-04 | Phase 3 | Pending |
 | LEDR-05 | Phase 3 | Pending |

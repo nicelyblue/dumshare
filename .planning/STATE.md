@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-04-20T19:56:57.716Z"
+status: verifying
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-04-20T20:29:09.677Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 Phase: 02 (ledger-setup-and-participants) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-20
 
 Progress: [█░░░░░░░░░] 13%
@@ -55,6 +55,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 01 P01 | 8min | 3 tasks | 9 files |
 | Phase 01 P02 | 2min | 2 tasks | 4 files |
 | Phase 02-ledger-setup-and-participants P01 | 3min | 2 tasks | 5 files |
+| Phase 02 P02 | 2 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Projection enforces strict eventType handling by throwing on unsupported types to mitigate tampered or unknown events.
 - [Phase 02-ledger-setup-and-participants]: Validate ledger.created payload fields in replay and fail fast on malformed metadata.
 - [Phase 02-ledger-setup-and-participants]: Represent organizer setup with ledger.created payload carrying title and settlementContext to keep replay as source of truth.
+- [Phase 02]: Represent participant roster changes as participant.added events with passive name-only data in Phase 2.
+- [Phase 02]: Validate participant.added payload fields during replay before mutating projection state.
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-20T19:56:57.712Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-04-20T20:29:09.673Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
