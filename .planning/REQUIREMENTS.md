@@ -49,8 +49,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Local Data and Determinism
 
-- [ ] **DATA-01**: Ledger state is persisted locally with no cloud storage dependency.
-- [ ] **DATA-02**: Ledger changes are recorded in an append-only event log.
+- [x] **DATA-01**: Ledger state is persisted locally with no cloud storage dependency.
+- [x] **DATA-02**: Ledger changes are recorded in an append-only event log.
 - [ ] **DATA-03**: User-visible ledger state is deterministically derived from replay of stored events.
 
 ## v2 Requirements
@@ -113,8 +113,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BALN-01 | Phase 8 | Pending |
 | BALN-02 | Phase 8 | Pending |
 | BALN-03 | Phase 8 | Pending |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Pending |
 
 **Coverage:**

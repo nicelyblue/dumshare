@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Implement local SQLite append-only event storage contracts and blocking schema push.
+- [x] 01-01-PLAN.md — Implement local SQLite append-only event storage contracts and blocking schema push.
 - [ ] 01-02-PLAN.md — Implement deterministic replay projection and reconstruction tests.
 
 ### Phase 2: Ledger Setup and Participants
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Data Backbone | 0/2 | Planned | - |
+| 1. Local Data Backbone | 1/2 | In Progress | 2026-04-20 |
 | 2. Ledger Setup and Participants | 0/TBD | Not started | - |
 | 3. Contributor Onboarding and Authority Model | 0/TBD | Not started | - |
 | 4. Expense Capture Foundations | 0/TBD | Not started | - |
