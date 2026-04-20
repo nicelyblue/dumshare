@@ -88,40 +88,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LEDR-01 | TBD | Pending |
-| LEDR-02 | TBD | Pending |
-| LEDR-03 | TBD | Pending |
-| LEDR-04 | TBD | Pending |
-| LEDR-05 | TBD | Pending |
-| EXPS-01 | TBD | Pending |
-| EXPS-02 | TBD | Pending |
-| EXPS-03 | TBD | Pending |
-| EXPS-04 | TBD | Pending |
-| EXPS-05 | TBD | Pending |
-| EXPS-06 | TBD | Pending |
-| EXPS-07 | TBD | Pending |
-| APRV-01 | TBD | Pending |
-| APRV-02 | TBD | Pending |
-| APRV-03 | TBD | Pending |
-| APRV-04 | TBD | Pending |
-| APRV-05 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
-| SYNC-03 | TBD | Pending |
-| SYNC-04 | TBD | Pending |
-| SYNC-05 | TBD | Pending |
-| BALN-01 | TBD | Pending |
-| BALN-02 | TBD | Pending |
-| BALN-03 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
+| LEDR-01 | Phase 2 | Pending |
+| LEDR-02 | Phase 2 | Pending |
+| LEDR-03 | Phase 3 | Pending |
+| LEDR-04 | Phase 3 | Pending |
+| LEDR-05 | Phase 3 | Pending |
+| EXPS-01 | Phase 4 | Pending |
+| EXPS-02 | Phase 4 | Pending |
+| EXPS-03 | Phase 4 | Pending |
+| EXPS-04 | Phase 5 | Pending |
+| EXPS-05 | Phase 5 | Pending |
+| EXPS-06 | Phase 5 | Pending |
+| EXPS-07 | Phase 5 | Pending |
+| APRV-01 | Phase 6 | Pending |
+| APRV-02 | Phase 6 | Pending |
+| APRV-03 | Phase 6 | Pending |
+| APRV-04 | Phase 6 | Pending |
+| APRV-05 | Phase 6 | Pending |
+| SYNC-01 | Phase 7 | Pending |
+| SYNC-02 | Phase 7 | Pending |
+| SYNC-03 | Phase 7 | Pending |
+| SYNC-04 | Phase 7 | Pending |
+| SYNC-05 | Phase 7 | Pending |
+| BALN-01 | Phase 8 | Pending |
+| BALN-02 | Phase 8 | Pending |
+| BALN-03 | Phase 8 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-20*
-*Last updated: 2026-04-20 after initial definition*
+*Last updated: 2026-04-20 after roadmap mapping*
