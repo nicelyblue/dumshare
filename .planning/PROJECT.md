@@ -12,11 +12,14 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 
 ### Validated
 
-(None yet — ship to validate)
+- DATA-01 (Phase 1): Ledger state persists locally on-device with no cloud dependency.
+- DATA-02 (Phase 1): Ledger changes are recorded as append-only immutable events.
+- DATA-03 (Phase 1): User-visible ledger state is deterministically reconstructed by replay.
+- LEDR-01 (Phase 2): Organizer can create a trip ledger with title and settlement context fully offline.
+- LEDR-02 (Phase 2): Organizer can add passive participant names that persist through replay and reopen.
 
 ### Active
 
-- [ ] Groups can create and use a shared trip ledger fully offline on Android and iOS.
 - [ ] Organizer can manage participants and promote selected participants to single-device contributors via QR invitation.
 - [ ] Organizer and contributors can create and amend multi-payer, mixed-currency expenses with equal/exact/percentage splits.
 - [ ] Contributors can sync pending changes with organizer using QR bootstrap + Bluetooth delta exchange.
@@ -81,4 +84,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-20 after initialization*
+*Last updated: 2026-04-20 after phase completion (Phase 2)*
