@@ -1,8 +1,28 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { clearLedgerDb, closeLedgerDb, openLedgerDb } from "../data/sqlite/client";
 import { createEventRepository } from "../domain/events/repository";
 import { replayLedger } from "../domain/projections";
+
+test("ledger setup contracts include ledger.created payload and projection metadata fields", () => {
+  const eventsTypesSource = readFileSync(
+    resolve(process.cwd(), "src/domain/events/types.ts"),
+    "utf8",
+  );
+  const projectionTypesSource = readFileSync(
+    resolve(process.cwd(), "src/domain/projections/types.ts"),
+    "utf8",
+  );
+
+  expect(eventsTypesSource).toContain('"ledger.created"');
+  expect(eventsTypesSource).toContain("title");
+  expect(eventsTypesSource).toContain("settlementContext");
+
+  expect(projectionTypesSource).toContain("title");
+  expect(projectionTypesSource).toContain("settlementContext");
+});
 
 describe("local-data-backbone", () => {
   const dbName = "local-data-backbone-test-db";
