@@ -1,24 +1,57 @@
 import type { LedgerDb } from "../../data/sqlite/client";
+import { asc, eq } from "drizzle-orm";
 
-export type AppendEventInput = {
-  id: string;
-  ledgerId: string;
-  eventType: string;
-  eventVersion: number;
-  occurredAt: string;
-  actorDeviceId: string;
-  payloadJson: string;
-};
+import { events } from "../../data/sqlite/schema";
+import type { EventInput, LedgerEvent } from "./types";
 
-export type StoredEvent = AppendEventInput & {
-  sequence: number;
-};
+export type AppendEventInput = EventInput;
+export type StoredEvent = LedgerEvent;
 
 export type EventRepository = {
   appendEvent(input: AppendEventInput): Promise<void>;
   listEventsByLedger(ledgerId: string): Promise<StoredEvent[]>;
 };
 
-export function createEventRepository(_db: LedgerDb): EventRepository {
-  throw new Error("Not implemented");
+function mapRowToStoredEvent(row: typeof events.$inferSelect): StoredEvent {
+  return {
+    id: row.id,
+    ledgerId: row.ledger_id,
+    eventType: row.event_type,
+    eventVersion: row.event_version,
+    occurredAt: row.occurred_at,
+    actorDeviceId: row.actor_device_id,
+    payloadJson: row.payload_json,
+    sequence: row.sequence,
+  };
+}
+
+export function createEventRepository(db: LedgerDb): EventRepository {
+  return {
+    async appendEvent(input: AppendEventInput): Promise<void> {
+      const [{ nextSequence }] = db.sqlite
+        .prepare("SELECT COALESCE(MAX(sequence), 0) + 1 as nextSequence FROM events")
+        .all() as { nextSequence: number }[];
+
+      await db.orm.insert(events).values({
+        id: input.id,
+        ledger_id: input.ledgerId,
+        event_type: input.eventType,
+        event_version: input.eventVersion,
+        occurred_at: input.occurredAt,
+        actor_device_id: input.actorDeviceId,
+        payload_json: input.payloadJson,
+        sequence: nextSequence,
+      });
+    },
+
+    async listEventsByLedger(ledgerId: string): Promise<StoredEvent[]> {
+      const rows = await db.orm
+        .select()
+        .from(events)
+        .where(eq(events.ledger_id, ledgerId))
+        .orderBy(asc(events.sequence));
+
+      return rows.map(mapRowToStoredEvent);
+    },
+  };
 }
