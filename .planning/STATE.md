@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-04-20T16:21:14.546Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-04-20T19:56:57.716Z"
 last_activity: 2026-04-20
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_plans: 4
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -21,39 +21,40 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 1 - Local Data Backbone
+**Current focus:** Phase 02 — ledger-setup-and-participants
 
 ## Current Position
 
-Phase: 1 of 8 (Local Data Backbone)
-Plan: 2 of 2 in current phase
+Phase: 02 (ledger-setup-and-participants) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
 Last activity: 2026-04-20
 
-Progress: [█████░░░░░] 50%
+Progress: [█░░░░░░░░░] 13%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: 8 min
-- Total execution time: 0.1 hours
+- Total plans completed: 2
+- Average duration: 5 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 1 | 8 min | 8 min |
+| 01 | 2 | 10 min | 5 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 8 min
+- Last 5 plans: 8 min, 2 min
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 01 P01 | 8min | 3 tasks | 9 files |
 | Phase 01 P02 | 2min | 2 tasks | 4 files |
+| Phase 02-ledger-setup-and-participants P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Use non-interactive drizzle schema push (--force) to keep verification automation reliable in non-TTY shells.
 - [Phase 01]: Replay reducer sorts by append sequence before applying events to preserve deterministic outputs even if input order drifts.
 - [Phase 01]: Projection enforces strict eventType handling by throwing on unsupported types to mitigate tampered or unknown events.
+- [Phase 02-ledger-setup-and-participants]: Validate ledger.created payload fields in replay and fail fast on malformed metadata.
+- [Phase 02-ledger-setup-and-participants]: Represent organizer setup with ledger.created payload carrying title and settlementContext to keep replay as source of truth.
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-20T16:21:14.543Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-04-20T19:56:57.712Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
