@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { clearLedgerDb, closeLedgerDb, openLedgerDb } from "../data/sqlite/client";
+import type { LedgerEvent } from "../domain/events/types";
 import { createEventRepository } from "../domain/events/repository";
 import { replayLedger } from "../domain/projections";
 
@@ -63,7 +64,7 @@ describe("ledger-setup-participants", () => {
   });
 
   test("replayLedger is deterministic for identical event sequences", () => {
-    const events = [
+    const events: LedgerEvent[] = [
       {
         id: "evt-expense-created-1",
         ledgerId,
@@ -249,13 +250,46 @@ describe("ledger-setup-participants", () => {
       },
     ];
 
-    const firstReplay = replayLedger(events as never[]);
-    const secondReplay = replayLedger(events as never[]);
+    const firstReplay = replayLedger(events);
+    const secondReplay = replayLedger(events);
 
     expect(secondReplay.participants).toEqual(firstReplay.participants);
     expect(firstReplay.participants.map((participant) => participant.displayName)).toEqual([
       "Alice",
       "Bob",
     ]);
+  });
+
+  test("participant.added replay rejects invalid payload fields", () => {
+    expect(() =>
+      replayLedger([
+        {
+          id: "evt-ledger-created-1",
+          ledgerId,
+          eventType: "ledger.created",
+          eventVersion: 1,
+          occurredAt: "2026-04-20T17:00:00.000Z",
+          actorDeviceId: organizerDeviceId,
+          payloadJson: JSON.stringify({
+            title: "Barcelona Weekend",
+            settlementContext: "per-currency balances",
+          }),
+          sequence: 1,
+        },
+        {
+          id: "evt-participant-added-invalid-1",
+          ledgerId,
+          eventType: "participant.added",
+          eventVersion: 1,
+          occurredAt: "2026-04-20T17:01:00.000Z",
+          actorDeviceId: organizerDeviceId,
+          payloadJson: JSON.stringify({
+            participantId: "",
+            displayName: "",
+          }),
+          sequence: 2,
+        },
+      ]),
+    ).toThrow(/Invalid payload for eventType participant.added/);
   });
 });

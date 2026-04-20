@@ -1,6 +1,6 @@
 import type { LedgerEvent } from "../events/types";
 
-import type { LedgerEntry, LedgerProjection } from "./types";
+import type { LedgerEntry, LedgerParticipant, LedgerProjection } from "./types";
 
 type ExpenseCreatedPayload = {
   expenseId: string;
@@ -12,6 +12,11 @@ type ExpenseCreatedPayload = {
 type LedgerCreatedPayload = {
   title: string;
   settlementContext: string;
+};
+
+type ParticipantAddedPayload = {
+  participantId: string;
+  displayName: string;
 };
 
 function parseLedgerCreatedPayload(payloadJson: string): LedgerCreatedPayload {
@@ -52,6 +57,24 @@ function parseExpenseCreatedPayload(payloadJson: string): ExpenseCreatedPayload 
   };
 }
 
+function parseParticipantAddedPayload(payloadJson: string): ParticipantAddedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<ParticipantAddedPayload>;
+
+  if (
+    typeof parsed.participantId !== "string" ||
+    parsed.participantId.trim().length === 0 ||
+    typeof parsed.displayName !== "string" ||
+    parsed.displayName.trim().length === 0
+  ) {
+    throw new Error("Invalid payload for eventType participant.added");
+  }
+
+  return {
+    participantId: parsed.participantId,
+    displayName: parsed.displayName,
+  };
+}
+
 function toLedgerEntry(event: LedgerEvent): LedgerEntry {
   const payload = parseExpenseCreatedPayload(event.payloadJson);
 
@@ -66,6 +89,16 @@ function toLedgerEntry(event: LedgerEvent): LedgerEntry {
   };
 }
 
+function toLedgerParticipant(event: LedgerEvent): LedgerParticipant {
+  const payload = parseParticipantAddedPayload(event.payloadJson);
+
+  return {
+    participantId: payload.participantId,
+    displayName: payload.displayName,
+    sourceEventId: event.id,
+  };
+}
+
 export function replayLedger(events: LedgerEvent[]): LedgerProjection {
   const ordered = [...events].sort((left, right) => left.sequence - right.sequence);
 
@@ -75,6 +108,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       lastSequence: 0,
       appliedEventIds: [],
       entries: [],
+      participants: [],
       title: "",
       settlementContext: "",
     };
@@ -85,6 +119,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
     lastSequence: 0,
     appliedEventIds: [],
     entries: [],
+    participants: [],
     title: "",
     settlementContext: "",
   };
@@ -105,6 +140,10 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       }
       case "expense.created": {
         projection.entries.push(toLedgerEntry(event));
+        break;
+      }
+      case "participant.added": {
+        projection.participants.push(toLedgerParticipant(event));
         break;
       }
       default:
