@@ -1,8 +1,14 @@
 export type LedgerEntry = {
   expenseId: string;
   description: string;
-  amountMinor: number;
+  totalAmountMinor: number;
   currency: string;
+  expenseDate: string;
+  creatorRole: "organizer" | "contributor";
+  payers: {
+    participantId: string;
+    paidAmountMinor: number;
+  }[];
   createdAt: string;
   createdByDeviceId: string;
   sourceEventId: string;

@@ -36,6 +36,19 @@ export type InviteConsumedPayload = {
   contributorDeviceId: string;
 };
 
+export type ExpenseCreatedPayload = {
+  expenseId: string;
+  description: string;
+  currency: string;
+  totalAmountMinor: number;
+  expenseDate: string;
+  creatorRole: "organizer" | "contributor";
+  payers: {
+    participantId: string;
+    paidAmountMinor: number;
+  }[];
+};
+
 export type EventInput = {
   id: string;
   ledgerId: string;
