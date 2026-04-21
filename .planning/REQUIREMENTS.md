@@ -17,9 +17,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Expenses and Splits
 
-- [ ] **EXPS-01**: Organizer can create an expense offline with description, currency, total amount, and date.
-- [ ] **EXPS-02**: Contributor can create an expense offline with description, currency, total amount, and date.
-- [ ] **EXPS-03**: User can record one or more payers for an expense with explicit paid amounts.
+- [x] **EXPS-01**: Organizer can create an expense offline with description, currency, total amount, and date.
+- [x] **EXPS-02**: Contributor can create an expense offline with description, currency, total amount, and date.
+- [x] **EXPS-03**: User can record one or more payers for an expense with explicit paid amounts.
 - [ ] **EXPS-04**: User can assign participants using equal split for an expense.
 - [ ] **EXPS-05**: User can assign participants using exact amount split for an expense.
 - [ ] **EXPS-06**: User can assign participants using percentage split for an expense.
@@ -93,9 +93,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LEDR-03 | Phase 3 | Complete |
 | LEDR-04 | Phase 3 | Complete |
 | LEDR-05 | Phase 3 | Complete |
-| EXPS-01 | Phase 4 | Pending |
-| EXPS-02 | Phase 4 | Pending |
-| EXPS-03 | Phase 4 | Pending |
+| EXPS-01 | Phase 4 | Complete |
+| EXPS-02 | Phase 4 | Complete |
+| EXPS-03 | Phase 4 | Complete |
 | EXPS-04 | Phase 5 | Pending |
 | EXPS-05 | Phase 5 | Pending |
 | EXPS-06 | Phase 5 | Pending |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-21T20:16:40.427Z"
-last_activity: 2026-04-21 -- Phase 04 planning complete
+status: verifying
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-21T20:25:47.215Z"
+last_activity: 2026-04-21
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 03 — contributor-onboarding-and-authority-model
+**Current focus:** Phase 04 — expense-capture-foundations
 
 ## Current Position
 
-Phase: 4
+Phase: 5
 Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-21 -- Phase 04 planning complete
+Status: Phase complete — ready for verification
+Last activity: 2026-04-21
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -36,7 +36,7 @@ Progress: [█░░░░░░░░░] 13%
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 5 min
 - Total execution time: 0.2 hours
 
@@ -47,6 +47,7 @@ Progress: [█░░░░░░░░░] 13%
 | 01 | 2 | 10 min | 5 min |
 | 02 | 2 | - | - |
 | 03 | 2 | - | - |
+| 04 | 1 | - | - |
 
 **Recent Trend:**
 
@@ -60,6 +61,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P02 | 2 min | 2 tasks | 4 files |
 | Phase 03 P01 | 7 | 2 tasks | 4 files |
 | Phase 03 P02 | 3 | 2 tasks | 2 files |
+| Phase 04 P01 | 6 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -81,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Validate participant.added payload fields during replay before mutating projection state.
 - [Phase 03]: Enforce invite lifecycle and one-device claims in replay with plain-language guard errors.
 - [Phase 03]: Centralize organizer-only sync/approval checks in pure authority guards validated against replay output.
+- [Phase 04]: Promoted expense.created to strict required payload including creatorRole and payer rows for EXPS-01/02/03
+- [Phase 04]: Authorized expense creation only for organizer sync hub device or claimed contributor devices from replay state
+- [Phase 04]: Kept fail-fast deterministic replay errors for invalid payloads and unknown payer participants
 
 ### Pending Todos
 
@@ -104,6 +109,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-21T17:11:27.588Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-expense-capture-foundations/04-CONTEXT.md
+Last session: 2026-04-21T20:24:36.239Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
