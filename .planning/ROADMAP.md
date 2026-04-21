@@ -74,7 +74,10 @@ Plans:
   1. Organizer can create an expense offline with description, currency, total amount, and date.
   2. Contributor can create an expense offline with description, currency, total amount, and date.
   3. User can assign one or more payers with explicit paid amounts for a single expense.
-**Plans**: TBD
+**Plans**: 1 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Implement strict expense-created contract, creator authorization guards, and deterministic multi-payer replay validation with automated invariants.
 
 ### Phase 5: Split Modes and Contributor Amendments
 **Goal**: Expenses support all v1 split modes and contributor amendments feed into the review pipeline.
