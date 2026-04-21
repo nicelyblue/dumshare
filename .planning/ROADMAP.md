@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Local Data Backbone** - Reliable local persistence and deterministic event replay are in place. (completed 2026-04-20)
 - [ ] **Phase 2: Ledger Setup and Participants** - Organizer can create a ledger and manage participant roster offline.
-- [ ] **Phase 3: Contributor Onboarding and Authority Model** - Organizer invites one-device contributors and remains sole hub/authority.
+- [x] **Phase 3: Contributor Onboarding and Authority Model** - Organizer invites one-device contributors and remains sole hub/authority. (completed 2026-04-21)
 - [ ] **Phase 4: Expense Capture Foundations** - Organizer and contributors can record complete offline expense basics.
 - [ ] **Phase 5: Split Modes and Contributor Amendments** - Equal/exact/percentage splits and contributor amendment submission work end-to-end.
 - [ ] **Phase 6: Organizer Approval Gate** - Contributor submissions are explicitly approved/rejected before entering approved state.
@@ -63,8 +63,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Implement deterministic invite lifecycle contracts and one-device join replay invariants.
-- [ ] 03-02-PLAN.md — Add organizer-only authority guard module and replay-integrated policy verification.
+- [x] 03-01-PLAN.md — Implement deterministic invite lifecycle contracts and one-device join replay invariants.
+- [x] 03-02-PLAN.md — Add organizer-only authority guard module and replay-integrated policy verification.
 
 ### Phase 4: Expense Capture Foundations
 **Goal**: Organizer and contributors can record complete offline expenses with multi-payer details.
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Local Data Backbone | 2/2 | Complete   | 2026-04-20 |
 | 2. Ledger Setup and Participants | 0/TBD | Not started | - |
-| 3. Contributor Onboarding and Authority Model | 0/TBD | Not started | - |
+| 3. Contributor Onboarding and Authority Model | 2/2 | Complete | 2026-04-21 |
 | 4. Expense Capture Foundations | 0/TBD | Not started | - |
 | 5. Split Modes and Contributor Amendments | 0/TBD | Not started | - |
 | 6. Organizer Approval Gate | 0/TBD | Not started | - |
