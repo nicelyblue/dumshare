@@ -1,13 +1,6 @@
-import type { LedgerEvent } from "../events/types";
+import type { ExpenseCreatedPayload, LedgerEvent } from "../events/types";
 
 import type { LedgerEntry, LedgerParticipant, LedgerProjection } from "./types";
-
-type ExpenseCreatedPayload = {
-  expenseId: string;
-  description: string;
-  amountMinor: number;
-  currency: string;
-};
 
 type LedgerCreatedPayload = {
   title: string;
@@ -57,11 +50,32 @@ function parseLedgerCreatedPayload(payloadJson: string): LedgerCreatedPayload {
 function parseExpenseCreatedPayload(payloadJson: string): ExpenseCreatedPayload {
   const parsed = JSON.parse(payloadJson) as Partial<ExpenseCreatedPayload>;
 
+  const payersAreValid =
+    Array.isArray(parsed.payers) &&
+    parsed.payers.length > 0 &&
+    parsed.payers.every(
+      (payer) =>
+        typeof payer?.participantId === "string" &&
+        payer.participantId.trim().length > 0 &&
+        typeof payer.paidAmountMinor === "number" &&
+        Number.isInteger(payer.paidAmountMinor) &&
+        payer.paidAmountMinor > 0,
+    );
+
   if (
     typeof parsed.expenseId !== "string" ||
+    parsed.expenseId.trim().length === 0 ||
     typeof parsed.description !== "string" ||
-    typeof parsed.amountMinor !== "number" ||
-    typeof parsed.currency !== "string"
+    parsed.description.trim().length === 0 ||
+    typeof parsed.currency !== "string" ||
+    parsed.currency.trim().length === 0 ||
+    typeof parsed.totalAmountMinor !== "number" ||
+    !Number.isInteger(parsed.totalAmountMinor) ||
+    parsed.totalAmountMinor <= 0 ||
+    typeof parsed.expenseDate !== "string" ||
+    parsed.expenseDate.trim().length === 0 ||
+    (parsed.creatorRole !== "organizer" && parsed.creatorRole !== "contributor") ||
+    !payersAreValid
   ) {
     throw new Error("Invalid payload for eventType expense.created");
   }
@@ -69,9 +83,20 @@ function parseExpenseCreatedPayload(payloadJson: string): ExpenseCreatedPayload 
   return {
     expenseId: parsed.expenseId,
     description: parsed.description,
-    amountMinor: parsed.amountMinor,
     currency: parsed.currency,
+    totalAmountMinor: parsed.totalAmountMinor,
+    expenseDate: parsed.expenseDate,
+    creatorRole: parsed.creatorRole,
+    payers: parsed.payers,
   };
+}
+
+function isExpenseCreatorAuthorized(projection: LedgerProjection, actorDeviceId: string): boolean {
+  if (actorDeviceId === projection.syncHubDeviceId) {
+    return true;
+  }
+
+  return Object.values(projection.participantContributorDeviceClaims).includes(actorDeviceId);
 }
 
 function parseParticipantAddedPayload(payloadJson: string): ParticipantAddedPayload {
@@ -158,8 +183,11 @@ function toLedgerEntry(event: LedgerEvent): LedgerEntry {
   return {
     expenseId: payload.expenseId,
     description: payload.description,
-    amountMinor: payload.amountMinor,
+    totalAmountMinor: payload.totalAmountMinor,
     currency: payload.currency,
+    expenseDate: payload.expenseDate,
+    creatorRole: payload.creatorRole,
+    payers: payload.payers,
     createdAt: event.occurredAt,
     createdByDeviceId: event.actorDeviceId,
     sourceEventId: event.id,
@@ -226,6 +254,22 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
         break;
       }
       case "expense.created": {
+        const payload = parseExpenseCreatedPayload(event.payloadJson);
+
+        if (!isExpenseCreatorAuthorized(projection, event.actorDeviceId)) {
+          throw new Error("Only organizer or a claimed contributor device can create expenses");
+        }
+
+        const participantIds = new Set(
+          projection.participants.map((participant) => participant.participantId),
+        );
+
+        for (const payer of payload.payers) {
+          if (!participantIds.has(payer.participantId)) {
+            throw new Error("Expense payer references unknown participant");
+          }
+        }
+
         projection.entries.push(toLedgerEntry(event));
         break;
       }

@@ -136,6 +136,32 @@ describe("local-data-backbone", () => {
     const repository = createEventRepository(db);
 
     await repository.appendEvent({
+      id: "evt-ledger-created-1",
+      ledgerId,
+      eventType: "ledger.created",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:19:00.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        title: "Backbone Replay",
+        settlementContext: "per-currency balances",
+      }),
+    });
+
+    await repository.appendEvent({
+      id: "evt-participant-added-1",
+      ledgerId,
+      eventType: "participant.added",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:19:30.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        participantId: "participant-001",
+        displayName: "Alice",
+      }),
+    });
+
+    await repository.appendEvent({
       id: "evt-replay-1",
       ledgerId,
       eventType: "expense.created",
@@ -145,8 +171,11 @@ describe("local-data-backbone", () => {
       payloadJson: JSON.stringify({
         expenseId: "expense-1",
         description: "Train",
-        amountMinor: 2500,
         currency: "EUR",
+        totalAmountMinor: 2500,
+        expenseDate: "2026-04-20",
+        creatorRole: "organizer",
+        payers: [{ participantId: "participant-001", paidAmountMinor: 2500 }],
       }),
     });
 
@@ -160,8 +189,11 @@ describe("local-data-backbone", () => {
       payloadJson: JSON.stringify({
         expenseId: "expense-2",
         description: "Lunch",
-        amountMinor: 1800,
         currency: "EUR",
+        totalAmountMinor: 1800,
+        expenseDate: "2026-04-20",
+        creatorRole: "organizer",
+        payers: [{ participantId: "participant-001", paidAmountMinor: 1800 }],
       }),
     });
 
@@ -178,6 +210,32 @@ describe("local-data-backbone", () => {
     const repository = createEventRepository(db);
 
     await repository.appendEvent({
+      id: "evt-ledger-created-1",
+      ledgerId,
+      eventType: "ledger.created",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:29:00.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        title: "Backbone Replay",
+        settlementContext: "per-currency balances",
+      }),
+    });
+
+    await repository.appendEvent({
+      id: "evt-participant-added-1",
+      ledgerId,
+      eventType: "participant.added",
+      eventVersion: 1,
+      occurredAt: "2026-04-20T16:29:30.000Z",
+      actorDeviceId: deviceId,
+      payloadJson: JSON.stringify({
+        participantId: "participant-001",
+        displayName: "Alice",
+      }),
+    });
+
+    await repository.appendEvent({
       id: "evt-reopen-replay-1",
       ledgerId,
       eventType: "expense.created",
@@ -187,8 +245,11 @@ describe("local-data-backbone", () => {
       payloadJson: JSON.stringify({
         expenseId: "expense-a",
         description: "Museum",
-        amountMinor: 3200,
         currency: "USD",
+        totalAmountMinor: 3200,
+        expenseDate: "2026-04-20",
+        creatorRole: "organizer",
+        payers: [{ participantId: "participant-001", paidAmountMinor: 3200 }],
       }),
     });
 

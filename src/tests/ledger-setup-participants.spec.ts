@@ -75,10 +75,13 @@ describe("ledger-setup-participants", () => {
         payloadJson: JSON.stringify({
           expenseId: "expense-001",
           description: "Dinner",
-          amountMinor: 7800,
           currency: "EUR",
+          totalAmountMinor: 7800,
+          expenseDate: "2026-04-20",
+          creatorRole: "organizer",
+          payers: [{ participantId: "participant-001", paidAmountMinor: 7800 }],
         }),
-        sequence: 2,
+        sequence: 3,
       },
       {
         id: "evt-ledger-created-1",
@@ -93,6 +96,19 @@ describe("ledger-setup-participants", () => {
         }),
         sequence: 1,
       },
+      {
+        id: "evt-participant-added-1",
+        ledgerId,
+        eventType: "participant.added",
+        eventVersion: 1,
+        occurredAt: "2026-04-20T17:01:00.000Z",
+        actorDeviceId: organizerDeviceId,
+        payloadJson: JSON.stringify({
+          participantId: "participant-001",
+          displayName: "Alice",
+        }),
+        sequence: 2,
+      },
     ];
 
     const firstReplay = replayLedger(events);
@@ -101,9 +117,10 @@ describe("ledger-setup-participants", () => {
     expect(secondReplay).toEqual(firstReplay);
     expect(firstReplay.appliedEventIds).toEqual([
       "evt-ledger-created-1",
+      "evt-participant-added-1",
       "evt-expense-created-1",
     ]);
-    expect(firstReplay.lastSequence).toBe(2);
+    expect(firstReplay.lastSequence).toBe(3);
     expect(firstReplay.title).toBe("Barcelona Weekend");
     expect(firstReplay.settlementContext).toBe("per-currency balances");
   });
