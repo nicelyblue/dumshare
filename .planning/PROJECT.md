@@ -17,6 +17,9 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 - DATA-03 (Phase 1): User-visible ledger state is deterministically reconstructed by replay.
 - LEDR-01 (Phase 2): Organizer can create a trip ledger with title and settlement context fully offline.
 - LEDR-02 (Phase 2): Organizer can add passive participant names that persist through replay and reopen.
+- EXPS-01 (Phase 4): Organizer can create an offline expense with description, currency, total amount, date, and payer rows.
+- EXPS-02 (Phase 4): Claimed contributor can create an offline expense with the same strict required fields.
+- EXPS-03 (Phase 4): Expense creation requires one-or-more explicit payer rows with participant IDs and paid amounts.
 
 ### Active
 
@@ -84,4 +87,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-20 after phase completion (Phase 2)*
+*Last updated: 2026-04-21 after phase completion (Phase 4)*
