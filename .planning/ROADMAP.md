@@ -60,7 +60,11 @@ Plans:
   2. Invited contributor can join the specific ledger by scanning that invitation QR on exactly one device.
   3. Attempts to join the same contributor identity from another device are blocked.
   4. Users experience organizer as the only sync hub and only approval authority in normal ledger operations.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Implement deterministic invite lifecycle contracts and one-device join replay invariants.
+- [ ] 03-02-PLAN.md — Add organizer-only authority guard module and replay-integrated policy verification.
 
 ### Phase 4: Expense Capture Foundations
 **Goal**: Organizer and contributors can record complete offline expenses with multi-payer details.
