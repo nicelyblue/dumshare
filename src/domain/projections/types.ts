@@ -14,12 +14,28 @@ export type LedgerParticipant = {
   sourceEventId: string;
 };
 
+export type InviteState = "issued" | "revoked" | "consumed";
+
+export type LedgerInvite = {
+  inviteId: string;
+  participantId: string;
+  inviteCode: string;
+  state: InviteState;
+  sourceEventId: string;
+  revokedReason?: string;
+  consumedByDeviceId?: string;
+};
+
 export type LedgerProjection = {
   ledgerId: string;
   lastSequence: number;
   appliedEventIds: string[];
   entries: LedgerEntry[];
   participants: LedgerParticipant[];
+  invites: LedgerInvite[];
+  participantContributorDeviceClaims: Record<string, string>;
+  syncHubDeviceId: string;
+  approvalAuthorityDeviceId: string;
   title: string;
   settlementContext: string;
 };
