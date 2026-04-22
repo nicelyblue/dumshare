@@ -21,12 +21,13 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 - EXPS-02 (Phase 4): Claimed contributor can create an offline expense with the same strict required fields.
 - EXPS-03 (Phase 4): Expense creation requires one-or-more explicit payer rows with participant IDs and paid amounts.
 - APRV-01..APRV-05 (Phase 6): Contributor submissions are pending-first and only affect approved ledger state after explicit organizer approve/reject decisions.
+- SYNC-01..SYNC-05 (Phase 7): Contributor QR bootstrap, organizer-gated session establishment, checkpoint deltas, bidirectional exchange, and plain-language sync status timeline are verified.
 
 ### Active
 
 - [ ] Organizer can manage participants and promote selected participants to single-device contributors via QR invitation.
 - [ ] Organizer and contributors can create and amend multi-payer, mixed-currency expenses with equal/exact/percentage splits.
-- [ ] Contributors can sync pending changes with organizer using QR bootstrap + Bluetooth delta exchange.
+- [x] Contributors can sync pending changes with organizer using QR bootstrap + Bluetooth delta exchange.
 - [ ] App can compute and display participant balances per currency without forced cross-currency merging.
 
 ### Out of Scope
@@ -87,4 +88,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-22 after phase completion (Phase 6)*
+*Last updated: 2026-04-22 after phase completion (Phase 7)*
