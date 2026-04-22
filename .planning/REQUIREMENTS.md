@@ -31,7 +31,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **APRV-02**: Every contributor-submitted amendment enters pending state until organizer reviews it.
 - [x] **APRV-03**: Organizer can approve a pending contributor expense or amendment.
 - [x] **APRV-04**: Organizer can reject a pending contributor expense or amendment.
-- [ ] **APRV-05**: Only approved organizer-reviewed changes affect approved ledger balances and settlement views.
+- [x] **APRV-05**: Only approved organizer-reviewed changes affect approved ledger balances and settlement views.
 
 ### Offline Sync
 
@@ -104,7 +104,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APRV-02 | Phase 6 | Complete |
 | APRV-03 | Phase 6 | Complete |
 | APRV-04 | Phase 6 | Complete |
-| APRV-05 | Phase 6 | Pending |
+| APRV-05 | Phase 6 | Complete |
 | SYNC-01 | Phase 7 | Pending |
 | SYNC-02 | Phase 7 | Pending |
 | SYNC-03 | Phase 7 | Pending |
