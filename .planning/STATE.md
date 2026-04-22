@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-04-21T20:25:47.215Z"
-last_activity: 2026-04-21
+status: executing
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-04-22T13:37:08.414Z"
+last_activity: 2026-04-22
 progress:
   total_phases: 8
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 5
+  total_plans: 9
+  completed_plans: 9
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 04 — expense-capture-foundations
+**Current focus:** Phase 05 — split-modes-and-contributor-amendments
 
 ## Current Position
 
-Phase: 5
+Phase: 6
 Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-21
+Status: Executing Phase 05
+Last activity: 2026-04-22
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -36,7 +36,7 @@ Progress: [█░░░░░░░░░] 13%
 
 **Velocity:**
 
-- Total plans completed: 7
+- Total plans completed: 9
 - Average duration: 5 min
 - Total execution time: 0.2 hours
 
@@ -48,6 +48,7 @@ Progress: [█░░░░░░░░░] 13%
 | 02 | 2 | - | - |
 | 03 | 2 | - | - |
 | 04 | 1 | - | - |
+| 05 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -62,6 +63,8 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P01 | 7 | 2 tasks | 4 files |
 | Phase 03 P02 | 3 | 2 tasks | 2 files |
 | Phase 04 P01 | 6 | 2 tasks | 6 files |
+| Phase 05 P01 | 16min | 2 tasks | 6 files |
+| Phase 05 P02 | 9min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -86,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Promoted expense.created to strict required payload including creatorRole and payer rows for EXPS-01/02/03
 - [Phase 04]: Authorized expense creation only for organizer sync hub device or claimed contributor devices from replay state
 - [Phase 04]: Kept fail-fast deterministic replay errors for invalid payloads and unknown payer participants
+- [Phase 05]: Use integer-only split arithmetic with stable remainder assignment to keep replay deterministic across equal and percentage modes.
+- [Phase 05]: Queue contributor amendments in pendingSubmissions and block unclaimed devices so organizer approval remains the only apply path.
 
 ### Pending Todos
 
@@ -109,6 +114,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-21T20:24:36.239Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-04-22T13:36:49.336Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

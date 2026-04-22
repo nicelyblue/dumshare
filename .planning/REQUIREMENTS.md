@@ -20,10 +20,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **EXPS-01**: Organizer can create an expense offline with description, currency, total amount, and date.
 - [x] **EXPS-02**: Contributor can create an expense offline with description, currency, total amount, and date.
 - [x] **EXPS-03**: User can record one or more payers for an expense with explicit paid amounts.
-- [ ] **EXPS-04**: User can assign participants using equal split for an expense.
-- [ ] **EXPS-05**: User can assign participants using exact amount split for an expense.
-- [ ] **EXPS-06**: User can assign participants using percentage split for an expense.
-- [ ] **EXPS-07**: Contributor can amend their submitted expenses and amendments enter the same approval flow as new submissions.
+- [x] **EXPS-04**: User can assign participants using equal split for an expense.
+- [x] **EXPS-05**: User can assign participants using exact amount split for an expense.
+- [x] **EXPS-06**: User can assign participants using percentage split for an expense.
+- [x] **EXPS-07**: Contributor can amend their submitted expenses and amendments enter the same approval flow as new submissions.
 
 ### Approval Workflow
 
@@ -96,10 +96,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPS-01 | Phase 4 | Complete |
 | EXPS-02 | Phase 4 | Complete |
 | EXPS-03 | Phase 4 | Complete |
-| EXPS-04 | Phase 5 | Pending |
-| EXPS-05 | Phase 5 | Pending |
-| EXPS-06 | Phase 5 | Pending |
-| EXPS-07 | Phase 5 | Pending |
+| EXPS-04 | Phase 5 | Complete |
+| EXPS-05 | Phase 5 | Complete |
+| EXPS-06 | Phase 5 | Complete |
+| EXPS-07 | Phase 5 | Complete |
 | APRV-01 | Phase 6 | Pending |
 | APRV-02 | Phase 6 | Pending |
 | APRV-03 | Phase 6 | Pending |

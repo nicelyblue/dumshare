@@ -88,7 +88,11 @@ Plans:
   2. User can split an expense by exact owed amounts across selected participants.
   3. User can split an expense by percentages across selected participants.
   4. Contributor can amend their submitted expenses and the amendment is treated as reviewable submission, not auto-applied approved state.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Implement strict equal/exact/percentage split contracts and deterministic replay owed-share derivation.
+- [ ] 05-02-PLAN.md — Implement contributor amendment submissions as replay-validated pending review queue input.
 
 ### Phase 6: Organizer Approval Gate
 **Goal**: Contributor-created expenses/amendments are governed by explicit organizer approve/reject decisions before they affect approved ledger outcomes.
@@ -135,7 +139,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Ledger Setup and Participants | 0/TBD | Not started | - |
 | 3. Contributor Onboarding and Authority Model | 2/2 | Complete | 2026-04-21 |
 | 4. Expense Capture Foundations | 1/1 | Complete   | 2026-04-21 |
-| 5. Split Modes and Contributor Amendments | 0/TBD | Not started | - |
+| 5. Split Modes and Contributor Amendments | 0/2 | Not started | - |
 | 6. Organizer Approval Gate | 0/TBD | Not started | - |
 | 7. In-Person Sync Exchange | 0/TBD | Not started | - |
 | 8. Per-Currency Balances and Settlement Readiness | 0/TBD | Not started | - |
