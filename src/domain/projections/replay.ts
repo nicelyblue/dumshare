@@ -1,9 +1,13 @@
 import type {
   ExpenseAmendmentSubmittedPayload,
   ExpenseCreatedPayload,
+  ExpenseSubmissionCreatedPayload,
+  ExpenseSubmissionReviewedPayload,
   ExpenseSplitPayload,
   LedgerEvent,
 } from "../events/types";
+
+import { assertOrganizerApprovalAuthority } from "../onboarding/authority";
 
 import type { LedgerEntry, LedgerParticipant, LedgerProjection } from "./types";
 
@@ -333,6 +337,91 @@ function parseExpenseAmendmentSubmittedPayload(
   };
 }
 
+function parseExpenseSubmissionCreatedPayload(
+  payloadJson: string,
+): ExpenseSubmissionCreatedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<ExpenseSubmissionCreatedPayload>;
+
+  if (
+    typeof parsed.submissionId !== "string" ||
+    parsed.submissionId.trim().length === 0 ||
+    (parsed.submissionType !== "expense-create" &&
+      parsed.submissionType !== "expense-amendment") ||
+    typeof parsed.submittedByParticipantId !== "string" ||
+    parsed.submittedByParticipantId.trim().length === 0 ||
+    typeof parsed.proposedExpense !== "object" ||
+    parsed.proposedExpense === null
+  ) {
+    throw new Error("Invalid payload for eventType expense.submission-created");
+  }
+
+  let proposedExpense: ExpenseCreatedPayload;
+  try {
+    proposedExpense = parseExpenseCreatedPayloadObject(
+      parsed.proposedExpense as Partial<ExpenseCreatedPayload>,
+    );
+  } catch {
+    throw new Error("Invalid payload for eventType expense.submission-created");
+  }
+
+  if (parsed.submissionType === "expense-amendment") {
+    if (
+      typeof parsed.targetExpenseId !== "string" ||
+      parsed.targetExpenseId.trim().length === 0 ||
+      typeof parsed.reason !== "string" ||
+      parsed.reason.trim().length === 0
+    ) {
+      throw new Error("Invalid payload for eventType expense.submission-created");
+    }
+  }
+
+  return {
+    submissionId: parsed.submissionId,
+    submissionType: parsed.submissionType,
+    submittedByParticipantId: parsed.submittedByParticipantId,
+    proposedExpense,
+    targetExpenseId: parsed.targetExpenseId,
+    reason: parsed.reason,
+  };
+}
+
+function parseExpenseSubmissionReviewedPayload(
+  payloadJson: string,
+): ExpenseSubmissionReviewedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<ExpenseSubmissionReviewedPayload>;
+
+  if (
+    typeof parsed.submissionId !== "string" ||
+    parsed.submissionId.trim().length === 0 ||
+    (parsed.decision !== "approved" && parsed.decision !== "rejected") ||
+    typeof parsed.reviewReason !== "string" ||
+    parsed.reviewReason.trim().length === 0
+  ) {
+    throw new Error("Invalid payload for eventType expense.submission-reviewed");
+  }
+
+  return {
+    submissionId: parsed.submissionId,
+    decision: parsed.decision,
+    reviewReason: parsed.reviewReason,
+  };
+}
+
+function participantIdForContributorDevice(
+  projection: LedgerProjection,
+  actorDeviceId: string,
+): string {
+  const participantEntry = Object.entries(
+    projection.participantContributorDeviceClaims,
+  ).find(([, claimedDeviceId]) => claimedDeviceId === actorDeviceId);
+
+  if (!participantEntry) {
+    throw new Error("Only claimed contributor devices can submit expense amendments");
+  }
+
+  return participantEntry[0];
+}
+
 function isExpenseCreatorAuthorized(projection: LedgerProjection, actorDeviceId: string): boolean {
   if (actorDeviceId === projection.syncHubDeviceId) {
     return true;
@@ -459,6 +548,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       invites: [],
       participantContributorDeviceClaims: {},
       pendingSubmissions: [],
+      reviewedSubmissions: [],
       syncHubDeviceId: "",
       approvalAuthorityDeviceId: "",
       title: "",
@@ -475,6 +565,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
     invites: [],
     participantContributorDeviceClaims: {},
     pendingSubmissions: [],
+    reviewedSubmissions: [],
     syncHubDeviceId: "",
     approvalAuthorityDeviceId: "",
     title: "",
@@ -520,14 +611,205 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
           participantIds,
         );
 
+        if (payload.creatorRole === "contributor") {
+          const submittedByParticipantId = participantIdForContributorDevice(
+            projection,
+            event.actorDeviceId,
+          );
+
+          if (
+            projection.pendingSubmissions.some(
+              (submission) => submission.submissionId === event.id,
+            ) ||
+            projection.reviewedSubmissions.some(
+              (submission) => submission.submissionId === event.id,
+            )
+          ) {
+            throw new Error("Contributor submission ID already exists");
+          }
+
+          projection.pendingSubmissions.push({
+            submissionType: "expense-create",
+            submissionId: event.id,
+            submittedByParticipantId,
+            proposedExpense: payload,
+            submittedAt: event.occurredAt,
+            submittedByDeviceId: event.actorDeviceId,
+            sourceEventId: event.id,
+          });
+          break;
+        }
+
         projection.entries.push(toLedgerEntry(event, payload, owedShares));
+        break;
+      }
+      case "expense.submission-created": {
+        const payload = parseExpenseSubmissionCreatedPayload(event.payloadJson);
+
+        const participantId = participantIdForContributorDevice(
+          projection,
+          event.actorDeviceId,
+        );
+
+        if (participantId !== payload.submittedByParticipantId) {
+          throw new Error("Submission participant does not match claimed contributor identity");
+        }
+
+        if (
+          projection.pendingSubmissions.some(
+            (submission) => submission.submissionId === payload.submissionId,
+          ) ||
+          projection.reviewedSubmissions.some(
+            (submission) => submission.submissionId === payload.submissionId,
+          )
+        ) {
+          throw new Error("Contributor submission ID already exists");
+        }
+
+        if (payload.submissionType === "expense-amendment") {
+          const targetExpenseExists = projection.entries.some(
+            (entry) => entry.expenseId === payload.targetExpenseId,
+          );
+
+          if (!targetExpenseExists) {
+            throw new Error("Expense amendment target references unknown expense");
+          }
+
+          projection.pendingSubmissions.push({
+            submissionType: "expense-amendment",
+            submissionId: payload.submissionId,
+            submittedByParticipantId: payload.submittedByParticipantId,
+            targetExpenseId: payload.targetExpenseId ?? "",
+            reason: payload.reason ?? "",
+            proposedExpense: payload.proposedExpense,
+            submittedAt: event.occurredAt,
+            submittedByDeviceId: event.actorDeviceId,
+            sourceEventId: event.id,
+          });
+          break;
+        }
+
+        projection.pendingSubmissions.push({
+          submissionType: "expense-create",
+          submissionId: payload.submissionId,
+          submittedByParticipantId: payload.submittedByParticipantId,
+          proposedExpense: payload.proposedExpense,
+          submittedAt: event.occurredAt,
+          submittedByDeviceId: event.actorDeviceId,
+          sourceEventId: event.id,
+        });
+        break;
+      }
+      case "expense.submission-reviewed": {
+        const payload = parseExpenseSubmissionReviewedPayload(event.payloadJson);
+
+        assertOrganizerApprovalAuthority(projection, event.actorDeviceId);
+
+        if (
+          projection.reviewedSubmissions.some(
+            (submission) => submission.submissionId === payload.submissionId,
+          )
+        ) {
+          throw new Error("Submission was already reviewed");
+        }
+
+        const pendingIndex = projection.pendingSubmissions.findIndex(
+          (submission) => submission.submissionId === payload.submissionId,
+        );
+
+        if (pendingIndex === -1) {
+          throw new Error("Cannot review unknown submission");
+        }
+
+        const pendingSubmission = projection.pendingSubmissions[pendingIndex];
+        if (!pendingSubmission) {
+          throw new Error("Cannot review unknown submission");
+        }
+
+        projection.pendingSubmissions.splice(pendingIndex, 1);
+
+        projection.reviewedSubmissions.push({
+          submissionId: payload.submissionId,
+          decision: payload.decision,
+          reviewedAt: event.occurredAt,
+          reviewedByDeviceId: event.actorDeviceId,
+          sourceEventId: event.id,
+          reviewReason: payload.reviewReason,
+        });
+
+        if (payload.decision === "rejected") {
+          break;
+        }
+
+        const participantIds = new Set(
+          projection.participants.map((participant) => participant.participantId),
+        );
+        const owedShares = deriveOwedShares(
+          pendingSubmission.proposedExpense.totalAmountMinor,
+          pendingSubmission.proposedExpense.split,
+          participantIds,
+        );
+
+        if (pendingSubmission.submissionType === "expense-create") {
+          projection.entries.push({
+            expenseId: pendingSubmission.proposedExpense.expenseId,
+            description: pendingSubmission.proposedExpense.description,
+            totalAmountMinor: pendingSubmission.proposedExpense.totalAmountMinor,
+            currency: pendingSubmission.proposedExpense.currency,
+            expenseDate: pendingSubmission.proposedExpense.expenseDate,
+            creatorRole: pendingSubmission.proposedExpense.creatorRole,
+            payers: pendingSubmission.proposedExpense.payers,
+            split: pendingSubmission.proposedExpense.split,
+            owedShares,
+            createdAt: pendingSubmission.submittedAt,
+            createdByDeviceId: pendingSubmission.submittedByDeviceId,
+            sourceEventId: pendingSubmission.sourceEventId,
+          });
+          break;
+        }
+
+        const entryIndex = projection.entries.findIndex(
+          (entry) => entry.expenseId === pendingSubmission.targetExpenseId,
+        );
+
+        if (entryIndex === -1) {
+          throw new Error("Expense amendment target references unknown expense");
+        }
+
+        projection.entries[entryIndex] = {
+          expenseId: pendingSubmission.targetExpenseId,
+          description: pendingSubmission.proposedExpense.description,
+          totalAmountMinor: pendingSubmission.proposedExpense.totalAmountMinor,
+          currency: pendingSubmission.proposedExpense.currency,
+          expenseDate: pendingSubmission.proposedExpense.expenseDate,
+          creatorRole: pendingSubmission.proposedExpense.creatorRole,
+          payers: pendingSubmission.proposedExpense.payers,
+          split: pendingSubmission.proposedExpense.split,
+          owedShares,
+          createdAt: pendingSubmission.submittedAt,
+          createdByDeviceId: pendingSubmission.submittedByDeviceId,
+          sourceEventId: pendingSubmission.sourceEventId,
+        };
+
         break;
       }
       case "expense.amendment-submitted": {
         const payload = parseExpenseAmendmentSubmittedPayload(event.payloadJson);
 
-        if (!Object.values(projection.participantContributorDeviceClaims).includes(event.actorDeviceId)) {
-          throw new Error("Only claimed contributor devices can submit expense amendments");
+        const submittedByParticipantId = participantIdForContributorDevice(
+          projection,
+          event.actorDeviceId,
+        );
+
+        if (
+          projection.pendingSubmissions.some(
+            (submission) => submission.submissionId === payload.amendmentId,
+          ) ||
+          projection.reviewedSubmissions.some(
+            (submission) => submission.submissionId === payload.amendmentId,
+          )
+        ) {
+          throw new Error("Contributor submission ID already exists");
         }
 
         const targetExpenseExists = projection.entries.some(
@@ -540,7 +822,8 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
 
         projection.pendingSubmissions.push({
           submissionType: "expense-amendment",
-          amendmentId: payload.amendmentId,
+          submissionId: payload.amendmentId,
+          submittedByParticipantId,
           targetExpenseId: payload.targetExpenseId,
           reason: payload.reason,
           proposedExpense: payload.proposedExpense,
