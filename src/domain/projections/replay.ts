@@ -1,4 +1,9 @@
-import type { ExpenseCreatedPayload, ExpenseSplitPayload, LedgerEvent } from "../events/types";
+import type {
+  ExpenseAmendmentSubmittedPayload,
+  ExpenseCreatedPayload,
+  ExpenseSplitPayload,
+  LedgerEvent,
+} from "../events/types";
 
 import type { LedgerEntry, LedgerParticipant, LedgerProjection } from "./types";
 
@@ -28,6 +33,51 @@ type InviteConsumedPayload = {
   participantId: string;
   contributorDeviceId: string;
 };
+
+function parseExpenseCreatedPayloadObject(parsed: Partial<ExpenseCreatedPayload>): ExpenseCreatedPayload {
+  const split = parseSplitPayload(parsed.split);
+
+  const payersAreValid =
+    Array.isArray(parsed.payers) &&
+    parsed.payers.length > 0 &&
+    parsed.payers.every(
+      (payer) =>
+        typeof payer?.participantId === "string" &&
+        payer.participantId.trim().length > 0 &&
+        typeof payer.paidAmountMinor === "number" &&
+        Number.isInteger(payer.paidAmountMinor) &&
+        payer.paidAmountMinor > 0,
+    );
+
+  if (
+    typeof parsed.expenseId !== "string" ||
+    parsed.expenseId.trim().length === 0 ||
+    typeof parsed.description !== "string" ||
+    parsed.description.trim().length === 0 ||
+    typeof parsed.currency !== "string" ||
+    parsed.currency.trim().length === 0 ||
+    typeof parsed.totalAmountMinor !== "number" ||
+    !Number.isInteger(parsed.totalAmountMinor) ||
+    parsed.totalAmountMinor <= 0 ||
+    typeof parsed.expenseDate !== "string" ||
+    parsed.expenseDate.trim().length === 0 ||
+    (parsed.creatorRole !== "organizer" && parsed.creatorRole !== "contributor") ||
+    !payersAreValid
+  ) {
+    throw new Error("Invalid payload for eventType expense.created");
+  }
+
+  return {
+    expenseId: parsed.expenseId,
+    description: parsed.description,
+    currency: parsed.currency,
+    totalAmountMinor: parsed.totalAmountMinor,
+    expenseDate: parsed.expenseDate,
+    creatorRole: parsed.creatorRole,
+    payers: parsed.payers,
+    split,
+  };
+}
 
 type OwedShare = {
   participantId: string;
@@ -245,47 +295,41 @@ function parseLedgerCreatedPayload(payloadJson: string): LedgerCreatedPayload {
 
 function parseExpenseCreatedPayload(payloadJson: string): ExpenseCreatedPayload {
   const parsed = JSON.parse(payloadJson) as Partial<ExpenseCreatedPayload>;
-  const split = parseSplitPayload(parsed.split);
+  return parseExpenseCreatedPayloadObject(parsed);
+}
 
-  const payersAreValid =
-    Array.isArray(parsed.payers) &&
-    parsed.payers.length > 0 &&
-    parsed.payers.every(
-      (payer) =>
-        typeof payer?.participantId === "string" &&
-        payer.participantId.trim().length > 0 &&
-        typeof payer.paidAmountMinor === "number" &&
-        Number.isInteger(payer.paidAmountMinor) &&
-        payer.paidAmountMinor > 0,
-    );
+function parseExpenseAmendmentSubmittedPayload(
+  payloadJson: string,
+): ExpenseAmendmentSubmittedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<ExpenseAmendmentSubmittedPayload>;
 
   if (
-    typeof parsed.expenseId !== "string" ||
-    parsed.expenseId.trim().length === 0 ||
-    typeof parsed.description !== "string" ||
-    parsed.description.trim().length === 0 ||
-    typeof parsed.currency !== "string" ||
-    parsed.currency.trim().length === 0 ||
-    typeof parsed.totalAmountMinor !== "number" ||
-    !Number.isInteger(parsed.totalAmountMinor) ||
-    parsed.totalAmountMinor <= 0 ||
-    typeof parsed.expenseDate !== "string" ||
-    parsed.expenseDate.trim().length === 0 ||
-    (parsed.creatorRole !== "organizer" && parsed.creatorRole !== "contributor") ||
-    !payersAreValid
+    typeof parsed.amendmentId !== "string" ||
+    parsed.amendmentId.trim().length === 0 ||
+    typeof parsed.targetExpenseId !== "string" ||
+    parsed.targetExpenseId.trim().length === 0 ||
+    typeof parsed.reason !== "string" ||
+    parsed.reason.trim().length === 0 ||
+    typeof parsed.proposedExpense !== "object" ||
+    parsed.proposedExpense === null
   ) {
-    throw new Error("Invalid payload for eventType expense.created");
+    throw new Error("Invalid payload for eventType expense.amendment-submitted");
+  }
+
+  let proposedExpense: ExpenseCreatedPayload;
+  try {
+    proposedExpense = parseExpenseCreatedPayloadObject(
+      parsed.proposedExpense as Partial<ExpenseCreatedPayload>,
+    );
+  } catch {
+    throw new Error("Invalid payload for eventType expense.amendment-submitted");
   }
 
   return {
-    expenseId: parsed.expenseId,
-    description: parsed.description,
-    currency: parsed.currency,
-    totalAmountMinor: parsed.totalAmountMinor,
-    expenseDate: parsed.expenseDate,
-    creatorRole: parsed.creatorRole,
-    payers: parsed.payers,
-    split,
+    amendmentId: parsed.amendmentId,
+    targetExpenseId: parsed.targetExpenseId,
+    reason: parsed.reason,
+    proposedExpense,
   };
 }
 
@@ -477,6 +521,33 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
         );
 
         projection.entries.push(toLedgerEntry(event, payload, owedShares));
+        break;
+      }
+      case "expense.amendment-submitted": {
+        const payload = parseExpenseAmendmentSubmittedPayload(event.payloadJson);
+
+        if (!Object.values(projection.participantContributorDeviceClaims).includes(event.actorDeviceId)) {
+          throw new Error("Only claimed contributor devices can submit expense amendments");
+        }
+
+        const targetExpenseExists = projection.entries.some(
+          (entry) => entry.expenseId === payload.targetExpenseId,
+        );
+
+        if (!targetExpenseExists) {
+          throw new Error("Expense amendment target references unknown expense");
+        }
+
+        projection.pendingSubmissions.push({
+          submissionType: "expense-amendment",
+          amendmentId: payload.amendmentId,
+          targetExpenseId: payload.targetExpenseId,
+          reason: payload.reason,
+          proposedExpense: payload.proposedExpense,
+          submittedAt: event.occurredAt,
+          submittedByDeviceId: event.actorDeviceId,
+          sourceEventId: event.id,
+        });
         break;
       }
       case "participant.added": {
