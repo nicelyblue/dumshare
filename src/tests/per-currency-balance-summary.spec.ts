@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import type { LedgerEvent } from "../domain/events/types";
 import { replayLedger } from "../domain/projections";
-import { buildApprovedBalanceSummary } from "../domain/balances/summary";
+import { buildApprovedBalanceSummary } from "../domain/balances";
 
 describe("per-currency balance summary invariants", () => {
   const ledgerId = "ledger-trip-008-summary";
