@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-04-22T13:47:07.167Z"
-last_activity: 2026-04-22 -- Phase 6 planning complete
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-04-22T14:02:16.948Z"
+last_activity: 2026-04-22
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 11
-  completed_plans: 9
-  percent: 82
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 05 — split-modes-and-contributor-amendments
+**Current focus:** Phase 06 — organizer-approval-gate
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 06 (organizer-approval-gate) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-04-22 -- Phase 6 planning complete
+Last activity: 2026-04-22
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -65,6 +65,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P01 | 6 | 2 tasks | 6 files |
 | Phase 05 P01 | 16min | 2 tasks | 6 files |
 | Phase 05 P02 | 9min | 2 tasks | 3 files |
+| Phase 06 P01 | 12min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Kept fail-fast deterministic replay errors for invalid payloads and unknown payer participants
 - [Phase 05]: Use integer-only split arithmetic with stable remainder assignment to keep replay deterministic across equal and percentage modes.
 - [Phase 05]: Queue contributor amendments in pendingSubmissions and block unclaimed devices so organizer approval remains the only apply path.
+- [Phase 06]: Contributor submissions now remain pending until organizer review events explicitly approve them.
+- [Phase 06]: Replay persists immutable reviewedSubmissions metadata for every approval or rejection decision.
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-22T13:36:49.336Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-04-22T14:02:16.945Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
