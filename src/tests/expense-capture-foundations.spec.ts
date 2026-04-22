@@ -161,7 +161,7 @@ describe("expense-capture-foundations replay invariants", () => {
     ]);
   });
 
-  test("claimed contributor can create expense with strict payload and payer rows (EXPS-02)", () => {
+  test("claimed contributor submissions remain pending until organizer review (EXPS-02)", () => {
     const projection = replayLedger([
       ledgerCreatedEvent(),
       participantAddedEvent("participant-001", "Alice", 2),
@@ -188,8 +188,18 @@ describe("expense-capture-foundations replay invariants", () => {
       },
     ]);
 
-    expect(projection.entries[0]?.createdByDeviceId).toBe("device-contributor-1");
-    expect(projection.entries[0]?.creatorRole).toBe("contributor");
+    expect(projection.entries).toHaveLength(0);
+    expect(projection.pendingSubmissions).toHaveLength(1);
+    expect(projection.pendingSubmissions[0]).toMatchObject({
+      submissionType: "expense-create",
+      submissionId: "evt-expense-created-2",
+      submittedByParticipantId: "participant-001",
+      submittedByDeviceId: "device-contributor-1",
+      proposedExpense: {
+        expenseId: "expense-002",
+        creatorRole: "contributor",
+      },
+    });
   });
 
   test("unknown payer participant is rejected with deterministic plain-language error", () => {
