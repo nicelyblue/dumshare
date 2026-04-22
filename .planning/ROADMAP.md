@@ -134,7 +134,11 @@ Plans:
   1. App computes each participant’s net position per currency from paid amounts and owed shares.
   2. App presents balances separated by currency instead of silently merging different currencies.
   3. Balance outputs preserve enough currency-specific detail to support later settlement calculation.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Build deterministic approved-entry per-currency balance derivation with BALN-01 TDD invariants.
+- [ ] 08-02-PLAN.md — Add approved-only balance summary API with per-currency settlement-ready detail and qualifier metadata.
 
 ## Progress
 

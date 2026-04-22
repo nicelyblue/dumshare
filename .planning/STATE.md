@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-04-22T15:04:22.209Z"
-last_activity: 2026-04-22
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-04-22T15:24:47.106Z"
+last_activity: 2026-04-22 -- Phase 08 planning complete
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 13
-  completed_plans: 13
-  percent: 100
+  total_plans: 15
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-20)
 
 Phase: 8
 Plan: Not started
-Status: Executing Phase 07
-Last activity: 2026-04-22
+Status: Ready to execute
+Last activity: 2026-04-22 -- Phase 08 planning complete
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -69,6 +69,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P02 | 9min | 2 tasks | 3 files |
 | Phase 06 P01 | 12min | 2 tasks | 4 files |
 | Phase 06 P02 | 8min | 2 tasks | 3 files |
+| Phase 08 P01 | 1min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Replay persists immutable reviewedSubmissions metadata for every approval or rejection decision.
 - [Phase 06]: APRV-05 is enforced by explicit approve/reject before-after entry invariants for both contributor create and amendment submissions.
 - [Phase 06]: Contributor expense.created expectations were migrated to pending-first semantics while preserving organizer-created entry behavior.
+- [Phase 08]: Aggregate per-currency balances from approved projection.entries only and exclude pending/reviewed submission data from numeric math.
+- [Phase 08]: Emit deterministic participant-first outputs with lexicographically sorted currency rows to preserve stable settlement calculations.
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-22T14:05:00.720Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-04-22T15:24:47.103Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
