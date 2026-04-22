@@ -44,8 +44,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Balances and Currency
 
 - [x] **BALN-01**: App computes participant net balances per currency from paid amounts and owed shares.
-- [ ] **BALN-02**: App displays balances per currency without auto-merging different currencies.
-- [ ] **BALN-03**: App preserves enough per-currency detail for eventual settlement calculation.
+- [x] **BALN-02**: App displays balances per currency without auto-merging different currencies.
+- [x] **BALN-03**: App preserves enough per-currency detail for eventual settlement calculation.
 
 ### Local Data and Determinism
 
@@ -111,8 +111,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SYNC-04 | Phase 7 | Complete |
 | SYNC-05 | Phase 7 | Complete |
 | BALN-01 | Phase 8 | Complete |
-| BALN-02 | Phase 8 | Pending |
-| BALN-03 | Phase 8 | Pending |
+| BALN-02 | Phase 8 | Complete |
+| BALN-03 | Phase 8 | Complete |
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete |

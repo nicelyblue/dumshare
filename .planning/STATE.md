@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-04-22T15:24:47.106Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-04-22T15:29:12.290Z"
 last_activity: 2026-04-22 -- Phase 08 planning complete
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 15
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -70,6 +70,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 06 P01 | 12min | 2 tasks | 4 files |
 | Phase 06 P02 | 8min | 2 tasks | 3 files |
 | Phase 08 P01 | 1min | 2 tasks | 3 files |
+| Phase 08 P02 | 1min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Contributor expense.created expectations were migrated to pending-first semantics while preserving organizer-created entry behavior.
 - [Phase 08]: Aggregate per-currency balances from approved projection.entries only and exclude pending/reviewed submission data from numeric math.
 - [Phase 08]: Emit deterministic participant-first outputs with lexicographically sorted currency rows to preserve stable settlement calculations.
+- [Phase 08]: Balance summary participants are sourced only from derivePerCurrencyBalances so pending/review metadata cannot mutate numeric totals.
+- [Phase 08]: Approved-only scope messaging uses exact deterministic copy and appears only while pending submissions exist.
 
 ### Pending Todos
 
@@ -125,6 +128,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-22T15:24:47.103Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-04-22T15:29:12.286Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
