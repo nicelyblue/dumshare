@@ -35,11 +35,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Offline Sync
 
-- [ ] **SYNC-01**: Contributor can initiate in-person sync by presenting a QR sync request to organizer.
-- [ ] **SYNC-02**: Organizer can scan contributor sync request and establish transfer session.
-- [ ] **SYNC-03**: Organizer and contributor can exchange unseen events using checkpoint-based delta synchronization.
-- [ ] **SYNC-04**: Sync flow supports bidirectional exchange where contributor uploads pending events and receives organizer-side events.
-- [ ] **SYNC-05**: Sync UX shows clear plain-language progress and status for sending and receiving changes.
+- [x] **SYNC-01**: Contributor can initiate in-person sync by presenting a QR sync request to organizer.
+- [x] **SYNC-02**: Organizer can scan contributor sync request and establish transfer session.
+- [x] **SYNC-03**: Organizer and contributor can exchange unseen events using checkpoint-based delta synchronization.
+- [x] **SYNC-04**: Sync flow supports bidirectional exchange where contributor uploads pending events and receives organizer-side events.
+- [x] **SYNC-05**: Sync UX shows clear plain-language progress and status for sending and receiving changes.
 
 ### Balances and Currency
 
@@ -105,11 +105,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APRV-03 | Phase 6 | Complete |
 | APRV-04 | Phase 6 | Complete |
 | APRV-05 | Phase 6 | Complete |
-| SYNC-01 | Phase 7 | Pending |
-| SYNC-02 | Phase 7 | Pending |
-| SYNC-03 | Phase 7 | Pending |
-| SYNC-04 | Phase 7 | Pending |
-| SYNC-05 | Phase 7 | Pending |
+| SYNC-01 | Phase 7 | Complete |
+| SYNC-02 | Phase 7 | Complete |
+| SYNC-03 | Phase 7 | Complete |
+| SYNC-04 | Phase 7 | Complete |
+| SYNC-05 | Phase 7 | Complete |
 | BALN-01 | Phase 8 | Pending |
 | BALN-02 | Phase 8 | Pending |
 | BALN-03 | Phase 8 | Pending |
