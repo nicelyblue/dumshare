@@ -80,6 +80,10 @@ describe("ledger-setup-participants", () => {
           expenseDate: "2026-04-20",
           creatorRole: "organizer",
           payers: [{ participantId: "participant-001", paidAmountMinor: 7800 }],
+          split: {
+            mode: "equal",
+            participants: [{ participantId: "participant-001" }],
+          },
         }),
         sequence: 3,
       },

@@ -176,6 +176,10 @@ describe("local-data-backbone", () => {
         expenseDate: "2026-04-20",
         creatorRole: "organizer",
         payers: [{ participantId: "participant-001", paidAmountMinor: 2500 }],
+        split: {
+          mode: "equal",
+          participants: [{ participantId: "participant-001" }],
+        },
       }),
     });
 
@@ -194,6 +198,10 @@ describe("local-data-backbone", () => {
         expenseDate: "2026-04-20",
         creatorRole: "organizer",
         payers: [{ participantId: "participant-001", paidAmountMinor: 1800 }],
+        split: {
+          mode: "equal",
+          participants: [{ participantId: "participant-001" }],
+        },
       }),
     });
 
@@ -250,6 +258,10 @@ describe("local-data-backbone", () => {
         expenseDate: "2026-04-20",
         creatorRole: "organizer",
         payers: [{ participantId: "participant-001", paidAmountMinor: 3200 }],
+        split: {
+          mode: "equal",
+          participants: [{ participantId: "participant-001" }],
+        },
       }),
     });
 

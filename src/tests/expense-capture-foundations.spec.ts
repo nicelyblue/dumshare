@@ -108,6 +108,13 @@ describe("expense-capture-foundations replay invariants", () => {
     };
   }
 
+  function equalSingleParticipantSplit(participantId: string) {
+    return {
+      mode: "equal" as const,
+      participants: [{ participantId }],
+    };
+  }
+
   test("organizer can create expense with strict payload and payer rows (EXPS-01/EXPS-03)", () => {
     const projection = replayLedger([
       ledgerCreatedEvent(),
@@ -127,6 +134,7 @@ describe("expense-capture-foundations replay invariants", () => {
           expenseDate: "2026-04-21",
           creatorRole: "organizer",
           payers: [{ participantId: "participant-001", paidAmountMinor: 7800 }],
+          split: equalSingleParticipantSplit("participant-001"),
         }),
         sequence: 3,
       },
@@ -141,6 +149,11 @@ describe("expense-capture-foundations replay invariants", () => {
         expenseDate: "2026-04-21",
         creatorRole: "organizer",
         payers: [{ participantId: "participant-001", paidAmountMinor: 7800 }],
+        split: {
+          mode: "equal",
+          participants: [{ participantId: "participant-001" }],
+        },
+        owedShares: [{ participantId: "participant-001", owedAmountMinor: 7800 }],
         createdAt: "2026-04-21T10:02:00.000Z",
         createdByDeviceId: organizerDeviceId,
         sourceEventId: "evt-expense-created-1",
@@ -169,6 +182,7 @@ describe("expense-capture-foundations replay invariants", () => {
           expenseDate: "2026-04-21",
           creatorRole: "contributor",
           payers: [{ participantId: "participant-001", paidAmountMinor: 2400 }],
+          split: equalSingleParticipantSplit("participant-001"),
         }),
         sequence: 5,
       },
@@ -198,6 +212,7 @@ describe("expense-capture-foundations replay invariants", () => {
             expenseDate: "2026-04-21",
             creatorRole: "organizer",
             payers: [{ participantId: "participant-404", paidAmountMinor: 1500 }],
+            split: equalSingleParticipantSplit("participant-404"),
           }),
           sequence: 3,
         },
@@ -225,6 +240,7 @@ describe("expense-capture-foundations replay invariants", () => {
             expenseDate: "2026-04-21",
             creatorRole: "contributor",
             payers: [{ participantId: "participant-001", paidAmountMinor: 600 }],
+            split: equalSingleParticipantSplit("participant-001"),
           }),
           sequence: 3,
         },
