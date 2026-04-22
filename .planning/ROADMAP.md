@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Expense Capture Foundations** - Organizer and contributors can record complete offline expense basics. (completed 2026-04-21)
 - [ ] **Phase 5: Split Modes and Contributor Amendments** - Equal/exact/percentage splits and contributor amendment submission work end-to-end.
 - [x] **Phase 6: Organizer Approval Gate** - Contributor submissions are explicitly approved/rejected before entering approved state. (completed 2026-04-22)
-- [ ] **Phase 7: In-Person Sync Exchange** - QR bootstrap and Bluetooth delta sync exchange unseen events bidirectionally.
+- [x] **Phase 7: In-Person Sync Exchange** - QR bootstrap and Bluetooth delta sync exchange unseen events bidirectionally. (completed 2026-04-22)
 - [ ] **Phase 8: Per-Currency Balances and Settlement Readiness** - Users get correct per-currency balances without auto-merging currencies.
 
 ## Phase Details
@@ -149,5 +149,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Expense Capture Foundations | 1/1 | Complete   | 2026-04-21 |
 | 5. Split Modes and Contributor Amendments | 0/2 | Not started | - |
 | 6. Organizer Approval Gate | 2/2 | Complete | 2026-04-22 |
-| 7. In-Person Sync Exchange | 0/TBD | Not started | - |
+| 7. In-Person Sync Exchange | 2/2 | Complete   | 2026-04-22 |
 | 8. Per-Currency Balances and Settlement Readiness | 0/TBD | Not started | - |
