@@ -5,6 +5,7 @@ export type KnownEventType =
   | "invite.revoked"
   | "invite.consumed"
   | "expense.created"
+  | "expense.amendment-submitted"
   | "expense.note-added";
 
 export type EventType = KnownEventType | string;
@@ -83,6 +84,13 @@ export type ExpenseSplitPayload =
   | EqualSplitPayload
   | ExactSplitPayload
   | PercentageSplitPayload;
+
+export type ExpenseAmendmentSubmittedPayload = {
+  amendmentId: string;
+  targetExpenseId: string;
+  reason: string;
+  proposedExpense: ExpenseCreatedPayload;
+};
 
 export type EventInput = {
   id: string;
