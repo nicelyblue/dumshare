@@ -5,6 +5,8 @@ export type KnownEventType =
   | "invite.revoked"
   | "invite.consumed"
   | "expense.created"
+  | "expense.submission-created"
+  | "expense.submission-reviewed"
   | "expense.amendment-submitted"
   | "expense.note-added";
 
@@ -90,6 +92,21 @@ export type ExpenseAmendmentSubmittedPayload = {
   targetExpenseId: string;
   reason: string;
   proposedExpense: ExpenseCreatedPayload;
+};
+
+export type ExpenseSubmissionCreatedPayload = {
+  submissionId: string;
+  submissionType: "expense-create" | "expense-amendment";
+  submittedByParticipantId: string;
+  proposedExpense: ExpenseCreatedPayload;
+  targetExpenseId?: string;
+  reason?: string;
+};
+
+export type ExpenseSubmissionReviewedPayload = {
+  submissionId: string;
+  decision: "approved" | "rejected";
+  reviewReason: string;
 };
 
 export type EventInput = {
