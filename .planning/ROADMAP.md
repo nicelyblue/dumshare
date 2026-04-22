@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Contributor Onboarding and Authority Model** - Organizer invites one-device contributors and remains sole hub/authority. (completed 2026-04-21)
 - [x] **Phase 4: Expense Capture Foundations** - Organizer and contributors can record complete offline expense basics. (completed 2026-04-21)
 - [ ] **Phase 5: Split Modes and Contributor Amendments** - Equal/exact/percentage splits and contributor amendment submission work end-to-end.
-- [ ] **Phase 6: Organizer Approval Gate** - Contributor submissions are explicitly approved/rejected before entering approved state.
+- [x] **Phase 6: Organizer Approval Gate** - Contributor submissions are explicitly approved/rejected before entering approved state. (completed 2026-04-22)
 - [ ] **Phase 7: In-Person Sync Exchange** - QR bootstrap and Bluetooth delta sync exchange unseen events bidirectionally.
 - [ ] **Phase 8: Per-Currency Balances and Settlement Readiness** - Users get correct per-currency balances without auto-merging currencies.
 
@@ -107,8 +107,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Add explicit contributor submission + organizer review event lifecycle with deterministic replay state transitions.
-- [ ] 06-02-PLAN.md — Harden APRV-05 verification and migrate legacy tests to pending-first contributor flow semantics.
+- [x] 06-01-PLAN.md — Add explicit contributor submission + organizer review event lifecycle with deterministic replay state transitions.
+- [x] 06-02-PLAN.md — Harden APRV-05 verification and migrate legacy tests to pending-first contributor flow semantics.
 
 ### Phase 7: In-Person Sync Exchange
 **Goal**: Organizer and contributors can run in-person QR + Bluetooth sync sessions that exchange unseen events in both directions.
@@ -144,6 +144,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Contributor Onboarding and Authority Model | 2/2 | Complete | 2026-04-21 |
 | 4. Expense Capture Foundations | 1/1 | Complete   | 2026-04-21 |
 | 5. Split Modes and Contributor Amendments | 0/2 | Not started | - |
-| 6. Organizer Approval Gate | 0/TBD | Not started | - |
+| 6. Organizer Approval Gate | 2/2 | Complete | 2026-04-22 |
 | 7. In-Person Sync Exchange | 0/TBD | Not started | - |
 | 8. Per-Currency Balances and Settlement Readiness | 0/TBD | Not started | - |
