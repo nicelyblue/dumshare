@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Split Modes and Contributor Amendments** - Equal/exact/percentage splits and contributor amendment submission work end-to-end.
 - [x] **Phase 6: Organizer Approval Gate** - Contributor submissions are explicitly approved/rejected before entering approved state. (completed 2026-04-22)
 - [x] **Phase 7: In-Person Sync Exchange** - QR bootstrap and Bluetooth delta sync exchange unseen events bidirectionally. (completed 2026-04-22)
-- [ ] **Phase 8: Per-Currency Balances and Settlement Readiness** - Users get correct per-currency balances without auto-merging currencies.
+- [x] **Phase 8: Per-Currency Balances and Settlement Readiness** - Users get correct per-currency balances without auto-merging currencies. (completed 2026-04-22)
 
 ## Phase Details
 
@@ -137,8 +137,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Build deterministic approved-entry per-currency balance derivation with BALN-01 TDD invariants.
-- [ ] 08-02-PLAN.md — Add approved-only balance summary API with per-currency settlement-ready detail and qualifier metadata.
+- [x] 08-01-PLAN.md — Build deterministic approved-entry per-currency balance derivation with BALN-01 TDD invariants.
+- [x] 08-02-PLAN.md — Add approved-only balance summary API with per-currency settlement-ready detail and qualifier metadata.
 
 ## Progress
 
@@ -154,4 +154,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Split Modes and Contributor Amendments | 0/2 | Not started | - |
 | 6. Organizer Approval Gate | 2/2 | Complete | 2026-04-22 |
 | 7. In-Person Sync Exchange | 2/2 | Complete   | 2026-04-22 |
-| 8. Per-Currency Balances and Settlement Readiness | 0/TBD | Not started | - |
+| 8. Per-Currency Balances and Settlement Readiness | 2/2 | Complete | 2026-04-22 |

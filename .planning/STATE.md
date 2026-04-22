@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-20)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 07 — in-person-sync-exchange
+**Current focus:** Phase 08 — per-currency-balances-and-settlement-readiness (complete)
 
 ## Current Position
 
 Phase: 8
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-04-22 -- Phase 08 planning complete
+Plan: Completed (02/02)
+Status: Phase 08 complete
+Last activity: 2026-04-22 -- Phase 08 execution complete
 
-Progress: [█░░░░░░░░░] 13%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 13
+- Total plans completed: 15
 - Average duration: 5 min
 - Total execution time: 0.2 hours
 
