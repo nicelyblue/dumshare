@@ -9,6 +9,18 @@ export type LedgerEntry = {
     participantId: string;
     paidAmountMinor: number;
   }[];
+  split: {
+    mode: "equal" | "exact" | "percentage";
+    participants: {
+      participantId: string;
+      owedAmountMinor?: number;
+      percentageBps?: number;
+    }[];
+  };
+  owedShares: {
+    participantId: string;
+    owedAmountMinor: number;
+  }[];
   createdAt: string;
   createdByDeviceId: string;
   sourceEventId: string;
@@ -40,6 +52,35 @@ export type LedgerProjection = {
   participants: LedgerParticipant[];
   invites: LedgerInvite[];
   participantContributorDeviceClaims: Record<string, string>;
+  pendingSubmissions: {
+    submissionType: "expense-amendment";
+    amendmentId: string;
+    targetExpenseId: string;
+    reason: string;
+    proposedExpense: {
+      expenseId: string;
+      description: string;
+      currency: string;
+      totalAmountMinor: number;
+      expenseDate: string;
+      creatorRole: "organizer" | "contributor";
+      payers: {
+        participantId: string;
+        paidAmountMinor: number;
+      }[];
+      split: {
+        mode: "equal" | "exact" | "percentage";
+        participants: {
+          participantId: string;
+          owedAmountMinor?: number;
+          percentageBps?: number;
+        }[];
+      };
+    };
+    submittedAt: string;
+    submittedByDeviceId: string;
+    sourceEventId: string;
+  }[];
   syncHubDeviceId: string;
   approvalAuthorityDeviceId: string;
   title: string;

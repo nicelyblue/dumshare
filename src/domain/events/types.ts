@@ -47,7 +47,42 @@ export type ExpenseCreatedPayload = {
     participantId: string;
     paidAmountMinor: number;
   }[];
+  split: ExpenseSplitPayload;
 };
+
+export type EqualSplitParticipant = {
+  participantId: string;
+};
+
+export type ExactSplitParticipant = {
+  participantId: string;
+  owedAmountMinor: number;
+};
+
+export type PercentageSplitParticipant = {
+  participantId: string;
+  percentageBps: number;
+};
+
+export type EqualSplitPayload = {
+  mode: "equal";
+  participants: EqualSplitParticipant[];
+};
+
+export type ExactSplitPayload = {
+  mode: "exact";
+  participants: ExactSplitParticipant[];
+};
+
+export type PercentageSplitPayload = {
+  mode: "percentage";
+  participants: PercentageSplitParticipant[];
+};
+
+export type ExpenseSplitPayload =
+  | EqualSplitPayload
+  | ExactSplitPayload
+  | PercentageSplitPayload;
 
 export type EventInput = {
   id: string;
