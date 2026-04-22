@@ -147,6 +147,28 @@ describe("contributor amendment replay invariants", () => {
     };
   }
 
+  function reviewEvent(
+    submissionId: string,
+    decision: "approved" | "rejected",
+    sequence: number,
+    actorDeviceId = organizerDeviceId,
+  ): LedgerEvent {
+    return {
+      id: `evt-review-${sequence}`,
+      ledgerId,
+      eventType: "expense.submission-reviewed",
+      eventVersion: 1,
+      occurredAt: "2026-04-22T10:05:00.000Z",
+      actorDeviceId,
+      payloadJson: JSON.stringify({
+        submissionId,
+        decision,
+        reviewReason: decision === "approved" ? "valid amendment" : "insufficient detail",
+      }),
+      sequence,
+    };
+  }
+
   test("claimed contributor submits amendment into pending queue without mutating approved entries", () => {
     const projection = replayLedger([...setupEvents(), amendmentSubmissionEvent(contributorDeviceId, 6)]);
 
@@ -173,5 +195,39 @@ describe("contributor amendment replay invariants", () => {
         amendmentSubmissionEvent(contributorDeviceId, 6, "expense-404"),
       ]),
     ).toThrow("Expense amendment target references unknown expense");
+  });
+
+  test("APRV-05: rejected amendment review keeps approved entries unchanged", () => {
+    const projection = replayLedger([
+      ...setupEvents(),
+      amendmentSubmissionEvent(contributorDeviceId, 6),
+      reviewEvent("amendment-6", "rejected", 7),
+    ]);
+
+    expect(projection.entries).toHaveLength(1);
+    expect(projection.entries[0]?.description).toBe("Dinner");
+    expect(projection.pendingSubmissions).toHaveLength(0);
+    expect(projection.reviewedSubmissions[0]).toMatchObject({
+      submissionId: "amendment-6",
+      decision: "rejected",
+      reviewedByDeviceId: organizerDeviceId,
+    });
+  });
+
+  test("APRV-05: approved amendment review applies proposed expense deterministically", () => {
+    const projection = replayLedger([
+      ...setupEvents(),
+      amendmentSubmissionEvent(contributorDeviceId, 6),
+      reviewEvent("amendment-6", "approved", 7),
+    ]);
+
+    expect(projection.entries).toHaveLength(1);
+    expect(projection.entries[0]).toMatchObject({
+      expenseId: "expense-001",
+      description: "Dinner (corrected)",
+      createdByDeviceId: contributorDeviceId,
+    });
+    expect(projection.pendingSubmissions).toHaveLength(0);
+    expect(projection.reviewedSubmissions[0]?.decision).toBe("approved");
   });
 });

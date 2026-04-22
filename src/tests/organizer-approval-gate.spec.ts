@@ -169,4 +169,86 @@ describe("organizer approval gate replay invariants", () => {
       ]),
     ).toThrow("Only organizer device can approve contributor submissions");
   });
+
+  test("APRV-05: reject decision does not mutate approved entries, approve does", () => {
+    const submissionEvent: LedgerEvent = {
+      id: "evt-submission-create-1",
+      ledgerId,
+      eventType: "expense.submission-created",
+      eventVersion: 1,
+      occurredAt: "2026-04-22T12:03:00.000Z",
+      actorDeviceId: contributorDeviceId,
+      payloadJson: JSON.stringify({
+        submissionId: "submission-create-1",
+        submissionType: "expense-create",
+        submittedByParticipantId: "participant-001",
+        proposedExpense: {
+          expenseId: "expense-001",
+          description: "Taxi",
+          currency: "EUR",
+          totalAmountMinor: 2400,
+          expenseDate: "2026-04-22",
+          creatorRole: "contributor",
+          payers: [{ participantId: "participant-001", paidAmountMinor: 2400 }],
+          split: { mode: "equal", participants: [{ participantId: "participant-001" }] },
+        },
+      }),
+      sequence: 5,
+    };
+
+    const rejected = replayLedger([
+      ...baseEvents(),
+      submissionEvent,
+      {
+        id: "evt-submission-reviewed-reject-1",
+        ledgerId,
+        eventType: "expense.submission-reviewed",
+        eventVersion: 1,
+        occurredAt: "2026-04-22T12:04:00.000Z",
+        actorDeviceId: organizerDeviceId,
+        payloadJson: JSON.stringify({
+          submissionId: "submission-create-1",
+          decision: "rejected",
+          reviewReason: "needs receipt",
+        }),
+        sequence: 6,
+      },
+    ]);
+
+    expect(rejected.entries).toHaveLength(0);
+    expect(rejected.pendingSubmissions).toHaveLength(0);
+    expect(rejected.reviewedSubmissions).toHaveLength(1);
+    expect(rejected.reviewedSubmissions[0]).toMatchObject({
+      submissionId: "submission-create-1",
+      decision: "rejected",
+      reviewedByDeviceId: organizerDeviceId,
+    });
+
+    const approved = replayLedger([
+      ...baseEvents(),
+      submissionEvent,
+      {
+        id: "evt-submission-reviewed-approve-1",
+        ledgerId,
+        eventType: "expense.submission-reviewed",
+        eventVersion: 1,
+        occurredAt: "2026-04-22T12:04:00.000Z",
+        actorDeviceId: organizerDeviceId,
+        payloadJson: JSON.stringify({
+          submissionId: "submission-create-1",
+          decision: "approved",
+          reviewReason: "approved",
+        }),
+        sequence: 6,
+      },
+    ]);
+
+    expect(approved.entries).toHaveLength(1);
+    expect(approved.entries[0]).toMatchObject({
+      expenseId: "expense-001",
+      description: "Taxi",
+      createdByDeviceId: contributorDeviceId,
+    });
+    expect(approved.pendingSubmissions).toHaveLength(0);
+  });
 });
