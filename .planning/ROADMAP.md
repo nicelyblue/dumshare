@@ -120,7 +120,11 @@ Plans:
   3. Organizer and contributor exchange unseen events via checkpoint-based delta synchronization.
   4. Sync transfers contributor pending events to organizer and organizer-side events back to contributor in one workflow.
   5. Users receive plain-language status updates while changes are sent and received.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Define sync bootstrap contracts, organizer session establishment, and checkpoint delta repository APIs.
+- [ ] 07-02-PLAN.md — Implement bidirectional delta exchange orchestration with plain-language sync status timeline.
 
 ### Phase 8: Per-Currency Balances and Settlement Readiness
 **Goal**: Users can trust per-currency net balances for settlement decisions without hidden cross-currency merging.
