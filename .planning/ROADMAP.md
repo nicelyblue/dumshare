@@ -104,7 +104,11 @@ Plans:
   3. Organizer can explicitly approve or reject each pending contributor submission.
   4. Rejected submissions do not alter approved balances/settlement outcomes.
   5. Approved submissions become part of approved ledger state used for downstream balance outcomes.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Add explicit contributor submission + organizer review event lifecycle with deterministic replay state transitions.
+- [ ] 06-02-PLAN.md — Harden APRV-05 verification and migrate legacy tests to pending-first contributor flow semantics.
 
 ### Phase 7: In-Person Sync Exchange
 **Goal**: Organizer and contributors can run in-person QR + Bluetooth sync sessions that exchange unseen events in both directions.
