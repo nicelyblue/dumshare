@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { loadLedgerDashboardSnapshot, type LedgerDashboardSnapshot } from '../data/ledger/ledgerSnapshot';
 import { createLedgerSetupMutations } from '../data/ledger/ledgerMutations';
+import { createExpenseDraftMutations } from '../data/ledger/expenseDrafts';
 
 type LedgerSessionStatus = 'loading' | 'ready' | 'empty' | 'error';
 
@@ -14,6 +15,24 @@ export type LedgerSessionValue = LedgerSessionState & {
   refresh: () => Promise<void>;
   saveLedgerSetup: (input: { title: string; settlementContext: string }) => Promise<string>;
   addParticipant: (input: { displayName: string }) => Promise<string>;
+  submitExpenseDraft: (input: {
+    description: string;
+    currency: string;
+    totalAmountMinor: number;
+    expenseDate: string;
+    creatorRole: 'organizer' | 'contributor';
+    payers: { participantId: string; paidAmountMinor: number }[];
+    split: {
+      mode: 'equal';
+      participants: { participantId: string }[];
+    } | {
+      mode: 'exact';
+      participants: { participantId: string; owedAmountMinor: number }[];
+    } | {
+      mode: 'percentage';
+      participants: { participantId: string; percentageBps: number }[];
+    };
+  }) => Promise<string>;
 };
 
 type LedgerSessionProviderProps = {
@@ -51,6 +70,7 @@ function createEmptyState(): LedgerSessionState {
 export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: LedgerSessionProviderProps) {
   const [state, setState] = useState<LedgerSessionState>(() => createEmptyState());
   const mutations = useMemo(() => createLedgerSetupMutations(dbName), [dbName]);
+  const expenseDraftMutations = useMemo(() => createExpenseDraftMutations(dbName), [dbName]);
 
   const refresh = useCallback(async () => {
     setState((current) => ({ ...current, status: 'loading', error: null }));
@@ -90,13 +110,39 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
     [mutations, refresh],
   );
 
+  const submitExpenseDraft = useCallback(
+    async (input: {
+      description: string;
+      currency: string;
+      totalAmountMinor: number;
+      expenseDate: string;
+      creatorRole: 'organizer' | 'contributor';
+      payers: { participantId: string; paidAmountMinor: number }[];
+      split: {
+        mode: 'equal';
+        participants: { participantId: string }[];
+      } | {
+        mode: 'exact';
+        participants: { participantId: string; owedAmountMinor: number }[];
+      } | {
+        mode: 'percentage';
+        participants: { participantId: string; percentageBps: number }[];
+      };
+    }) => {
+      const expenseId = await expenseDraftMutations.submitExpenseDraft(input);
+      await refresh();
+      return expenseId;
+    },
+    [expenseDraftMutations, refresh],
+  );
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
   const value = useMemo<LedgerSessionValue>(
-    () => ({ ...state, refresh, saveLedgerSetup, addParticipant }),
-    [addParticipant, refresh, saveLedgerSetup, state],
+    () => ({ ...state, refresh, saveLedgerSetup, addParticipant, submitExpenseDraft }),
+    [addParticipant, refresh, saveLedgerSetup, state, submitExpenseDraft],
   );
 
   return <LedgerSessionContext.Provider value={value}>{children}</LedgerSessionContext.Provider>;
