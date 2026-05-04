@@ -1,3 +1,8 @@
+import type {
+  ExpenseCreatedPayload,
+  ExpenseSplitPayload,
+} from "../events/types";
+
 export type LedgerEntry = {
   expenseId: string;
   description: string;
@@ -9,14 +14,7 @@ export type LedgerEntry = {
     participantId: string;
     paidAmountMinor: number;
   }[];
-  split: {
-    mode: "equal" | "exact" | "percentage";
-    participants: {
-      participantId: string;
-      owedAmountMinor?: number;
-      percentageBps?: number;
-    }[];
-  };
+  split: ExpenseSplitPayload;
   owedShares: {
     participantId: string;
     owedAmountMinor: number;
@@ -56,26 +54,7 @@ export type LedgerProjection = {
     submissionType: "expense-create";
     submissionId: string;
     submittedByParticipantId: string;
-    proposedExpense: {
-      expenseId: string;
-      description: string;
-      currency: string;
-      totalAmountMinor: number;
-      expenseDate: string;
-      creatorRole: "organizer" | "contributor";
-      payers: {
-        participantId: string;
-        paidAmountMinor: number;
-      }[];
-      split: {
-        mode: "equal" | "exact" | "percentage";
-        participants: {
-          participantId: string;
-          owedAmountMinor?: number;
-          percentageBps?: number;
-        }[];
-      };
-    };
+    proposedExpense: ExpenseCreatedPayload;
     submittedAt: string;
     submittedByDeviceId: string;
     sourceEventId: string;
@@ -85,26 +64,7 @@ export type LedgerProjection = {
     submittedByParticipantId: string;
     targetExpenseId: string;
     reason: string;
-    proposedExpense: {
-      expenseId: string;
-      description: string;
-      currency: string;
-      totalAmountMinor: number;
-      expenseDate: string;
-      creatorRole: "organizer" | "contributor";
-      payers: {
-        participantId: string;
-        paidAmountMinor: number;
-      }[];
-      split: {
-        mode: "equal" | "exact" | "percentage";
-        participants: {
-          participantId: string;
-          owedAmountMinor?: number;
-          percentageBps?: number;
-        }[];
-      };
-    };
+    proposedExpense: ExpenseCreatedPayload;
     submittedAt: string;
     submittedByDeviceId: string;
     sourceEventId: string;

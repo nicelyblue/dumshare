@@ -1,9 +1,12 @@
 import type {
+  EqualSplitParticipant,
+  ExactSplitParticipant,
   ExpenseAmendmentSubmittedPayload,
   ExpenseCreatedPayload,
   ExpenseSubmissionCreatedPayload,
   ExpenseSubmissionReviewedPayload,
   ExpenseSplitPayload,
+  PercentageSplitParticipant,
   LedgerEvent,
 } from "../events/types";
 
@@ -101,7 +104,9 @@ function parseSplitPayload(split: unknown): ExpenseSplitPayload {
   }
 
   if (parsed.mode === "equal") {
-    const participants = parsed.participants.map((participant) => participant as { participantId?: unknown });
+    const participants: EqualSplitParticipant[] = parsed.participants.map((participant) =>
+      participant as EqualSplitParticipant,
+    );
 
     if (
       participants.some(
@@ -114,13 +119,13 @@ function parseSplitPayload(split: unknown): ExpenseSplitPayload {
 
     return {
       mode: "equal",
-      participants: participants as ExpenseSplitPayload["participants"],
+      participants,
     };
   }
 
   if (parsed.mode === "exact") {
-    const participants = parsed.participants.map(
-      (participant) => participant as { participantId?: unknown; owedAmountMinor?: unknown },
+    const participants: ExactSplitParticipant[] = parsed.participants.map((participant) =>
+      participant as ExactSplitParticipant,
     );
 
     if (
@@ -138,12 +143,12 @@ function parseSplitPayload(split: unknown): ExpenseSplitPayload {
 
     return {
       mode: "exact",
-      participants: participants as ExpenseSplitPayload["participants"],
+      participants,
     };
   }
 
-  const participants = parsed.participants.map(
-    (participant) => participant as { participantId?: unknown; percentageBps?: unknown },
+  const participants: PercentageSplitParticipant[] = parsed.participants.map((participant) =>
+    participant as PercentageSplitParticipant,
   );
 
   if (
@@ -161,7 +166,7 @@ function parseSplitPayload(split: unknown): ExpenseSplitPayload {
 
   return {
     mode: "percentage",
-    participants: participants as ExpenseSplitPayload["participants"],
+    participants,
   };
 }
 

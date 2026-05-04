@@ -17,6 +17,8 @@ describe("contributor-authority-policy guards", () => {
     participants: [],
     invites: [],
     participantContributorDeviceClaims: {},
+    pendingSubmissions: [],
+    reviewedSubmissions: [],
     syncHubDeviceId: "device-organizer-1",
     approvalAuthorityDeviceId: "device-organizer-1",
     title: "Phase 3 Onboarding",
