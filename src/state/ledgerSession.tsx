@@ -7,6 +7,12 @@ import {
   loadExpenseReviewSnapshot,
   type ExpenseReviewSnapshot,
 } from '../data/ledger/expenseReview';
+import { loadBalanceDetailSnapshot, type BalanceDetailSnapshot } from '../data/ledger/balanceDetails';
+import {
+  buildSyncRequestQr as buildSyncRequestQrData,
+  parseSyncRequestQr as parseSyncRequestQrData,
+  runSyncTransfer as runSyncTransferData,
+} from '../data/ledger/syncSession';
 
 type LedgerSessionStatus = 'loading' | 'ready' | 'empty' | 'error';
 
@@ -14,6 +20,7 @@ type LedgerSessionState = {
   status: LedgerSessionStatus;
   snapshot: LedgerDashboardSnapshot;
   reviewSnapshot: ExpenseReviewSnapshot;
+  balanceDetailSnapshot: BalanceDetailSnapshot;
   error: string | null;
 };
 
@@ -44,6 +51,9 @@ export type LedgerSessionValue = LedgerSessionState & {
     decision: 'approved' | 'rejected';
     reviewReason: string;
   }) => Promise<string>;
+  buildSyncRequestQr: () => Promise<string>;
+  parseSyncRequestQr: (raw: string) => { ok: true; payload: { ledgerId: string; requesterDeviceId: string; lastSeenSequence: number; requestedAt: string; nonce: string } } | { ok: false; error: string };
+  runSyncTransfer: (rawRequestQr: string) => Promise<string[]>;
 };
 
 type LedgerSessionProviderProps = {
@@ -80,6 +90,15 @@ function createEmptyState(): LedgerSessionState {
         reviewedCount: 0,
         items: [],
       },
+      balanceDetailSnapshot: {
+        hasLedger: false,
+        participants: [],
+        metadata: {
+          pendingSubmissionCount: 0,
+          reviewedSubmissionCount: 0,
+          approvalScopeNote: '',
+        },
+      },
       error: null,
   };
 }
@@ -94,15 +113,17 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
     setState((current) => ({ ...current, status: 'loading', error: null }));
 
     try {
-      const [snapshot, reviewSnapshot] = await Promise.all([
+      const [snapshot, reviewSnapshot, balanceDetailSnapshot] = await Promise.all([
         loadLedgerDashboardSnapshot(dbName),
         loadExpenseReviewSnapshot(dbName),
+        loadBalanceDetailSnapshot(dbName),
       ]);
 
       setState({
         status: snapshot.hasLedger ? 'ready' : 'empty',
         snapshot,
         reviewSnapshot,
+        balanceDetailSnapshot,
         error: null,
       });
     } catch (error) {
@@ -110,6 +131,7 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
         status: 'error',
         snapshot: current.snapshot,
         reviewSnapshot: current.reviewSnapshot,
+        balanceDetailSnapshot: current.balanceDetailSnapshot,
         error: error instanceof Error ? error.message : 'Unable to load ledger state',
       }));
     }
@@ -172,13 +194,34 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
     [expenseReviewMutations, refresh],
   );
 
+  const buildSyncRequestQr = useCallback(async () => buildSyncRequestQrData(dbName), [dbName]);
+  const parseSyncRequestQr = useCallback((raw: string) => parseSyncRequestQrData(raw), []);
+  const runSyncTransfer = useCallback(
+    async (rawRequestQr: string) => {
+      const result = await runSyncTransferData({ dbName, rawRequestQr });
+      await refresh();
+      return result.statusTimeline;
+    },
+    [dbName, refresh],
+  );
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
   const value = useMemo<LedgerSessionValue>(
-    () => ({ ...state, refresh, saveLedgerSetup, addParticipant, submitExpenseDraft, submitExpenseReview }),
-    [addParticipant, refresh, saveLedgerSetup, state, submitExpenseDraft, submitExpenseReview],
+    () => ({
+      ...state,
+      refresh,
+      saveLedgerSetup,
+      addParticipant,
+      submitExpenseDraft,
+      submitExpenseReview,
+      buildSyncRequestQr,
+      parseSyncRequestQr,
+      runSyncTransfer,
+    }),
+    [addParticipant, buildSyncRequestQr, parseSyncRequestQr, refresh, runSyncTransfer, saveLedgerSetup, state, submitExpenseDraft, submitExpenseReview],
   );
 
   return <LedgerSessionContext.Provider value={value}>{children}</LedgerSessionContext.Provider>;
