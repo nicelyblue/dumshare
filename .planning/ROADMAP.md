@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 9: App Shell and Navigation** - App opens into a native shell with top-level navigation and shared screen layout.
 - [ ] **Phase 10: Dashboard and Ledger Setup** - Dashboard surfaces ledger status while setup screens let the organizer manage the roster.
-- [ ] **Phase 11: Expense Entry and Review UI** - Expense forms, split controls, and pending-review actions are available on mobile.
+- [x] **Phase 11: Expense Entry and Review UI** - Expense forms, split controls, and pending-review actions are available on mobile. (completed 2026-05-04)
 - [ ] **Phase 12: Sync and Balance Views** - QR sync flow and per-currency balance detail screens are available with plain-language states.
 
 ## Phase Details
@@ -58,8 +58,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Build the expense entry form and split editor UI.
-- [ ] 11-02-PLAN.md — Build the pending review list and submission detail screens.
+- [x] 11-01-PLAN.md — Build the expense entry form and split editor UI.
+- [x] 11-02-PLAN.md — Build the pending review list and submission detail screens.
 
 ### Phase 12: Sync and Balance Views
 **Goal**: Users can run the QR sync flow and inspect per-currency balances in settlement-ready form.
@@ -84,5 +84,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12
 |-------|----------------|--------|-----------|
 | 9. App Shell and Navigation | 0/2 | Not started | - |
 | 10. Dashboard and Ledger Setup | 0/2 | Not started | - |
-| 11. Expense Entry and Review UI | 0/2 | Not started | - |
+| 11. Expense Entry and Review UI | 2/2 | Complete   | 2026-05-04 |
 | 12. Sync and Balance Views | 0/2 | Not started | - |

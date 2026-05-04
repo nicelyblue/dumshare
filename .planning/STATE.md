@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: executing
-stopped_at: Phase 10 complete
-last_updated: "2026-05-04T11:17:13.471Z"
-last_activity: 2026-05-04 -- Phase 10 execution completed
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-05-04T11:42:17.415Z"
+last_activity: 2026-05-04
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 4
-  percent: 50
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-04)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 10 — dashboard-and-ledger-setup complete; Phase 11 next
+**Current focus:** Phase 11 — expense-entry-and-review-ui
 
 ## Current Position
 
-Phase: 10 (dashboard-and-ledger-setup) — COMPLETE
+Phase: 11 (expense-entry-and-review-ui) — EXECUTING
 Plan: 2 of 2
-Status: Phase 10 complete
-Last activity: 2026-05-04 -- Phase 10 execution completed
+Status: Ready to execute
+Last activity: 2026-05-04
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -66,6 +66,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Balance summary participants are sourced only from derivePerCurrencyBalances so pending/review metadata cannot mutate numeric totals.
 - [Phase 08]: Approved-only scope messaging uses exact deterministic copy and appears only while pending submissions exist.
 - [v1.1]: Frontend milestone should stay thin and reuse validated domain read models rather than duplicating business logic in the UI.
+- [Phase 11]: Expense drafts and review decisions are appended exclusively through session actions that refresh replay-backed snapshots.
+- [Phase 11]: Expense workflow keeps entry and pending-review surfaces in the same shell destination with reusable status chips.
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-04T00:00:00.000Z
-Stopped at: Milestone setup
+Last session: 2026-05-04T11:42:17.411Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None

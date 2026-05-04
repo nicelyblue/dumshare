@@ -19,8 +19,8 @@ Requirements for the frontend milestone. Each maps to roadmap phases.
 
 ### Expenses and Review
 
-- [ ] **FE-05**: User can create an expense draft with payer rows and equal, exact, or percentage split controls.
-- [ ] **FE-06**: User can review pending contributor submissions and see approve/reject status in the UI.
+- [x] **FE-05**: User can create an expense draft with payer rows and equal, exact, or percentage split controls.
+- [x] **FE-06**: User can review pending contributor submissions and see approve/reject status in the UI.
 
 ### Sync and Balances
 
@@ -68,8 +68,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FE-02 | Phase 9 | Pending |
 | FE-03 | Phase 10 | Pending |
 | FE-04 | Phase 10 | Pending |
-| FE-05 | Phase 11 | Pending |
-| FE-06 | Phase 11 | Pending |
+| FE-05 | Phase 11 | Complete |
+| FE-06 | Phase 11 | Complete |
 | FE-07 | Phase 12 | Pending |
 | FE-08 | Phase 12 | Pending |
 
