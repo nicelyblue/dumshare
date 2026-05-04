@@ -6,6 +6,7 @@ import type { AppRouteName } from '../navigation/types';
 import { AppShell } from '../ui/AppShell';
 import { FeatureCard } from '../ui/FeatureCard';
 import { DashboardScreen } from './DashboardScreen';
+import { ExpenseEntryScreen } from './ExpenseEntryScreen';
 import { LedgerSetupScreen } from './LedgerSetupScreen';
 
 type FeatureScreenProps = {
@@ -20,6 +21,10 @@ export function FeatureScreen({ feature, onNavigate }: FeatureScreenProps) {
 
   if (feature.screenKind === 'setup') {
     return <LedgerSetupScreen />;
+  }
+
+  if (feature.screenKind === 'expense') {
+    return <ExpenseEntryScreen />;
   }
 
   const otherFeatures = FEATURE_REGISTRY.filter((item) => item.name !== feature.name);

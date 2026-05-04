@@ -2,7 +2,7 @@ import { APP_ROUTES } from './routes';
 import type { AppScreenContract } from './types';
 
 export type FeatureRegistryItem = AppScreenContract & {
-  screenKind: 'dashboard' | 'setup' | 'feature';
+  screenKind: 'dashboard' | 'setup' | 'expense' | 'feature';
   accent: string;
   eyebrow: string;
   primaryAction: string;
@@ -32,7 +32,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.expenseEntry,
-    screenKind: 'feature',
+    screenKind: 'expense',
     label: 'Expense Entry',
     description: 'Capture trip costs with payer rows and split controls.',
     eyebrow: 'Expense capture',
