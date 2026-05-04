@@ -8,6 +8,17 @@ Dumshare v1 is a local-first, offline expense-sharing app for small travel group
 
 A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
 
+## Current Milestone: v1.1 Frontend Foundation
+
+**Goal:** Turn the Expo app into a real mobile UI layer over the validated offline ledger and sync engine.
+
+**Target features:**
+- App shell and navigation
+- Read-only ledger dashboard with status and balances
+- Ledger setup and participant management screens
+- Expense entry and split editor screens
+- Sync request and balance detail screens
+
 ## Requirements
 
 ### Validated
@@ -22,13 +33,18 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 - EXPS-03 (Phase 4): Expense creation requires one-or-more explicit payer rows with participant IDs and paid amounts.
 - APRV-01..APRV-05 (Phase 6): Contributor submissions are pending-first and only affect approved ledger state after explicit organizer approve/reject decisions.
 - SYNC-01..SYNC-05 (Phase 7): Contributor QR bootstrap, organizer-gated session establishment, checkpoint deltas, bidirectional exchange, and plain-language sync status timeline are verified.
+- BALN-01..BALN-03 (Phase 8): Per-currency balances are derived from approved entries and remain separated by currency.
 
 ### Active
 
-- [ ] Organizer can manage participants and promote selected participants to single-device contributors via QR invitation.
-- [ ] Organizer and contributors can create and amend multi-payer, mixed-currency expenses with equal/exact/percentage splits.
-- [x] Contributors can sync pending changes with organizer using QR bootstrap + Bluetooth delta exchange.
-- [ ] App can compute and display participant balances per currency without forced cross-currency merging.
+- [ ] User can open the app into a native mobile shell with a branded header and primary navigation.
+- [ ] User can move between dashboard, setup, expense entry, sync, and balances screens without leaving the app.
+- [ ] User can see a dashboard summary with ledger title, participant count, pending approvals, latest activity, and currency balance snapshot.
+- [ ] Organizer can create a ledger and manage the participant roster through mobile forms.
+- [ ] User can create an expense draft with payer rows and equal, exact, or percentage split controls.
+- [ ] User can review pending contributor submissions and see approve/reject status in the UI.
+- [ ] User can start sync by showing or scanning QR codes and follow plain-language transfer states.
+- [ ] User can inspect per-currency balance detail and settlement-ready summaries.
 
 ### Out of Scope
 
@@ -39,6 +55,7 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 - Recovery guarantees for lost devices — local copies may be unrecoverable after device loss.
 - Financial-grade cryptographic hardening — v1 security remains lightweight to preserve usability.
 - Automatic conflict resolution — organizer remains human arbiter for conflicting proposals.
+- Rich visual personalization and marketing-style motion — first frontend milestone should ship usable screens before polish.
 
 ## Context
 
@@ -46,8 +63,8 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 - User roles are explicit: organizer (authority + hub), contributor (single-device participant), passive participant (name-only ledger member).
 - Data model constraint is append-only event log with deterministic projection to user-visible state.
 - Sync flow is fixed for v1: contributor prepares sync request QR, organizer scans, Bluetooth transfer exchanges unseen events, organizer reviews pending changes, organizer sends missing organizer-side events back.
+- The codebase already has a validated domain/data layer, but the UI surface is still a static Expo root component.
 - UX language must stay plain and action-oriented (for example: "Show code", "Scan code", "Sending changes", "Receiving changes") and avoid distributed-systems terminology.
-- Open technical choices to resolve in later specs include exact mobile stack, event ordering strategy, approved-expense edit rules, invitation verification details, and mixed-currency settlement UX.
 
 ## Constraints
 
@@ -59,6 +76,7 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 - **Consistency model**: Append-only event log with checkpoint-based delta sync — supports deterministic replay and bounded transfer.
 - **Governance**: Mandatory organizer approval on contributor submissions — ensures trusted approved ledger state.
 - **Currency handling**: Per-currency balance accounting — no automatic currency merging.
+- **Frontend approach**: Expo/React Native shell over existing domain APIs — keep UI thin and avoid duplicating replay logic.
 
 ## Key Decisions
 
@@ -69,6 +87,7 @@ A small group can reliably record and reconcile shared trip expenses offline, th
 | Single-device contributor identity | Simplifies identity, replication edges, and invitation semantics in MVP | — Pending |
 | Expense model includes multi-payer + exact + percentage splits in v1 | Required for real travel expense scenarios; equal-only splits are insufficient | — Pending |
 | Mixed currencies allowed in one ledger with per-currency balances | Reflects real group travel behavior while avoiding fragile implicit conversions | — Pending |
+| Frontend should be a thin Expo UI over the validated domain layer | Keeps navigation, forms, and screens deterministic without re-implementing business logic | — Pending |
 
 ## Evolution
 
@@ -88,4 +107,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-22 after phase completion (Phase 7)*
+*Last updated: 2026-05-04 after starting v1.1 Frontend Foundation*

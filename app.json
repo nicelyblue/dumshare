@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "c295da90-7e04-4783-8b59-776759cbe237"
+      }
+    },
+    "android": {
+      "package": "com.dumshare.app"
+    }
+  }
+}

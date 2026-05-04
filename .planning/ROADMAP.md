@@ -1,157 +1,88 @@
-# Roadmap: Dumshare v1
+# Roadmap: Dumshare v1.1 Frontend Foundation
 
 ## Overview
 
-This roadmap delivers Dumshare v1 in dependency order: establish deterministic local ledger behavior first, then role/onboarding flows, then expense authoring and approval governance, then in-person synchronization, and finally currency-safe balance outcomes users can trust.
+This roadmap turns the validated offline ledger engine into a real mobile app experience. The focus is a thin Expo/React Native frontend that exposes navigation, dashboard summaries, ledger setup, expense entry, sync status, and per-currency balance views without duplicating domain logic.
 
 ## Phases
 
 **Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+- Integer phases continue from the previous milestone.
+- Decimal phases (for example 9.1) are reserved for urgent insertions.
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Local Data Backbone** - Reliable local persistence and deterministic event replay are in place. (completed 2026-04-20)
-- [ ] **Phase 2: Ledger Setup and Participants** - Organizer can create a ledger and manage participant roster offline.
-- [x] **Phase 3: Contributor Onboarding and Authority Model** - Organizer invites one-device contributors and remains sole hub/authority. (completed 2026-04-21)
-- [x] **Phase 4: Expense Capture Foundations** - Organizer and contributors can record complete offline expense basics. (completed 2026-04-21)
-- [ ] **Phase 5: Split Modes and Contributor Amendments** - Equal/exact/percentage splits and contributor amendment submission work end-to-end.
-- [x] **Phase 6: Organizer Approval Gate** - Contributor submissions are explicitly approved/rejected before entering approved state. (completed 2026-04-22)
-- [x] **Phase 7: In-Person Sync Exchange** - QR bootstrap and Bluetooth delta sync exchange unseen events bidirectionally. (completed 2026-04-22)
-- [x] **Phase 8: Per-Currency Balances and Settlement Readiness** - Users get correct per-currency balances without auto-merging currencies. (completed 2026-04-22)
+- [ ] **Phase 9: App Shell and Navigation** - App opens into a native shell with top-level navigation and shared screen layout.
+- [ ] **Phase 10: Dashboard and Ledger Setup** - Dashboard surfaces ledger status while setup screens let the organizer manage the roster.
+- [ ] **Phase 11: Expense Entry and Review UI** - Expense forms, split controls, and pending-review actions are available on mobile.
+- [ ] **Phase 12: Sync and Balance Views** - QR sync flow and per-currency balance detail screens are available with plain-language states.
 
 ## Phase Details
 
-### Phase 1: Local Data Backbone
-**Goal**: Ledger data is stored locally and always reconstructs the same user-visible state from append-only events.
-**Depends on**: Nothing (first phase)
-**Requirements**: DATA-01, DATA-02, DATA-03
+### Phase 9: App Shell and Navigation
+**Goal**: App launches into a branded mobile shell with top-level navigation and reusable layout scaffolding.
+**Depends on**: Phase 8 completed domain data and read models
+**Requirements**: FE-01, FE-02
 **Success Criteria** (what must be TRUE):
-  1. User can close and reopen the app offline and all previously recorded ledger data is still present on the same device.
-  2. User actions are preserved as immutable history rather than destructive overwrites.
-  3. The app produces the same ledger outcome every time the same event history is replayed.
+  1. User can open the app and see a native shell rather than a placeholder root view.
+  2. User can move between the main frontend areas from the same app container.
+  3. Shared layout and loading/error handling are centralized so later screens stay consistent.
 **Plans**: 2 plans
 
 Plans:
-- [x] 01-01-PLAN.md — Implement local SQLite append-only event storage contracts and blocking schema push.
-- [x] 01-02-PLAN.md — Implement deterministic replay projection and reconstruction tests.
+- [ ] 09-01-PLAN.md — Build the Expo shell, branded header, and primary navigation structure.
+- [ ] 09-02-PLAN.md — Add shared UI state wiring and layout primitives for all main screens.
 
-### Phase 2: Ledger Setup and Participants
-**Goal**: Organizer can start a trip ledger and maintain participant names fully offline.
-**Depends on**: Phase 1
-**Requirements**: LEDR-01, LEDR-02
+### Phase 10: Dashboard and Ledger Setup
+**Goal**: Dashboard shows ledger health at a glance and setup screens let the organizer manage the roster.
+**Depends on**: Phase 9
+**Requirements**: FE-03, FE-04
 **Success Criteria** (what must be TRUE):
-  1. Organizer can create a new trip ledger with title and settlement context without internet access.
-  2. Organizer can add participant names to the ledger for shared expense allocation.
-  3. Added participants persist and remain available for later expense/split actions.
+  1. User can see a dashboard summary that includes the current ledger title, participant count, pending approvals, and balance snapshot.
+  2. Organizer can create or edit ledger setup data through a mobile form flow.
+  3. Organizer can manage the participant roster from the app UI without needing to inspect raw data structures.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Extend deterministic replay contracts to support offline ledger creation metadata.
-- [ ] 02-02-PLAN.md — Add deterministic participant roster replay and persistence coverage for offline organizer management.
+- [ ] 10-01-PLAN.md — Build the dashboard summary cards, activity states, and participant overview.
+- [ ] 10-02-PLAN.md — Build the ledger setup and participant management screens.
 
-### Phase 3: Contributor Onboarding and Authority Model
-**Goal**: Organizer can onboard contributors by QR invitation while preserving single-device identity and organizer-only authority.
-**Depends on**: Phase 2
-**Requirements**: LEDR-03, LEDR-04, LEDR-05
+### Phase 11: Expense Entry and Review UI
+**Goal**: Users can enter expenses and inspect pending contributor submissions from mobile forms.
+**Depends on**: Phase 10
+**Requirements**: FE-05, FE-06
 **Success Criteria** (what must be TRUE):
-  1. Organizer can generate a one-time invitation QR for a selected passive participant.
-  2. Invited contributor can join the specific ledger by scanning that invitation QR on exactly one device.
-  3. Attempts to join the same contributor identity from another device are blocked.
-  4. Users experience organizer as the only sync hub and only approval authority in normal ledger operations.
+  1. User can draft an expense with payer rows and equal, exact, or percentage split controls.
+  2. User can review pending contributor submissions and see approval state clearly in the UI.
+  3. Expense workflow screens reuse the same validation language as the underlying domain model.
 **Plans**: 2 plans
 
 Plans:
-- [x] 03-01-PLAN.md — Implement deterministic invite lifecycle contracts and one-device join replay invariants.
-- [x] 03-02-PLAN.md — Add organizer-only authority guard module and replay-integrated policy verification.
+- [ ] 11-01-PLAN.md — Build the expense entry form and split editor UI.
+- [ ] 11-02-PLAN.md — Build the pending review list and submission detail screens.
 
-### Phase 4: Expense Capture Foundations
-**Goal**: Organizer and contributors can record complete offline expenses with multi-payer details.
-**Depends on**: Phase 3
-**Requirements**: EXPS-01, EXPS-02, EXPS-03
+### Phase 12: Sync and Balance Views
+**Goal**: Users can run the QR sync flow and inspect per-currency balances in settlement-ready form.
+**Depends on**: Phase 11
+**Requirements**: FE-07, FE-08
 **Success Criteria** (what must be TRUE):
-  1. Organizer can create an expense offline with description, currency, total amount, and date.
-  2. Contributor can create an expense offline with description, currency, total amount, and date.
-  3. User can assign one or more payers with explicit paid amounts for a single expense.
-**Plans**: 1 plans
-
-Plans:
-- [ ] 04-01-PLAN.md — Implement strict expense-created contract, creator authorization guards, and deterministic multi-payer replay validation with automated invariants.
-
-### Phase 5: Split Modes and Contributor Amendments
-**Goal**: Expenses support all v1 split modes and contributor amendments feed into the review pipeline.
-**Depends on**: Phase 4
-**Requirements**: EXPS-04, EXPS-05, EXPS-06, EXPS-07
-**Success Criteria** (what must be TRUE):
-  1. User can split an expense equally across selected participants.
-  2. User can split an expense by exact owed amounts across selected participants.
-  3. User can split an expense by percentages across selected participants.
-  4. Contributor can amend their submitted expenses and the amendment is treated as reviewable submission, not auto-applied approved state.
+  1. User can start sync by showing or scanning QR codes and follow plain-language progress states.
+  2. User can inspect per-currency balance detail without forced cross-currency merging.
+  3. Balance views preserve enough settlement context to support the next planning cycle.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Implement strict equal/exact/percentage split contracts and deterministic replay owed-share derivation.
-- [ ] 05-02-PLAN.md — Implement contributor amendment submissions as replay-validated pending review queue input.
-
-### Phase 6: Organizer Approval Gate
-**Goal**: Contributor-created expenses/amendments are governed by explicit organizer approve/reject decisions before they affect approved ledger outcomes.
-**Depends on**: Phase 5
-**Requirements**: APRV-01, APRV-02, APRV-03, APRV-04, APRV-05
-**Success Criteria** (what must be TRUE):
-  1. Contributor-created expenses arrive in pending state until organizer review occurs.
-  2. Contributor-submitted amendments arrive in pending state until organizer review occurs.
-  3. Organizer can explicitly approve or reject each pending contributor submission.
-  4. Rejected submissions do not alter approved balances/settlement outcomes.
-  5. Approved submissions become part of approved ledger state used for downstream balance outcomes.
-**Plans**: 2 plans
-
-Plans:
-- [x] 06-01-PLAN.md — Add explicit contributor submission + organizer review event lifecycle with deterministic replay state transitions.
-- [x] 06-02-PLAN.md — Harden APRV-05 verification and migrate legacy tests to pending-first contributor flow semantics.
-
-### Phase 7: In-Person Sync Exchange
-**Goal**: Organizer and contributors can run in-person QR + Bluetooth sync sessions that exchange unseen events in both directions.
-**Depends on**: Phase 6
-**Requirements**: SYNC-01, SYNC-02, SYNC-03, SYNC-04, SYNC-05
-**Success Criteria** (what must be TRUE):
-  1. Contributor can initiate sync by showing a sync-request QR to organizer.
-  2. Organizer can scan the request QR and establish a transfer session.
-  3. Organizer and contributor exchange unseen events via checkpoint-based delta synchronization.
-  4. Sync transfers contributor pending events to organizer and organizer-side events back to contributor in one workflow.
-  5. Users receive plain-language status updates while changes are sent and received.
-**Plans**: 2 plans
-
-Plans:
-- [ ] 07-01-PLAN.md — Define sync bootstrap contracts, organizer session establishment, and checkpoint delta repository APIs.
-- [ ] 07-02-PLAN.md — Implement bidirectional delta exchange orchestration with plain-language sync status timeline.
-
-### Phase 8: Per-Currency Balances and Settlement Readiness
-**Goal**: Users can trust per-currency net balances for settlement decisions without hidden cross-currency merging.
-**Depends on**: Phase 7
-**Requirements**: BALN-01, BALN-02, BALN-03
-**Success Criteria** (what must be TRUE):
-  1. App computes each participant’s net position per currency from paid amounts and owed shares.
-  2. App presents balances separated by currency instead of silently merging different currencies.
-  3. Balance outputs preserve enough currency-specific detail to support later settlement calculation.
-**Plans**: 2 plans
-
-Plans:
-- [x] 08-01-PLAN.md — Build deterministic approved-entry per-currency balance derivation with BALN-01 TDD invariants.
-- [x] 08-02-PLAN.md — Add approved-only balance summary API with per-currency settlement-ready detail and qualifier metadata.
+- [ ] 12-01-PLAN.md — Build the QR sync request, scan, and transfer status screens.
+- [ ] 12-02-PLAN.md — Build the per-currency balance detail and settlement summary screens.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 9 → 10 → 11 → 12
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Local Data Backbone | 2/2 | Complete   | 2026-04-20 |
-| 2. Ledger Setup and Participants | 0/TBD | Not started | - |
-| 3. Contributor Onboarding and Authority Model | 2/2 | Complete | 2026-04-21 |
-| 4. Expense Capture Foundations | 1/1 | Complete   | 2026-04-21 |
-| 5. Split Modes and Contributor Amendments | 0/2 | Not started | - |
-| 6. Organizer Approval Gate | 2/2 | Complete | 2026-04-22 |
-| 7. In-Person Sync Exchange | 2/2 | Complete   | 2026-04-22 |
-| 8. Per-Currency Balances and Settlement Readiness | 2/2 | Complete | 2026-04-22 |
+| 9. App Shell and Navigation | 0/2 | Not started | - |
+| 10. Dashboard and Ledger Setup | 0/2 | Not started | - |
+| 11. Expense Entry and Review UI | 0/2 | Not started | - |
+| 12. Sync and Balance Views | 0/2 | Not started | - |

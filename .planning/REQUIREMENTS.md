@@ -1,61 +1,35 @@
-# Requirements: Dumshare v1
+# Requirements: Dumshare v1.1 Frontend Foundation
 
-**Defined:** 2026-04-20
+**Defined:** 2026-05-04
 **Core Value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
 
 ## v1 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+Requirements for the frontend milestone. Each maps to roadmap phases.
 
-### Ledger and Roles
+### Shell and Navigation
 
-- [x] **LEDR-01**: Organizer can create a new trip ledger with title and settlement context on device without internet.
-- [x] **LEDR-02**: Organizer can add participants as passive names inside the ledger.
-- [x] **LEDR-03**: Organizer can promote a passive participant to contributor by generating a one-time invitation QR.
-- [x] **LEDR-04**: Invited contributor can join the specific ledger on exactly one device by scanning organizer invitation QR.
-- [x] **LEDR-05**: Organizer remains the only approval authority and only sync hub for contributor devices.
+- [ ] **FE-01**: User can open the app into a native mobile shell with a branded header and primary navigation.
+- [ ] **FE-02**: User can move between dashboard, setup, expense entry, sync, and balances screens without leaving the app.
 
-### Expenses and Splits
+### Dashboard and Setup
 
-- [x] **EXPS-01**: Organizer can create an expense offline with description, currency, total amount, and date.
-- [x] **EXPS-02**: Contributor can create an expense offline with description, currency, total amount, and date.
-- [x] **EXPS-03**: User can record one or more payers for an expense with explicit paid amounts.
-- [x] **EXPS-04**: User can assign participants using equal split for an expense.
-- [x] **EXPS-05**: User can assign participants using exact amount split for an expense.
-- [x] **EXPS-06**: User can assign participants using percentage split for an expense.
-- [x] **EXPS-07**: Contributor can amend their submitted expenses and amendments enter the same approval flow as new submissions.
+- [ ] **FE-03**: User can see a dashboard summary with ledger title, participant count, pending approvals, latest activity, and currency balance snapshot.
+- [ ] **FE-04**: Organizer can create a ledger and manage the participant roster through mobile forms.
 
-### Approval Workflow
+### Expenses and Review
 
-- [x] **APRV-01**: Every contributor-created expense enters pending state until organizer reviews it.
-- [x] **APRV-02**: Every contributor-submitted amendment enters pending state until organizer reviews it.
-- [x] **APRV-03**: Organizer can approve a pending contributor expense or amendment.
-- [x] **APRV-04**: Organizer can reject a pending contributor expense or amendment.
-- [x] **APRV-05**: Only approved organizer-reviewed changes affect approved ledger balances and settlement views.
+- [ ] **FE-05**: User can create an expense draft with payer rows and equal, exact, or percentage split controls.
+- [ ] **FE-06**: User can review pending contributor submissions and see approve/reject status in the UI.
 
-### Offline Sync
+### Sync and Balances
 
-- [x] **SYNC-01**: Contributor can initiate in-person sync by presenting a QR sync request to organizer.
-- [x] **SYNC-02**: Organizer can scan contributor sync request and establish transfer session.
-- [x] **SYNC-03**: Organizer and contributor can exchange unseen events using checkpoint-based delta synchronization.
-- [x] **SYNC-04**: Sync flow supports bidirectional exchange where contributor uploads pending events and receives organizer-side events.
-- [x] **SYNC-05**: Sync UX shows clear plain-language progress and status for sending and receiving changes.
-
-### Balances and Currency
-
-- [x] **BALN-01**: App computes participant net balances per currency from paid amounts and owed shares.
-- [x] **BALN-02**: App displays balances per currency without auto-merging different currencies.
-- [x] **BALN-03**: App preserves enough per-currency detail for eventual settlement calculation.
-
-### Local Data and Determinism
-
-- [x] **DATA-01**: Ledger state is persisted locally with no cloud storage dependency.
-- [x] **DATA-02**: Ledger changes are recorded in an append-only event log.
-- [x] **DATA-03**: User-visible ledger state is deterministically derived from replay of stored events.
+- [ ] **FE-07**: User can start sync by showing or scanning QR codes and follow plain-language transfer states.
+- [ ] **FE-08**: User can inspect per-currency balance detail and settlement-ready summaries.
 
 ## v2 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Deferred to future release. Tracked but not in the current frontend roadmap.
 
 ### Reliability and UX Extensions
 
@@ -63,10 +37,11 @@ Deferred to future release. Tracked but not in current roadmap.
 - **RUXE-02**: User can export trip summaries in shareable formats.
 - **RUXE-03**: User can view category-level spend insights.
 
-### Identity and Continuity
+### Visual Polish and Accessibility
 
-- **IDCT-01**: Contributor can use the same identity across multiple devices.
-- **IDCT-02**: Ledger can be recovered after device loss through backup/restore mechanisms.
+- **UXPL-01**: User can switch between light and dark visual themes.
+- **UXPL-02**: User can adjust layout density for small and large phones.
+- **UXPL-03**: User can navigate core screens with accessible labels and focus order.
 
 ## Out of Scope
 
@@ -81,6 +56,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Forced cross-currency balance merging | v1 keeps per-currency balances to avoid hidden conversion ambiguity. |
 | Financial-grade security hardening | v1 security stays lightweight to preserve usability under travel conditions. |
 | Direct payment rail integrations | Not core to v1 value; focus is trusted offline ledger and sync. |
+| Desktop and web layouts | This milestone is Android-first and iOS-compatible mobile UI only. |
 
 ## Traceability
 
@@ -88,40 +64,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LEDR-01 | Phase 2 | Complete |
-| LEDR-02 | Phase 2 | Complete |
-| LEDR-03 | Phase 3 | Complete |
-| LEDR-04 | Phase 3 | Complete |
-| LEDR-05 | Phase 3 | Complete |
-| EXPS-01 | Phase 4 | Complete |
-| EXPS-02 | Phase 4 | Complete |
-| EXPS-03 | Phase 4 | Complete |
-| EXPS-04 | Phase 5 | Complete |
-| EXPS-05 | Phase 5 | Complete |
-| EXPS-06 | Phase 5 | Complete |
-| EXPS-07 | Phase 5 | Complete |
-| APRV-01 | Phase 6 | Complete |
-| APRV-02 | Phase 6 | Complete |
-| APRV-03 | Phase 6 | Complete |
-| APRV-04 | Phase 6 | Complete |
-| APRV-05 | Phase 6 | Complete |
-| SYNC-01 | Phase 7 | Complete |
-| SYNC-02 | Phase 7 | Complete |
-| SYNC-03 | Phase 7 | Complete |
-| SYNC-04 | Phase 7 | Complete |
-| SYNC-05 | Phase 7 | Complete |
-| BALN-01 | Phase 8 | Complete |
-| BALN-02 | Phase 8 | Complete |
-| BALN-03 | Phase 8 | Complete |
-| DATA-01 | Phase 1 | Complete |
-| DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 1 | Complete |
+| FE-01 | Phase 9 | Pending |
+| FE-02 | Phase 9 | Pending |
+| FE-03 | Phase 10 | Pending |
+| FE-04 | Phase 10 | Pending |
+| FE-05 | Phase 11 | Pending |
+| FE-06 | Phase 11 | Pending |
+| FE-07 | Phase 12 | Pending |
+| FE-08 | Phase 12 | Pending |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 28
-- Unmapped: 0
+- v1 requirements: 8 total
+- Mapped to phases: 8
+- Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-04-20*
-*Last updated: 2026-04-20 after roadmap mapping*
+*Requirements defined: 2026-05-04*
+*Last updated: 2026-05-04 after v1.1 frontend planning*
