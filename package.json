@@ -8,9 +8,20 @@
     "db:push": "drizzle-kit push --force"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.5",
-    "drizzle-orm": "^0.45.2",
+    "@types/react": "~19.2.10",
     "better-sqlite3": "^12.1.1",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "typescript": "~5.9.2",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "expo": "^55.0.19",
+    "expo-dev-client": "^55.0.30",
+    "@react-navigation/native": "^7.2.2",
+    "@react-navigation/native-stack": "^7.2.2",
+    "react-native-gesture-handler": "^2.24.0",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-screens": "^4.13.1"
   }
 }

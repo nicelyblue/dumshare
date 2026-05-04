@@ -1,76 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v1.1
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-04-22T15:29:12.290Z"
-last_activity: 2026-04-22 -- Phase 08 planning complete
+stopped_at: Milestone setup
+last_updated: "2026-05-04T11:05:26.490Z"
+last_activity: 2026-05-04 -- Phase 09 execution started
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-20)
+See: .planning/PROJECT.md (updated 2026-05-04)
 
 **Core value:** A small group can reliably record and reconcile shared trip expenses offline, then sync in person through an organizer-controlled flow without requiring internet or cloud services.
-**Current focus:** Phase 08 — per-currency-balances-and-settlement-readiness (complete)
+**Current focus:** Phase 09 — app-shell-and-navigation
 
 ## Current Position
 
-Phase: 8
-Plan: Completed (02/02)
-Status: Phase 08 complete
-Last activity: 2026-04-22 -- Phase 08 execution complete
+Phase: 09 (app-shell-and-navigation) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 09
+Last activity: 2026-05-04 -- Phase 09 execution started
 
-Progress: [██████████] 100%
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 15
-- Average duration: 5 min
-- Total execution time: 0.2 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01 | 2 | 10 min | 5 min |
-| 02 | 2 | - | - |
-| 03 | 2 | - | - |
-| 04 | 1 | - | - |
-| 05 | 2 | - | - |
-| 06 | 2 | - | - |
-| 07 | 2 | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: 8 min, 2 min
-- Trend: Stable
-
-*Updated after each plan completion*
-| Phase 01 P01 | 8min | 3 tasks | 9 files |
-| Phase 01 P02 | 2min | 2 tasks | 4 files |
-| Phase 02-ledger-setup-and-participants P01 | 3min | 2 tasks | 5 files |
-| Phase 02 P02 | 2 min | 2 tasks | 4 files |
-| Phase 03 P01 | 7 | 2 tasks | 4 files |
-| Phase 03 P02 | 3 | 2 tasks | 2 files |
-| Phase 04 P01 | 6 | 2 tasks | 6 files |
-| Phase 05 P01 | 16min | 2 tasks | 6 files |
-| Phase 05 P02 | 9min | 2 tasks | 3 files |
-| Phase 06 P01 | 12min | 2 tasks | 4 files |
-| Phase 06 P02 | 8min | 2 tasks | 3 files |
-| Phase 08 P01 | 1min | 2 tasks | 3 files |
-| Phase 08 P02 | 1min | 2 tasks | 3 files |
+Progress: [░░░░░░░░░░] 0%
 
 ## Accumulated Context
 
@@ -105,6 +65,7 @@ Recent decisions affecting current work:
 - [Phase 08]: Emit deterministic participant-first outputs with lexicographically sorted currency rows to preserve stable settlement calculations.
 - [Phase 08]: Balance summary participants are sourced only from derivePerCurrencyBalances so pending/review metadata cannot mutate numeric totals.
 - [Phase 08]: Approved-only scope messaging uses exact deterministic copy and appears only while pending submissions exist.
+- [v1.1]: Frontend milestone should stay thin and reuse validated domain read models rather than duplicating business logic in the UI.
 
 ### Pending Todos
 
@@ -117,6 +78,7 @@ None yet.
 [Issues that affect future work]
 
 - BLE reliability and device-matrix behavior risk may require deeper phase research before sync implementation.
+- Frontend navigation and screen state design need to stay disciplined so the UI remains a thin layer over the domain engine.
 
 ## Deferred Items
 
@@ -128,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-22T15:29:12.286Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-05-04T00:00:00.000Z
+Stopped at: Milestone setup
 Resume file: None
