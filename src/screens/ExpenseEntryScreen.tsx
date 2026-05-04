@@ -6,6 +6,8 @@ import { AppShell } from '../ui/AppShell';
 import { ExpenseSplitEditor } from '../ui/ExpenseSplitEditor';
 import { FeatureCard } from '../ui/FeatureCard';
 import { LabeledField } from '../ui/LabeledField';
+import { PendingReviewScreen } from './PendingReviewScreen';
+import { SubmissionDetailScreen } from './SubmissionDetailScreen';
 
 type PayerRow = {
   rowId: string;
@@ -44,7 +46,7 @@ function createPayerRow(participantId: string, paidAmountText: string): PayerRow
 }
 
 export function ExpenseEntryScreen() {
-  const { snapshot, status, error, submitExpenseDraft } = useLedgerSession();
+  const { snapshot, reviewSnapshot, status, error, submitExpenseDraft, submitExpenseReview } = useLedgerSession();
   const participants = snapshot.balanceSummary.participants.map((participant) => ({
     participantId: participant.participantId,
     displayName: participant.displayName,
@@ -61,6 +63,8 @@ export function ExpenseEntryScreen() {
   );
   const [split, setSplit] = useState<ExpenseSplitPayload>(() => defaultSplit(participants.map((item) => item.participantId)));
   const [message, setMessage] = useState('');
+  const [panel, setPanel] = useState<'entry' | 'pending' | 'detail'>('entry');
+  const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
 
   const totalAmountMinor = toMinorAmount(totalAmountText);
 
@@ -161,6 +165,8 @@ export function ExpenseEntryScreen() {
     );
   }
 
+  const activeSubmission = reviewSnapshot.items.find((item) => item.submissionId === activeSubmissionId);
+
   return (
     <AppShell
       eyebrow="Expense capture"
@@ -170,6 +176,11 @@ export function ExpenseEntryScreen() {
     >
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Expense details</Text>
+        {reviewSnapshot.pendingCount > 0 ? (
+          <Pressable style={styles.secondaryButton} onPress={() => setPanel('pending')}>
+            <Text style={styles.secondaryButtonLabel}>Review pending submissions ({reviewSnapshot.pendingCount})</Text>
+          </Pressable>
+        ) : null}
         <LabeledField label="Description" value={description} onChangeText={setDescription} placeholder="Dinner at El Born" helperText="Keep labels specific so review is easy." />
         <LabeledField label="Currency" value={currency} onChangeText={setCurrency} placeholder="EUR" helperText="Per-currency settlement is preserved in the ledger." autoCapitalize="characters" />
         <LabeledField label="Expense date" value={expenseDate} onChangeText={setExpenseDate} placeholder="2026-05-04" helperText="Use ISO style for deterministic event replay." />
@@ -252,6 +263,43 @@ export function ExpenseEntryScreen() {
           <Text style={styles.messageText}>{message}</Text>
         </View>
       ) : null}
+
+      {panel === 'pending' ? (
+        <View style={styles.section}>
+          <View style={styles.panelHeaderRow}>
+            <Text style={styles.sectionLabel}>Pending review</Text>
+            <Pressable style={styles.secondaryButton} onPress={() => setPanel('entry')}>
+              <Text style={styles.secondaryButtonLabel}>Back to entry</Text>
+            </Pressable>
+          </View>
+          <PendingReviewScreen
+            items={reviewSnapshot.items}
+            onOpenSubmission={(submissionId) => {
+              setActiveSubmissionId(submissionId);
+              setPanel('detail');
+            }}
+          />
+        </View>
+      ) : null}
+
+      {panel === 'detail' && activeSubmission ? (
+        <View style={styles.section}>
+          <View style={styles.panelHeaderRow}>
+            <Text style={styles.sectionLabel}>Submission detail</Text>
+            <Pressable style={styles.secondaryButton} onPress={() => setPanel('pending')}>
+              <Text style={styles.secondaryButtonLabel}>Back to list</Text>
+            </Pressable>
+          </View>
+          <SubmissionDetailScreen
+            item={activeSubmission}
+            onSubmitDecision={async (input) => {
+              await submitExpenseReview(input);
+              setPanel('pending');
+              setActiveSubmissionId(null);
+            }}
+          />
+        </View>
+      ) : null}
     </AppShell>
   );
 }
@@ -266,6 +314,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.6,
     textTransform: 'uppercase',
+  },
+  panelHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
   },
   roleRow: {
     flexDirection: 'row',
