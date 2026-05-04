@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: executing
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-05-04T11:42:17.415Z"
+status: verifying
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-05-04T11:55:40.981Z"
 last_activity: 2026-05-04
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 4
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-04)
 
 Phase: 11 (expense-entry-and-review-ui) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-04
 
 Progress: [░░░░░░░░░░] 0%
@@ -68,6 +68,10 @@ Recent decisions affecting current work:
 - [v1.1]: Frontend milestone should stay thin and reuse validated domain read models rather than duplicating business logic in the UI.
 - [Phase 11]: Expense drafts and review decisions are appended exclusively through session actions that refresh replay-backed snapshots.
 - [Phase 11]: Expense workflow keeps entry and pending-review surfaces in the same shell destination with reusable status chips.
+- [Phase 12]: Sync screen reuses domain QR/session/exchange APIs with no duplicated transfer logic.
+- [Phase 12]: Session provider owns sync transfer and refresh to keep replay-backed views consistent.
+- [Phase 12]: Balance detail screen renders approved summary metadata verbatim for scope messaging.
+- [Phase 12]: Balances destination remains participant-first and per-currency without merge logic.
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-04T11:42:17.411Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-05-04T11:55:40.978Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None

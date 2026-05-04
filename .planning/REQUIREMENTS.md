@@ -24,8 +24,8 @@ Requirements for the frontend milestone. Each maps to roadmap phases.
 
 ### Sync and Balances
 
-- [ ] **FE-07**: User can start sync by showing or scanning QR codes and follow plain-language transfer states.
-- [ ] **FE-08**: User can inspect per-currency balance detail and settlement-ready summaries.
+- [x] **FE-07**: User can start sync by showing or scanning QR codes and follow plain-language transfer states.
+- [x] **FE-08**: User can inspect per-currency balance detail and settlement-ready summaries.
 
 ## v2 Requirements
 
@@ -70,8 +70,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FE-04 | Phase 10 | Pending |
 | FE-05 | Phase 11 | Complete |
 | FE-06 | Phase 11 | Complete |
-| FE-07 | Phase 12 | Pending |
-| FE-08 | Phase 12 | Pending |
+| FE-07 | Phase 12 | Complete |
+| FE-08 | Phase 12 | Complete |
 
 **Coverage:**
 - v1 requirements: 8 total
