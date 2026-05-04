@@ -2,6 +2,7 @@ import { APP_ROUTES } from './routes';
 import type { AppScreenContract } from './types';
 
 export type FeatureRegistryItem = AppScreenContract & {
+  screenKind: 'dashboard' | 'setup' | 'feature';
   accent: string;
   eyebrow: string;
   primaryAction: string;
@@ -11,6 +12,7 @@ export type FeatureRegistryItem = AppScreenContract & {
 export const FEATURE_REGISTRY = [
   {
     name: APP_ROUTES.dashboard,
+    screenKind: 'dashboard',
     label: 'Dashboard',
     description: 'Review ledger health, pending approvals, and balance snapshots.',
     eyebrow: 'Trip overview',
@@ -20,6 +22,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.setup,
+    screenKind: 'setup',
     label: 'Ledger Setup',
     description: 'Edit the trip title, participant roster, and organizer setup.',
     eyebrow: 'Trip setup',
@@ -29,6 +32,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.expenseEntry,
+    screenKind: 'feature',
     label: 'Expense Entry',
     description: 'Capture trip costs with payer rows and split controls.',
     eyebrow: 'Expense capture',
@@ -38,6 +42,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.sync,
+    screenKind: 'feature',
     label: 'Sync',
     description: 'Prepare QR transfer and in-person exchange states.',
     eyebrow: 'Sync status',
@@ -47,6 +52,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.balances,
+    screenKind: 'feature',
     label: 'Balances',
     description: 'Inspect settlement-ready balances per currency.',
     eyebrow: 'Settlement',

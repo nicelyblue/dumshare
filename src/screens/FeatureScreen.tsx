@@ -1,9 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { APP_ROUTES } from '../navigation/routes';
 import { FEATURE_REGISTRY, type FeatureRegistryItem } from '../navigation/featureRegistry';
 import type { AppRouteName } from '../navigation/types';
 import { AppShell } from '../ui/AppShell';
 import { FeatureCard } from '../ui/FeatureCard';
+import { DashboardScreen } from './DashboardScreen';
+import { LedgerSetupScreen } from './LedgerSetupScreen';
 
 type FeatureScreenProps = {
   feature: FeatureRegistryItem;
@@ -11,6 +14,14 @@ type FeatureScreenProps = {
 };
 
 export function FeatureScreen({ feature, onNavigate }: FeatureScreenProps) {
+  if (feature.screenKind === 'dashboard') {
+    return <DashboardScreen onNavigate={onNavigate} />;
+  }
+
+  if (feature.screenKind === 'setup') {
+    return <LedgerSetupScreen />;
+  }
+
   const otherFeatures = FEATURE_REGISTRY.filter((item) => item.name !== feature.name);
 
   return (
