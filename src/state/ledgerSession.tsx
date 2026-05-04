@@ -2,12 +2,18 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { loadLedgerDashboardSnapshot, type LedgerDashboardSnapshot } from '../data/ledger/ledgerSnapshot';
 import { createLedgerSetupMutations } from '../data/ledger/ledgerMutations';
 import { createExpenseDraftMutations } from '../data/ledger/expenseDrafts';
+import {
+  createExpenseReviewMutations,
+  loadExpenseReviewSnapshot,
+  type ExpenseReviewSnapshot,
+} from '../data/ledger/expenseReview';
 
 type LedgerSessionStatus = 'loading' | 'ready' | 'empty' | 'error';
 
 type LedgerSessionState = {
   status: LedgerSessionStatus;
   snapshot: LedgerDashboardSnapshot;
+  reviewSnapshot: ExpenseReviewSnapshot;
   error: string | null;
 };
 
@@ -33,6 +39,11 @@ export type LedgerSessionValue = LedgerSessionState & {
       participants: { participantId: string; percentageBps: number }[];
     };
   }) => Promise<string>;
+  submitExpenseReview: (input: {
+    submissionId: string;
+    decision: 'approved' | 'rejected';
+    reviewReason: string;
+  }) => Promise<string>;
 };
 
 type LedgerSessionProviderProps = {
@@ -45,7 +56,7 @@ const LedgerSessionContext = createContext<LedgerSessionValue | null>(null);
 function createEmptyState(): LedgerSessionState {
   return {
     status: 'loading',
-    snapshot: {
+      snapshot: {
       ledgerId: null,
       hasLedger: false,
       title: 'No ledger yet',
@@ -61,9 +72,15 @@ function createEmptyState(): LedgerSessionState {
           reviewedSubmissionCount: 0,
           approvalScopeNote: '',
         },
+        },
       },
-    },
-    error: null,
+      reviewSnapshot: {
+        hasLedger: false,
+        pendingCount: 0,
+        reviewedCount: 0,
+        items: [],
+      },
+      error: null,
   };
 }
 
@@ -71,22 +88,28 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
   const [state, setState] = useState<LedgerSessionState>(() => createEmptyState());
   const mutations = useMemo(() => createLedgerSetupMutations(dbName), [dbName]);
   const expenseDraftMutations = useMemo(() => createExpenseDraftMutations(dbName), [dbName]);
+  const expenseReviewMutations = useMemo(() => createExpenseReviewMutations(dbName), [dbName]);
 
   const refresh = useCallback(async () => {
     setState((current) => ({ ...current, status: 'loading', error: null }));
 
     try {
-      const snapshot = await loadLedgerDashboardSnapshot(dbName);
+      const [snapshot, reviewSnapshot] = await Promise.all([
+        loadLedgerDashboardSnapshot(dbName),
+        loadExpenseReviewSnapshot(dbName),
+      ]);
 
       setState({
         status: snapshot.hasLedger ? 'ready' : 'empty',
         snapshot,
+        reviewSnapshot,
         error: null,
       });
     } catch (error) {
       setState((current) => ({
         status: 'error',
         snapshot: current.snapshot,
+        reviewSnapshot: current.reviewSnapshot,
         error: error instanceof Error ? error.message : 'Unable to load ledger state',
       }));
     }
@@ -136,13 +159,26 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
     [expenseDraftMutations, refresh],
   );
 
+  const submitExpenseReview = useCallback(
+    async (input: {
+      submissionId: string;
+      decision: 'approved' | 'rejected';
+      reviewReason: string;
+    }) => {
+      const submissionId = await expenseReviewMutations.submitExpenseReview(input);
+      await refresh();
+      return submissionId;
+    },
+    [expenseReviewMutations, refresh],
+  );
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
   const value = useMemo<LedgerSessionValue>(
-    () => ({ ...state, refresh, saveLedgerSetup, addParticipant, submitExpenseDraft }),
-    [addParticipant, refresh, saveLedgerSetup, state, submitExpenseDraft],
+    () => ({ ...state, refresh, saveLedgerSetup, addParticipant, submitExpenseDraft, submitExpenseReview }),
+    [addParticipant, refresh, saveLedgerSetup, state, submitExpenseDraft, submitExpenseReview],
   );
 
   return <LedgerSessionContext.Provider value={value}>{children}</LedgerSessionContext.Provider>;
