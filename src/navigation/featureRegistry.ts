@@ -2,7 +2,7 @@ import { APP_ROUTES } from './routes';
 import type { AppScreenContract } from './types';
 
 export type FeatureRegistryItem = AppScreenContract & {
-  screenKind: 'dashboard' | 'setup' | 'expense' | 'feature';
+  screenKind: 'dashboard' | 'setup' | 'expense' | 'sync' | 'balances';
   accent: string;
   eyebrow: string;
   primaryAction: string;
@@ -42,7 +42,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.sync,
-    screenKind: 'feature',
+    screenKind: 'sync',
     label: 'Sync',
     description: 'Prepare QR transfer and in-person exchange states.',
     eyebrow: 'Sync status',
@@ -52,7 +52,7 @@ export const FEATURE_REGISTRY = [
   },
   {
     name: APP_ROUTES.balances,
-    screenKind: 'feature',
+    screenKind: 'balances',
     label: 'Balances',
     description: 'Inspect settlement-ready balances per currency.',
     eyebrow: 'Settlement',

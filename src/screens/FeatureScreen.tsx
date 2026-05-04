@@ -8,6 +8,8 @@ import { FeatureCard } from '../ui/FeatureCard';
 import { DashboardScreen } from './DashboardScreen';
 import { ExpenseEntryScreen } from './ExpenseEntryScreen';
 import { LedgerSetupScreen } from './LedgerSetupScreen';
+import { SyncScreen } from './SyncScreen';
+import { BalancesScreen } from './BalancesScreen';
 
 type FeatureScreenProps = {
   feature: FeatureRegistryItem;
@@ -25,6 +27,14 @@ export function FeatureScreen({ feature, onNavigate }: FeatureScreenProps) {
 
   if (feature.screenKind === 'expense') {
     return <ExpenseEntryScreen />;
+  }
+
+  if (feature.screenKind === 'sync') {
+    return <SyncScreen />;
+  }
+
+  if (feature.screenKind === 'balances') {
+    return <BalancesScreen />;
   }
 
   const otherFeatures = FEATURE_REGISTRY.filter((item) => item.name !== feature.name);
