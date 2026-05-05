@@ -1,11 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ExpenseSplitPayload } from '../domain/events/types';
 import { useLedgerSession } from '../state/ledgerSession';
 import { AppShell } from '../ui/AppShell';
 import { ExpenseSplitEditor } from '../ui/ExpenseSplitEditor';
 import { FeatureCard } from '../ui/FeatureCard';
 import { LabeledField } from '../ui/LabeledField';
+import { APP_ROUTES } from '../navigation/routes';
+import type { RootStackParamList } from '../navigation/types';
 import { PendingReviewScreen } from './PendingReviewScreen';
 import { SubmissionDetailScreen } from './SubmissionDetailScreen';
 
@@ -47,6 +51,7 @@ function createPayerRow(participantId: string, paidAmountText: string): PayerRow
 
 export function ExpenseEntryScreen() {
   const { snapshot, reviewSnapshot, status, error, submitExpenseDraft, submitExpenseReview } = useLedgerSession();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const participants = snapshot.balanceSummary.participants.map((participant) => ({
     participantId: participant.participantId,
     displayName: participant.displayName,
@@ -124,6 +129,9 @@ export function ExpenseEntryScreen() {
         description="Could not load the local ledger state."
         accent="#6e4a7e"
       >
+        <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
+          <Text style={styles.backButtonLabel}>Back to dashboard</Text>
+        </Pressable>
         <FeatureCard label="Session error" description={error ?? 'Unknown error'} accent="#b14f2e" selected />
       </AppShell>
     );
@@ -137,6 +145,9 @@ export function ExpenseEntryScreen() {
         description="Create the ledger in Setup before recording expenses."
         accent="#6e4a7e"
       >
+        <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
+          <Text style={styles.backButtonLabel}>Back to dashboard</Text>
+        </Pressable>
         <FeatureCard
           label="Ledger not ready"
           description="Open Setup and create the ledger plus participant roster first."
@@ -155,6 +166,9 @@ export function ExpenseEntryScreen() {
         description="Add participants before creating expense rows."
         accent="#6e4a7e"
       >
+        <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
+          <Text style={styles.backButtonLabel}>Back to dashboard</Text>
+        </Pressable>
         <FeatureCard
           label="No participants"
           description="Go to Setup and add participants so payer rows can reference real members."
@@ -174,6 +188,10 @@ export function ExpenseEntryScreen() {
       description="Capture organizer or contributor expenses with payer rows and split controls."
       accent="#6e4a7e"
     >
+      <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
+        <Text style={styles.backButtonLabel}>Back to dashboard</Text>
+      </Pressable>
+
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Expense details</Text>
         {reviewSnapshot.pendingCount > 0 ? (
@@ -305,6 +323,22 @@ export function ExpenseEntryScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: '#6e4a7e',
+    backgroundColor: '#f5efe4',
+  },
+  backButtonLabel: {
+    color: '#6e4a7e',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
   section: {
     gap: 12,
   },

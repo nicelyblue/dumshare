@@ -7,6 +7,7 @@ import {
   runBidirectionalSyncExchange,
 } from '../../domain/sync';
 import { replayLedger } from '../../domain/projections';
+import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type ParsedSyncRequest =
   | { ok: true; payload: ReturnType<typeof decodeSyncRequestQr> }
@@ -20,15 +21,6 @@ type RunSyncTransferInput = {
   repository?: EventRepository;
 };
 
-function resolveLatestLedgerId(dbName: string): string | null {
-  const db = openLedgerDb(dbName);
-  const row = db.sqlite
-    .prepare('SELECT ledger_id AS ledgerId FROM events ORDER BY sequence DESC LIMIT 1')
-    .get() as { ledgerId?: string } | undefined;
-
-  return row?.ledgerId ?? null;
-}
-
 export function parseSyncRequestQr(raw: string): ParsedSyncRequest {
   try {
     return { ok: true, payload: decodeSyncRequestQr(raw) };
@@ -41,7 +33,7 @@ export function parseSyncRequestQr(raw: string): ParsedSyncRequest {
 }
 
 export async function buildSyncRequestQr(dbName = 'dumshare-ui', requesterDeviceId = 'device-contributor-ui'): Promise<string> {
-  const ledgerId = resolveLatestLedgerId(dbName);
+  const ledgerId = await resolveLatestLedgerId(dbName);
 
   if (!ledgerId) {
     throw new Error('Create the ledger before generating a sync request');
@@ -72,7 +64,7 @@ export async function runSyncTransfer({
     throw new Error(parsed.error);
   }
 
-  const ledgerId = resolveLatestLedgerId(dbName);
+  const ledgerId = await resolveLatestLedgerId(dbName);
   if (!ledgerId) {
     throw new Error('Create the ledger before running sync transfer');
   }

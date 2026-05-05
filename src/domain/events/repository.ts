@@ -1,5 +1,5 @@
 import type { LedgerDb } from "../../data/sqlite/client";
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, sql } from "drizzle-orm";
 
 import { events, syncCheckpoints } from "../../data/sqlite/schema";
 import type { EventInput, LedgerEvent } from "./types";
@@ -31,9 +31,10 @@ function mapRowToStoredEvent(row: typeof events.$inferSelect): StoredEvent {
 export function createEventRepository(db: LedgerDb): EventRepository {
   return {
     async appendEvent(input: AppendEventInput): Promise<void> {
-      const [{ nextSequence }] = db.sqlite
-        .prepare("SELECT COALESCE(MAX(sequence), 0) + 1 as nextSequence FROM events")
-        .all() as { nextSequence: number }[];
+      const [row] = await db.orm
+        .select({ nextSequence: sql<number>`COALESCE(MAX(${events.sequence}), 0) + 1` })
+        .from(events);
+      const nextSequence = row?.nextSequence ?? 1;
 
       await db.orm.insert(events).values({
         id: input.id,
@@ -85,15 +86,18 @@ export function createEventRepository(db: LedgerDb): EventRepository {
         throw new Error("lastSequence must be a non-negative integer");
       }
 
-      db.sqlite
-        .prepare(
-          `
-            INSERT INTO sync_checkpoints (peer_id, last_sequence)
-            VALUES (?, ?)
-            ON CONFLICT(peer_id) DO UPDATE SET last_sequence = excluded.last_sequence
-          `,
-        )
-        .run(peerId, lastSequence);
+      await db.orm
+        .insert(syncCheckpoints)
+        .values({
+          peer_id: peerId,
+          last_sequence: lastSequence,
+        })
+        .onConflictDoUpdate({
+          target: syncCheckpoints.peer_id,
+          set: {
+            last_sequence: lastSequence,
+          },
+        });
     },
   };
 }

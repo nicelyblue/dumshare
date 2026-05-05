@@ -1,6 +1,7 @@
 import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import type { EventRepository } from '../../domain/events/repository';
+import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type LedgerSetupInput = {
   title: string;
@@ -16,6 +17,11 @@ type LedgerSetupMutations = {
   addParticipant: (input: ParticipantRosterInput) => Promise<string>;
 };
 
+type NormalizedLedgerSetupInput = {
+  title: string;
+  settlementContext: string;
+};
+
 function sanitizePart(value: string): string {
   return value
     .trim()
@@ -28,19 +34,25 @@ function createEventId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-function resolveLatestLedgerId(dbName: string): string | null {
-  const db = openLedgerDb(dbName);
-  const row = db.sqlite
-    .prepare('SELECT ledger_id AS ledgerId FROM events ORDER BY sequence DESC LIMIT 1')
-    .get() as { ledgerId?: string } | undefined;
+function normalizeLedgerSetupInput(input: LedgerSetupInput): NormalizedLedgerSetupInput {
+  const title = input.title.trim();
+  const settlementContext = input.settlementContext.trim();
 
-  return row?.ledgerId ?? null;
+  if (!title) {
+    throw new Error('Enter a ledger title before creating the ledger');
+  }
+
+  if (!settlementContext) {
+    throw new Error('Enter a settlement context before creating the ledger');
+  }
+
+  return { title, settlementContext };
 }
 
 async function appendLedgerCreatedEvent(
   repository: EventRepository,
   ledgerId: string,
-  input: LedgerSetupInput,
+  input: NormalizedLedgerSetupInput,
 ): Promise<void> {
   await repository.appendEvent({
     id: createEventId('ledger-created'),
@@ -85,15 +97,17 @@ export function createLedgerSetupMutations(dbName = 'dumshare-ui'): LedgerSetupM
 
   return {
     async saveLedgerSetup(input: LedgerSetupInput): Promise<string> {
-      const existingLedgerId = resolveLatestLedgerId(dbName);
-      const nextLedgerId = existingLedgerId ?? `ledger-${sanitizePart(input.title) || 'trip'}-${Date.now()}`;
+      const normalizedInput = normalizeLedgerSetupInput(input);
+      const existingLedgerId = await resolveLatestLedgerId(dbName);
+      const nextLedgerId =
+        existingLedgerId ?? `ledger-${sanitizePart(normalizedInput.title) || 'trip'}-${Date.now()}`;
 
-      await appendLedgerCreatedEvent(repository, nextLedgerId, input);
+      await appendLedgerCreatedEvent(repository, nextLedgerId, normalizedInput);
       return nextLedgerId;
     },
 
     async addParticipant(input: ParticipantRosterInput): Promise<string> {
-      const ledgerId = resolveLatestLedgerId(dbName);
+      const ledgerId = await resolveLatestLedgerId(dbName);
 
       if (!ledgerId) {
         throw new Error('Create the ledger before adding participants');

@@ -1,11 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppShell } from '../ui/AppShell';
 import { SummaryCard } from '../ui/SummaryCard';
 import { useLedgerSession } from '../state/ledgerSession';
+import { APP_ROUTES } from '../navigation/routes';
+import type { RootStackParamList } from '../navigation/types';
 
 export function SyncScreen() {
   const { snapshot, buildSyncRequestQr, parseSyncRequestQr, runSyncTransfer } = useLedgerSession();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [requestPayload, setRequestPayload] = useState('');
   const [generatedPayload, setGeneratedPayload] = useState('');
   const [statusTimeline, setStatusTimeline] = useState<string[]>([]);
@@ -26,6 +31,14 @@ export function SyncScreen() {
       description="Generate a request payload, validate pasted QR text, then run transfer with deterministic status updates."
       accent="#2f6f9f"
     >
+      <Pressable
+        onPress={() => navigation.navigate(APP_ROUTES.dashboard)}
+        accessibilityRole="button"
+        style={styles.backButton}
+      >
+        <Text style={styles.backButtonLabel}>Back to dashboard</Text>
+      </Pressable>
+
       <View style={styles.section}>
         <Text style={styles.label}>Current ledger</Text>
         <Text style={styles.value}>{snapshot.ledgerId ?? 'No ledger selected'}</Text>
@@ -93,6 +106,22 @@ export function SyncScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: '#2f6f9f',
+    backgroundColor: '#f5efe4',
+  },
+  backButtonLabel: {
+    color: '#2f6f9f',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
   section: {
     gap: 10,
   },

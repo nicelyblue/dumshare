@@ -13,6 +13,7 @@ import {
   parseSyncRequestQr as parseSyncRequestQrData,
   runSyncTransfer as runSyncTransferData,
 } from '../data/ledger/syncSession';
+import { clearLedgerDb } from '../data/sqlite/client';
 
 type LedgerSessionStatus = 'loading' | 'ready' | 'empty' | 'error';
 
@@ -54,6 +55,7 @@ export type LedgerSessionValue = LedgerSessionState & {
   buildSyncRequestQr: () => Promise<string>;
   parseSyncRequestQr: (raw: string) => { ok: true; payload: { ledgerId: string; requesterDeviceId: string; lastSeenSequence: number; requestedAt: string; nonce: string } } | { ok: false; error: string };
   runSyncTransfer: (rawRequestQr: string) => Promise<string[]>;
+  resetAppData: () => Promise<void>;
 };
 
 type LedgerSessionProviderProps = {
@@ -205,6 +207,12 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
     [dbName, refresh],
   );
 
+  const resetAppData = useCallback(async () => {
+    clearLedgerDb(dbName);
+    setState(createEmptyState());
+    await refresh();
+  }, [dbName, refresh]);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -220,8 +228,9 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
       buildSyncRequestQr,
       parseSyncRequestQr,
       runSyncTransfer,
+      resetAppData,
     }),
-    [addParticipant, buildSyncRequestQr, parseSyncRequestQr, refresh, runSyncTransfer, saveLedgerSetup, state, submitExpenseDraft, submitExpenseReview],
+    [addParticipant, buildSyncRequestQr, parseSyncRequestQr, refresh, resetAppData, runSyncTransfer, saveLedgerSetup, state, submitExpenseDraft, submitExpenseReview],
   );
 
   return <LedgerSessionContext.Provider value={value}>{children}</LedgerSessionContext.Provider>;

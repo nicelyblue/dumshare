@@ -3,6 +3,8 @@ import { createEventRepository } from '../../domain/events/repository';
 import { buildApprovedBalanceSummary } from '../../domain/balances';
 import { replayLedger } from '../../domain/projections';
 import type { ApprovedBalanceSummary } from '../../domain/balances';
+import type { LedgerEvent } from '../../domain/events/types';
+import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type LedgerDashboardSnapshot = {
   ledgerId: string | null;
@@ -66,19 +68,47 @@ function formatActivityLabel(eventType: string): string {
   }
 }
 
-async function getLatestLedgerId(dbName: string): Promise<string | null> {
-  const db = openLedgerDb(dbName);
-  const row = db.sqlite
-    .prepare('SELECT ledger_id AS ledgerId FROM events ORDER BY sequence DESC LIMIT 1')
-    .get() as { ledgerId?: string } | undefined;
+function sanitizeLedgerCreatedPayload(payloadJson: string): string {
+  const fallbackTitle = 'Recovered ledger';
+  const fallbackContext = 'Legacy ledger metadata was repaired during load.';
 
-  return row?.ledgerId ?? null;
+  try {
+    const parsed = JSON.parse(payloadJson) as Record<string, unknown>;
+    const titleCandidates = [parsed.title, parsed.ledgerTitle, parsed.name];
+    const contextCandidates = [parsed.settlementContext, parsed.settlement, parsed.context, parsed.description];
+
+    const title = titleCandidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+    const settlementContext = contextCandidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+
+    return JSON.stringify({
+      title: typeof title === 'string' ? title.trim() : fallbackTitle,
+      settlementContext: typeof settlementContext === 'string' ? settlementContext.trim() : fallbackContext,
+    });
+  } catch {
+    return JSON.stringify({
+      title: fallbackTitle,
+      settlementContext: fallbackContext,
+    });
+  }
+}
+
+function sanitizeLegacyEventsForReplay(events: LedgerEvent[]): LedgerEvent[] {
+  return events.map((event) => {
+    if (event.eventType !== 'ledger.created') {
+      return event;
+    }
+
+    return {
+      ...event,
+      payloadJson: sanitizeLedgerCreatedPayload(event.payloadJson),
+    };
+  });
 }
 
 export async function loadLedgerDashboardSnapshot(
   dbName = 'dumshare-ui',
 ): Promise<LedgerDashboardSnapshot> {
-  const ledgerId = await getLatestLedgerId(dbName);
+  const ledgerId = await resolveLatestLedgerId(dbName);
 
   if (!ledgerId) {
     return createEmptySnapshot();
@@ -92,7 +122,7 @@ export async function loadLedgerDashboardSnapshot(
     return createEmptySnapshot();
   }
 
-  const projection = replayLedger(events);
+  const projection = replayLedger(sanitizeLegacyEventsForReplay(events));
   const latestEvent = events[events.length - 1];
 
   if (!latestEvent) {

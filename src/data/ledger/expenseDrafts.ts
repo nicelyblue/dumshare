@@ -1,6 +1,7 @@
 import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import type { EventInput, ExpenseCreatedPayload, ExpenseSplitPayload } from '../../domain/events/types';
+import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type ExpenseDraftInput = {
   description: string;
@@ -28,15 +29,6 @@ type ExpenseDraftMutations = {
 
 function createEventId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-}
-
-function resolveLatestLedgerId(dbName: string): string | null {
-  const db = openLedgerDb(dbName);
-  const row = db.sqlite
-    .prepare('SELECT ledger_id AS ledgerId FROM events ORDER BY sequence DESC LIMIT 1')
-    .get() as { ledgerId?: string } | undefined;
-
-  return row?.ledgerId ?? null;
 }
 
 function sanitizeSplit(split: ExpenseSplitPayload): ExpenseSplitPayload {
@@ -150,7 +142,7 @@ export function createExpenseDraftMutations(dbName = 'dumshare-ui'): ExpenseDraf
 
   return {
     async submitExpenseDraft(input: ExpenseDraftInput): Promise<string> {
-      const ledgerId = resolveLatestLedgerId(dbName);
+      const ledgerId = await resolveLatestLedgerId(dbName);
 
       if (!ledgerId) {
         throw new Error('Create the ledger before adding expenses');

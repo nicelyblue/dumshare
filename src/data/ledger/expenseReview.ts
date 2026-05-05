@@ -2,6 +2,7 @@ import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import { replayLedger } from '../../domain/projections';
 import type { EventInput, ExpenseSubmissionReviewedPayload } from '../../domain/events/types';
+import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type ReviewDecision = ExpenseSubmissionReviewedPayload['decision'];
 
@@ -56,15 +57,6 @@ function createEventId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-function resolveLatestLedgerId(dbName: string): string | null {
-  const db = openLedgerDb(dbName);
-  const row = db.sqlite
-    .prepare('SELECT ledger_id AS ledgerId FROM events ORDER BY sequence DESC LIMIT 1')
-    .get() as { ledgerId?: string } | undefined;
-
-  return row?.ledgerId ?? null;
-}
-
 function formatSplitSummary(split: ExpenseReviewItem['proposedExpense']['payers'] | any, proposedSplit: any): string {
   if (proposedSplit.mode === 'equal') {
     return `Equal split across ${proposedSplit.participants.length} participant(s)`;
@@ -90,7 +82,7 @@ function mapDecisionToStatusLabel(decision: 'approved' | 'rejected'): string {
 }
 
 export async function loadExpenseReviewSnapshot(dbName = 'dumshare-ui'): Promise<ExpenseReviewSnapshot> {
-  const ledgerId = resolveLatestLedgerId(dbName);
+  const ledgerId = await resolveLatestLedgerId(dbName);
 
   if (!ledgerId) {
     return {
@@ -185,7 +177,7 @@ export function createExpenseReviewMutations(dbName = 'dumshare-ui'): ExpenseRev
 
   return {
     async submitExpenseReview(input: SubmissionReviewMutationInput): Promise<string> {
-      const ledgerId = resolveLatestLedgerId(dbName);
+      const ledgerId = await resolveLatestLedgerId(dbName);
 
       if (!ledgerId) {
         throw new Error('Create the ledger before reviewing submissions');
