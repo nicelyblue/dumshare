@@ -10,8 +10,8 @@ export type BalanceDetailSnapshot = {
   metadata: ReturnType<typeof buildApprovedBalanceSummary>['metadata'];
 };
 
-export async function loadBalanceDetailSnapshot(dbName = 'dumshare-ui'): Promise<BalanceDetailSnapshot> {
-  const ledgerId = await resolveLatestLedgerId(dbName);
+export async function loadBalanceDetailSnapshot(dbName = 'dumshare-ui', selectedLedgerId?: string | null): Promise<BalanceDetailSnapshot> {
+  const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
 
   if (!ledgerId) {
     return {

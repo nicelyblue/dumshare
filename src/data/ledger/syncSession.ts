@@ -16,6 +16,8 @@ export type ParsedSyncRequest =
 type RunSyncTransferInput = {
   dbName?: string;
   rawRequestQr: string;
+  selectedLedgerId?: string | null;
+  recipientParticipantId?: string | null;
   remoteEvents?: StoredEvent[];
   organizerDeviceId?: string;
   repository?: EventRepository;
@@ -32,8 +34,12 @@ export function parseSyncRequestQr(raw: string): ParsedSyncRequest {
   }
 }
 
-export async function buildSyncRequestQr(dbName = 'dumshare-ui', requesterDeviceId = 'device-contributor-ui'): Promise<string> {
-  const ledgerId = await resolveLatestLedgerId(dbName);
+export async function buildSyncRequestQr(
+  dbName = 'dumshare-ui',
+  requesterDeviceId = 'device-contributor-ui',
+  selectedLedgerId?: string | null,
+): Promise<string> {
+  const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
 
   if (!ledgerId) {
     throw new Error('Create the ledger before generating a sync request');
@@ -55,6 +61,8 @@ export async function buildSyncRequestQr(dbName = 'dumshare-ui', requesterDevice
 export async function runSyncTransfer({
   dbName = 'dumshare-ui',
   rawRequestQr,
+  selectedLedgerId,
+  recipientParticipantId,
   remoteEvents = [],
   organizerDeviceId = 'device-organizer-ui',
   repository,
@@ -64,14 +72,59 @@ export async function runSyncTransfer({
     throw new Error(parsed.error);
   }
 
-  const ledgerId = await resolveLatestLedgerId(dbName);
+  const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
   if (!ledgerId) {
     throw new Error('Create the ledger before running sync transfer');
   }
 
   const activeRepository = repository ?? createEventRepository(openLedgerDb(dbName));
-  const localEvents = await activeRepository.listEventsByLedger(ledgerId);
-  const projection = replayLedger(localEvents);
+  let localEvents = await activeRepository.listEventsByLedger(ledgerId);
+  let projection = replayLedger(localEvents);
+
+  if (recipientParticipantId) {
+    const participantExists = projection.participants.some(
+      (participant) => participant.participantId === recipientParticipantId,
+    );
+
+    if (!participantExists) {
+      throw new Error('Select a valid recipient participant before sharing ledger access');
+    }
+
+    const inviteId = `invite-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const inviteCode = `code-${Math.random().toString(16).slice(2, 10)}`;
+
+    await activeRepository.appendEvent({
+      id: `invite-issued-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      ledgerId,
+      eventType: 'invite.issued',
+      eventVersion: 1,
+      occurredAt: new Date().toISOString(),
+      actorDeviceId: organizerDeviceId,
+      payloadJson: JSON.stringify({
+        inviteId,
+        participantId: recipientParticipantId,
+        inviteCode,
+      }),
+    });
+
+    await activeRepository.appendEvent({
+      id: `invite-consumed-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      ledgerId,
+      eventType: 'invite.consumed',
+      eventVersion: 1,
+      occurredAt: new Date().toISOString(),
+      actorDeviceId: organizerDeviceId,
+      payloadJson: JSON.stringify({
+        inviteId,
+        participantId: recipientParticipantId,
+        contributorDeviceId: parsed.payload.requesterDeviceId,
+      }),
+    });
+
+    localEvents = await activeRepository.listEventsByLedger(ledgerId);
+    projection = replayLedger(localEvents);
+  }
+
   const session = establishSyncSession(projection, organizerDeviceId, parsed.payload);
   const result = await runBidirectionalSyncExchange({
     repository: activeRepository,

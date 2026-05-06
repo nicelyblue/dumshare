@@ -4,6 +4,7 @@ import { clearLedgerDb, openLedgerDb } from '../data/sqlite/client';
 import { createLedgerSetupMutations } from '../data/ledger/ledgerMutations';
 import { buildSyncRequestQr, parseSyncRequestQr, runSyncTransfer } from '../data/ledger/syncSession';
 import { createExpenseDraftMutations } from '../data/ledger/expenseDrafts';
+import { replayLedger } from '../domain/projections';
 
 describe('sync session bridge helpers', () => {
   test('invalid QR payload returns plain-language parse error', () => {
@@ -45,5 +46,26 @@ describe('sync session bridge helpers', () => {
       expect.stringContaining('Receiving'),
       'Sync complete',
     ]);
+  });
+
+  test('selected recipient is claimed as contributor during share', async () => {
+    const dbName = 'phase12-sync-claim-1';
+    clearLedgerDb(dbName);
+    const setup = createLedgerSetupMutations(dbName);
+    const ledgerId = await setup.saveLedgerSetup({
+      title: 'Trip',
+      settlementContext: 'Summer',
+      organizerName: 'Marko',
+    });
+    const alice = await setup.addParticipant({ displayName: 'Alice' });
+
+    const request = await buildSyncRequestQr(dbName, 'device-contributor-alice', ledgerId);
+    await runSyncTransfer({ dbName, rawRequestQr: request, selectedLedgerId: ledgerId, recipientParticipantId: alice });
+
+    const repository = createEventRepository(openLedgerDb(dbName));
+    const events = await repository.listEventsByLedger(ledgerId);
+    const projection = replayLedger(events);
+
+    expect(projection.participantContributorDeviceClaims[alice]).toBe('device-contributor-alice');
   });
 });

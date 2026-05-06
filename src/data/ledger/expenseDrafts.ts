@@ -24,7 +24,7 @@ type BuildExpenseEventInput = {
 };
 
 type ExpenseDraftMutations = {
-  submitExpenseDraft: (input: ExpenseDraftInput) => Promise<string>;
+  submitExpenseDraft: (input: ExpenseDraftInput, selectedLedgerId?: string | null) => Promise<string>;
 };
 
 function createEventId(prefix: string): string {
@@ -141,8 +141,8 @@ export function createExpenseDraftMutations(dbName = 'dumshare-ui'): ExpenseDraf
   const repository = createEventRepository(db);
 
   return {
-    async submitExpenseDraft(input: ExpenseDraftInput): Promise<string> {
-      const ledgerId = await resolveLatestLedgerId(dbName);
+    async submitExpenseDraft(input: ExpenseDraftInput, selectedLedgerId?: string | null): Promise<string> {
+      const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
 
       if (!ledgerId) {
         throw new Error('Create the ledger before adding expenses');

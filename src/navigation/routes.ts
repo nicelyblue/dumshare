@@ -1,5 +1,6 @@
 export const APP_ROUTES = {
   dashboard: 'dashboard',
+  ledgers: 'ledgers',
   setup: 'setup',
   expenseEntry: 'expenseEntry',
   sync: 'sync',
@@ -11,6 +12,11 @@ export const APP_FEATURES = [
     name: APP_ROUTES.dashboard,
     label: 'Dashboard',
     description: 'Review ledger health, approvals, and balance snapshot.',
+  },
+  {
+    name: APP_ROUTES.ledgers,
+    label: 'Ledgers',
+    description: 'Select, create, and delete trip ledgers.',
   },
   {
     name: APP_ROUTES.setup,

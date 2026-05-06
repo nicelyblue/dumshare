@@ -1,7 +1,7 @@
 import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import { replayLedger } from '../../domain/projections';
-import type { EventInput, ExpenseSubmissionReviewedPayload } from '../../domain/events/types';
+import type { EventInput, ExpenseSplitPayload, ExpenseSubmissionReviewedPayload } from '../../domain/events/types';
 import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type ReviewDecision = ExpenseSubmissionReviewedPayload['decision'];
@@ -50,28 +50,28 @@ type SubmissionReviewMutationInput = {
 };
 
 type ExpenseReviewMutations = {
-  submitExpenseReview: (input: SubmissionReviewMutationInput) => Promise<string>;
+  submitExpenseReview: (input: SubmissionReviewMutationInput, selectedLedgerId?: string | null) => Promise<string>;
 };
 
 function createEventId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-function formatSplitSummary(split: ExpenseReviewItem['proposedExpense']['payers'] | any, proposedSplit: any): string {
+export function formatSplitSummary(proposedSplit: ExpenseSplitPayload): string {
   if (proposedSplit.mode === 'equal') {
     return `Equal split across ${proposedSplit.participants.length} participant(s)`;
   }
 
   if (proposedSplit.mode === 'exact') {
     const totalMinor = proposedSplit.participants.reduce(
-      (sum: number, participant: { owedAmountMinor: number }) => sum + participant.owedAmountMinor,
+      (sum, participant) => sum + participant.owedAmountMinor,
       0,
     );
     return `Exact split total ${totalMinor / 100}`;
   }
 
   const totalPercent = proposedSplit.participants.reduce(
-    (sum: number, participant: { percentageBps: number }) => sum + participant.percentageBps,
+    (sum, participant) => sum + participant.percentageBps,
     0,
   );
   return `Percentage split total ${totalPercent / 100}%`;
@@ -81,8 +81,8 @@ function mapDecisionToStatusLabel(decision: 'approved' | 'rejected'): string {
   return decision === 'approved' ? 'Approved by organizer' : 'Rejected by organizer';
 }
 
-export async function loadExpenseReviewSnapshot(dbName = 'dumshare-ui'): Promise<ExpenseReviewSnapshot> {
-  const ledgerId = await resolveLatestLedgerId(dbName);
+export async function loadExpenseReviewSnapshot(dbName = 'dumshare-ui', selectedLedgerId?: string | null): Promise<ExpenseReviewSnapshot> {
+  const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
 
   if (!ledgerId) {
     return {
@@ -115,7 +115,7 @@ export async function loadExpenseReviewSnapshot(dbName = 'dumshare-ui'): Promise
       expenseDate: submission.proposedExpense.expenseDate,
       creatorRole: submission.proposedExpense.creatorRole,
       payers: submission.proposedExpense.payers,
-      splitSummary: formatSplitSummary(submission.proposedExpense.payers, submission.proposedExpense.split),
+      splitSummary: formatSplitSummary(submission.proposedExpense.split),
     },
   }));
 
@@ -176,8 +176,8 @@ export function createExpenseReviewMutations(dbName = 'dumshare-ui'): ExpenseRev
   const repository = createEventRepository(db);
 
   return {
-    async submitExpenseReview(input: SubmissionReviewMutationInput): Promise<string> {
-      const ledgerId = await resolveLatestLedgerId(dbName);
+    async submitExpenseReview(input: SubmissionReviewMutationInput, selectedLedgerId?: string | null): Promise<string> {
+      const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
 
       if (!ledgerId) {
         throw new Error('Create the ledger before reviewing submissions');

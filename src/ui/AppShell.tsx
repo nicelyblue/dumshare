@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOptionalLedgerSession } from '../state/ledgerSession';
 
 type AppShellProps = {
   eyebrow: string;
@@ -11,6 +12,12 @@ type AppShellProps = {
 };
 
 export function AppShell({ eyebrow, title, description, accent, children }: AppShellProps) {
+  const session = useOptionalLedgerSession();
+  const activeLedger =
+    session?.activeLedgerId
+      ? session.ledgers.find((ledger) => ledger.ledgerId === session.activeLedgerId)
+      : null;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.accentBand, { backgroundColor: accent }]} />
@@ -18,6 +25,12 @@ export function AppShell({ eyebrow, title, description, accent, children }: AppS
         <View style={styles.shell}>
           <View style={styles.header}>
             <Text style={[styles.eyebrow, { color: accent }]}>{eyebrow}</Text>
+            {activeLedger ? (
+              <View style={styles.activeLedgerBadge}>
+                <Text style={styles.activeLedgerLabel}>Active ledger</Text>
+                <Text style={styles.activeLedgerValue}>{activeLedger.title}</Text>
+              </View>
+            ) : null}
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.description}>{description}</Text>
           </View>
@@ -61,6 +74,30 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 2.2,
     textTransform: 'uppercase',
+  },
+  activeLedgerBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#d9d0bf',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  activeLedgerLabel: {
+    color: '#6f7a89',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  activeLedgerValue: {
+    color: '#10203a',
+    fontSize: 11,
+    fontWeight: '800',
   },
   title: {
     color: '#10203a',

@@ -2,7 +2,7 @@ import { APP_ROUTES } from './routes';
 import type { AppScreenContract } from './types';
 
 export type FeatureRegistryItem = AppScreenContract & {
-  screenKind: 'dashboard' | 'setup' | 'expense' | 'sync' | 'balances';
+  screenKind: 'dashboard' | 'ledgers' | 'setup' | 'expense' | 'sync' | 'balances';
   accent: string;
   eyebrow: string;
   primaryAction: string;
@@ -19,6 +19,16 @@ export const FEATURE_REGISTRY = [
     primaryAction: 'See current ledger status',
     secondaryAction: 'Check pending approvals',
     accent: '#b14f2e',
+  },
+  {
+    name: APP_ROUTES.ledgers,
+    screenKind: 'ledgers',
+    label: 'Ledgers',
+    description: 'Select an active ledger, create new trips, or delete old ones.',
+    eyebrow: 'Ledger management',
+    primaryAction: 'Manage ledgers',
+    secondaryAction: 'Switch active ledger',
+    accent: '#3f5f7f',
   },
   {
     name: APP_ROUTES.setup,

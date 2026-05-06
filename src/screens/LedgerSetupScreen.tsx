@@ -10,18 +10,39 @@ import type { RootStackParamList } from '../navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export function LedgerSetupScreen() {
-  const { snapshot, status, error, refresh, saveLedgerSetup, addParticipant, resetAppData } = useLedgerSession();
+  const { 
+    snapshot, 
+    status, 
+    error, 
+    refresh, 
+    saveLedgerSetup, 
+    addParticipant, 
+    renameParticipant, 
+    removeParticipant,
+    setupState,
+    startSetup,
+    setStep1Data,
+    progressToStep2,
+    setStep2Data,
+    completeSetup,
+  } = useLedgerSession();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  
   const [title, setTitle] = useState(snapshot.title);
-  const [settlementContext, setSettlementContext] = useState(snapshot.settlementContext);
+  const [organizerName, setOrganizerName] = useState(snapshot.organizerName);
   const [participantName, setParticipantName] = useState('');
+  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const [editingParticipantName, setEditingParticipantName] = useState('');
   const [savedMessage, setSavedMessage] = useState('');
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Initialize setup state on mount
   useEffect(() => {
-    setTitle(snapshot.title);
-    setSettlementContext(snapshot.settlementContext);
-  }, [snapshot.settlementContext, snapshot.title]);
+    if (!setupState.step1Data && !setupState.isComplete) {
+      startSetup();
+    }
+  }, [startSetup, setupState.step1Data, setupState.isComplete]);
 
   const rosterCards = useMemo(
     () =>
@@ -32,13 +53,37 @@ export function LedgerSetupScreen() {
     [snapshot.balanceSummary.participants],
   );
 
-  async function handleSaveLedger(): Promise<void> {
+  async function handleStep1Submit(): Promise<void> {
+    const titleTrimmed = title.trim();
+    const organizerNameTrimmed = organizerName.trim();
+
+    if (!titleTrimmed || !organizerNameTrimmed) {
+      setErrorMessage('Enter ledger title and organizer name to continue.');
+      return;
+    }
+
     try {
-      const nextLedgerId = await saveLedgerSetup({ title, settlementContext });
-      setSavedMessage(nextLedgerId ? 'Ledger setup saved locally.' : 'Ledger setup saved.');
+      setIsLoading(true);
+      setErrorMessage('');
+      
+      // Save Step 1 data to context
+      setStep1Data({ title: titleTrimmed, organizerName: organizerNameTrimmed });
+      
+      // Create the ledger
+      await saveLedgerSetup({ 
+        title: titleTrimmed, 
+        settlementContext: organizerNameTrimmed 
+      });
+      
       await refresh();
+      
+      // Move to Step 2
+      progressToStep2();
+      setSavedMessage('');
     } catch (setupError) {
-      setSavedMessage(setupError instanceof Error ? setupError.message : 'Unable to save ledger setup.');
+      const errorMsg = setupError instanceof Error ? setupError.message : 'Unable to save ledger. Please try again.';
+      setErrorMessage(errorMsg);
+      setIsLoading(false);
     }
   }
 
@@ -63,20 +108,73 @@ export function LedgerSetupScreen() {
     }
   }
 
-  async function handleResetAppData(): Promise<void> {
+  function handleStartEditParticipant(participantId: string, displayName: string): void {
+    setEditingParticipantId(participantId);
+    setEditingParticipantName(displayName);
+    setSavedMessage('');
+  }
+
+  async function handleSaveParticipantEdit(): Promise<void> {
+    if (!editingParticipantId) {
+      return;
+    }
+
     try {
-      await resetAppData();
-      setParticipantName('');
-      setSavedMessage('Local app data deleted. Start by creating a new ledger.');
-      setConfirmReset(false);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: APP_ROUTES.dashboard }],
+      await renameParticipant({
+        participantId: editingParticipantId,
+        displayName: editingParticipantName,
       });
-    } catch (resetError) {
-      setSavedMessage(resetError instanceof Error ? resetError.message : 'Unable to delete local app data.');
+      setSavedMessage('Participant updated.');
+      setEditingParticipantId(null);
+      setEditingParticipantName('');
+      await refresh();
+    } catch (participantError) {
+      setSavedMessage(participantError instanceof Error ? participantError.message : 'Unable to update participant.');
     }
   }
+
+  async function handleDeleteParticipant(participantId: string): Promise<void> {
+    try {
+      await removeParticipant({ participantId });
+      setSavedMessage('Participant removed from roster.');
+      if (editingParticipantId === participantId) {
+        setEditingParticipantId(null);
+        setEditingParticipantName('');
+      }
+      await refresh();
+    } catch (participantError) {
+      setSavedMessage(participantError instanceof Error ? participantError.message : 'Unable to remove participant.');
+    }
+  }
+
+  async function handleStep2Complete(): Promise<void> {
+    if (rosterCards.length === 0) {
+      setErrorMessage('Add at least one participant before completing setup.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      
+      // Store Step 2 data
+      setStep2Data(rosterCards.map((p) => p.participantId));
+      
+      // Mark setup as complete
+      completeSetup();
+      
+      // Navigate to Dashboard
+      navigation.navigate(APP_ROUTES.dashboard);
+      
+      setSavedMessage('');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Unable to complete setup.';
+      setErrorMessage(errorMsg);
+      setIsLoading(false);
+    }
+  }
+
+  const isStep1Valid = title.trim().length > 0 && organizerName.trim().length > 0;
 
   return (
     <AppShell
@@ -94,90 +192,190 @@ export function LedgerSetupScreen() {
       </Pressable>
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Ledger details</Text>
-        <LabeledField label="Ledger title" value={title} onChangeText={setTitle} placeholder="Barcelona weekend" helperText="This is the main trip name shown in the dashboard." />
-        <LabeledField label="Settlement context" value={settlementContext} onChangeText={setSettlementContext} placeholder="per-currency balances" helperText="Describe how the group settles after the trip." multiline numberOfLines={3} textAlignVertical="top" />
-        <Pressable onPress={handleSaveLedger} accessibilityRole="button" style={styles.primaryButton}>
-          <Text style={styles.primaryButtonLabel}>{snapshot.ledgerId ? 'Save ledger changes' : 'Create ledger'}</Text>
-        </Pressable>
-      </View>
+        <Text style={styles.stepLabel}>
+          Step {setupState.activeStep === 'step1' ? 1 : 2} of 2
+        </Text>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Participant roster</Text>
-        <LabeledField label="Add participant" value={participantName} onChangeText={setParticipantName} placeholder="Alice" helperText="Add names one at a time to keep the roster clear." />
-        <Pressable
-          onPress={handleAddParticipant}
-          accessibilityRole="button"
-          disabled={!snapshot.hasLedger}
-          style={[styles.secondaryButton, !snapshot.hasLedger ? styles.secondaryButtonDisabled : null]}
-        >
-          <Text style={styles.secondaryButtonLabel}>Add to roster</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Current roster</Text>
-        <View style={styles.rosterList}>
-          {rosterCards.length > 0 ? (
-            rosterCards.map((participant) => (
-              <FeatureCard
-                key={participant.participantId}
-                label={participant.displayName}
-                description={participant.participantId}
-                accent="#2f5d62"
-                selected={false}
-                actionLabel="Participant"
-              />
-            ))
-          ) : (
-            <FeatureCard
-              label="No participants yet"
-              description="Add people to the trip roster after creating the ledger."
-              accent="#2f5d62"
-              selected
+        {setupState.activeStep === 'step1' ? (
+          <View style={styles.stepBlock}>
+            <Text style={styles.sectionLabel}>Ledger details</Text>
+            <LabeledField 
+              label="Ledger title" 
+              value={title} 
+              onChangeText={setTitle} 
+              placeholder="Barcelona weekend" 
+              helperText="This is the main trip name shown in the dashboard." 
             />
-          )}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Danger zone</Text>
-        <Pressable
-          onPress={() => setConfirmReset((current) => !current)}
-          accessibilityRole="button"
-          style={styles.dangerButton}
-        >
-          <Text style={styles.dangerButtonLabel}>Delete app data</Text>
-        </Pressable>
-        {confirmReset ? (
-          <FeatureCard
-            label="Confirm delete"
-            description="This clears the local ledger database and setup/session state on this device. This action cannot be undone."
-            accent="#b14f2e"
-            selected
-            actionLabel="Destructive action"
-            onPress={() => {
-              void handleResetAppData();
-            }}
-          />
+            <LabeledField 
+              label="Organizer name" 
+              value={organizerName} 
+              onChangeText={setOrganizerName} 
+              placeholder="Your name" 
+              helperText="Who is organizing this trip?" 
+            />
+            <Pressable 
+              onPress={() => {
+                void handleStep1Submit();
+              }} 
+              accessibilityRole="button" 
+              disabled={!isStep1Valid || isLoading}
+              style={[styles.primaryButton, (!isStep1Valid || isLoading) ? styles.primaryButtonDisabled : null]}
+            >
+              <Text style={styles.primaryButtonLabel}>{isLoading ? 'Loading...' : 'Continue to Step 2'}</Text>
+            </Pressable>
+            {errorMessage ? (
+              <View style={styles.errorBlock}>
+                <Text style={styles.errorMessage}>{errorMessage}</Text>
+                <Pressable 
+                  onPress={() => {
+                    void handleStep1Submit();
+                  }}
+                  accessibilityRole="button"
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryButtonLabel}>Retry</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         ) : null}
+
+        {setupState.activeStep === 'step2' ? (
+          <View style={styles.stepBlock}>
+            <Text style={styles.sectionLabel}>Add participants</Text>
+            <LabeledField 
+              label="Participant name" 
+              value={participantName} 
+              onChangeText={setParticipantName} 
+              placeholder="Alice" 
+              helperText="Add names one at a time." 
+            />
+            <Pressable
+              onPress={() => {
+                void handleAddParticipant();
+              }}
+              accessibilityRole="button"
+              disabled={!snapshot.hasLedger}
+              style={[styles.secondaryButton, !snapshot.hasLedger ? styles.secondaryButtonDisabled : null]}
+            >
+              <Text style={styles.secondaryButtonLabel}>Add to roster</Text>
+            </Pressable>
+
+            <Text style={styles.sectionLabel}>Roster ({rosterCards.length})</Text>
+            <View style={styles.rosterList}>
+              {rosterCards.length > 0 ? (
+                rosterCards.map((participant) => (
+                  <View key={participant.participantId} style={styles.rosterCard}>
+                    <Text style={styles.rosterName}>{participant.displayName}</Text>
+                    {snapshot.organizerParticipantId === participant.participantId ? (
+                      <Text style={styles.organizerTag}>Organizer</Text>
+                    ) : null}
+                    <Text style={styles.rosterId}>{participant.participantId}</Text>
+
+                    <View style={styles.rosterActionsRow}>
+                      <Pressable
+                        accessibilityRole="button"
+                        style={styles.rowActionButton}
+                        onPress={() => {
+                          handleStartEditParticipant(participant.participantId, participant.displayName);
+                        }}
+                      >
+                        <Text style={styles.rowActionLabel}>Edit</Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        style={[styles.rowActionButton, styles.rowDangerActionButton]}
+                        onPress={() => {
+                          void handleDeleteParticipant(participant.participantId);
+                        }}
+                      >
+                        <Text style={[styles.rowActionLabel, styles.rowDangerActionLabel]}>Delete</Text>
+                      </Pressable>
+                    </View>
+
+                    {editingParticipantId === participant.participantId ? (
+                      <View style={styles.editBlock}>
+                        <LabeledField
+                          label="Edit participant"
+                          value={editingParticipantName}
+                          onChangeText={setEditingParticipantName}
+                          placeholder="Updated name"
+                        />
+                        <View style={styles.editActionsRow}>
+                          <Pressable accessibilityRole="button" style={styles.rowActionButton} onPress={() => {
+                            void handleSaveParticipantEdit();
+                          }}>
+                            <Text style={styles.rowActionLabel}>Save</Text>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            style={styles.rowActionButton}
+                            onPress={() => {
+                              setEditingParticipantId(null);
+                              setEditingParticipantName('');
+                            }}
+                          >
+                            <Text style={styles.rowActionLabel}>Cancel</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    ) : null}
+                  </View>
+                ))
+              ) : (
+                <FeatureCard
+                  label="No participants yet"
+                  description="Add people to the trip roster after creating the ledger."
+                  accent="#2f5d62"
+                  selected
+                />
+              )}
+            </View>
+
+            <Pressable 
+              onPress={() => {
+                void handleStep2Complete();
+              }}
+              accessibilityRole="button"
+              disabled={rosterCards.length === 0 || isLoading}
+              style={[styles.primaryButton, (rosterCards.length === 0 || isLoading) ? styles.primaryButtonDisabled : null]}
+            >
+              <Text style={styles.primaryButtonLabel}>{isLoading ? 'Completing...' : 'Complete Setup'}</Text>
+            </Pressable>
+            {errorMessage ? (
+              <View style={styles.errorBlock}>
+                <Text style={styles.errorMessage}>{errorMessage}</Text>
+                <Pressable 
+                  onPress={() => {
+                    void handleStep2Complete();
+                  }}
+                  accessibilityRole="button"
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryButtonLabel}>Retry</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
       </View>
-
-      {status === 'error' ? (
-        <FeatureCard label="Setup error" description={error ?? 'Could not load setup state.'} accent="#b14f2e" selected />
-      ) : null}
-
-      {savedMessage ? (
-        <View style={styles.messageBox}>
-          <Text style={styles.messageText}>{savedMessage}</Text>
-        </View>
-      ) : null}
     </AppShell>
   );
 }
 
 const styles = StyleSheet.create({
   section: {
+    gap: 12,
+  },
+  stepLabel: {
+    color: '#2f5d62',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  stepBlock: {
     gap: 12,
   },
   backButton: {
@@ -210,6 +408,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#2f5d62',
     alignSelf: 'flex-start',
   },
+  primaryButtonDisabled: {
+    opacity: 0.5,
+  },
   primaryButtonLabel: {
     color: '#f5efe4',
     fontSize: 12,
@@ -236,33 +437,101 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  dangerButton: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff1ee',
-    borderWidth: 1,
-    borderColor: '#b14f2e',
-    alignSelf: 'flex-start',
-  },
-  dangerButtonLabel: {
-    color: '#b14f2e',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
   rosterList: {
     gap: 12,
   },
-  messageBox: {
-    borderRadius: 18,
-    backgroundColor: '#eef3ef',
-    padding: 14,
+  rosterCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d9d0bf',
+    backgroundColor: '#ffffff',
+    padding: 12,
+    gap: 8,
   },
-  messageText: {
+  rosterName: {
+    color: '#10203a',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  organizerTag: {
+    alignSelf: 'flex-start',
     color: '#2f5d62',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    backgroundColor: '#e9f2ef',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  rosterId: {
+    color: '#6b5e4c',
+    fontSize: 12,
+  },
+  rosterActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  rowActionButton: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#2f5d62',
+    backgroundColor: '#f5efe4',
+  },
+  rowActionLabel: {
+    color: '#2f5d62',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  rowDangerActionButton: {
+    borderColor: '#b14f2e',
+    backgroundColor: '#fff1ee',
+  },
+  rowDangerActionLabel: {
+    color: '#b14f2e',
+  },
+  editBlock: {
+    gap: 10,
+    marginTop: 4,
+  },
+  editActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  errorMessage: {
+    color: '#b14f2e',
     fontSize: 14,
     lineHeight: 20,
+    marginTop: 8,
+  },
+  errorBlock: {
+    borderRadius: 12,
+    backgroundColor: '#fff1ee',
+    borderWidth: 1,
+    borderColor: '#d9a8a0',
+    padding: 12,
+    gap: 10,
+    marginTop: 8,
+  },
+  retryButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#b14f2e',
+    backgroundColor: '#ffffff',
+  },
+  retryButtonLabel: {
+    color: '#b14f2e',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

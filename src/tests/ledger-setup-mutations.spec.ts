@@ -3,6 +3,7 @@ import { createLedgerSetupMutations } from '../data/ledger/ledgerMutations';
 import { clearLedgerDb, openLedgerDb } from '../data/sqlite/client';
 import { loadLedgerDashboardSnapshot } from '../data/ledger/ledgerSnapshot';
 import { createEventRepository } from '../domain/events/repository';
+import { createExpenseDraftMutations } from '../data/ledger/expenseDrafts';
 
 describe('ledger-setup-mutations', () => {
   const dbName = 'ledger-setup-mutations-test-db';
@@ -60,6 +61,72 @@ describe('ledger-setup-mutations', () => {
     expect(snapshot.ledgerId).toBeNull();
     expect(snapshot.participantCount).toBe(0);
     expect(snapshot.title).toBe('No ledger yet');
+  });
+
+  test('participant can be renamed and updated name appears in snapshot', async () => {
+    const setup = createLedgerSetupMutations(dbName);
+
+    await setup.saveLedgerSetup({
+      title: 'Weekend Trip',
+      settlementContext: 'per-currency balances',
+    });
+    const participantId = await setup.addParticipant({ displayName: 'Alice' });
+
+    await setup.renameParticipant({ participantId, displayName: 'Alicia' });
+
+    const snapshot = await loadLedgerDashboardSnapshot(dbName);
+    const renamed = snapshot.balanceSummary.participants.find((participant) => participant.participantId === participantId);
+    expect(renamed?.displayName).toBe('Alicia');
+    expect(snapshot.latestActivityLabel).toBe('Participant renamed');
+  });
+
+  test('participant can be removed when no ledger activity references it', async () => {
+    const setup = createLedgerSetupMutations(dbName);
+
+    await setup.saveLedgerSetup({
+      title: 'Weekend Trip',
+      settlementContext: 'per-currency balances',
+    });
+    await setup.addParticipant({ displayName: 'Alice' });
+    const removableId = await setup.addParticipant({ displayName: 'Bob' });
+
+    await setup.removeParticipant({ participantId: removableId });
+
+    const snapshot = await loadLedgerDashboardSnapshot(dbName);
+    expect(snapshot.participantCount).toBe(2);
+    const names = snapshot.balanceSummary.participants.map((participant) => participant.displayName);
+    expect(names).toContain('Organizer');
+    expect(names).toContain('Alice');
+    expect(snapshot.latestActivityLabel).toBe('Participant removed');
+  });
+
+  test('participant removal is blocked once ledger activity references them', async () => {
+    const setup = createLedgerSetupMutations(dbName);
+    const draftMutations = createExpenseDraftMutations(dbName);
+
+    await setup.saveLedgerSetup({
+      title: 'Weekend Trip',
+      settlementContext: 'per-currency balances',
+    });
+    const aliceId = await setup.addParticipant({ displayName: 'Alice' });
+    const bobId = await setup.addParticipant({ displayName: 'Bob' });
+
+    await draftMutations.submitExpenseDraft({
+      description: 'Dinner',
+      currency: 'EUR',
+      totalAmountMinor: 2000,
+      expenseDate: '2026-05-05',
+      creatorRole: 'organizer',
+      payers: [{ participantId: aliceId, paidAmountMinor: 2000 }],
+      split: {
+        mode: 'equal',
+        participants: [{ participantId: aliceId }, { participantId: bobId }],
+      },
+    });
+
+    await expect(setup.removeParticipant({ participantId: bobId })).rejects.toThrow(
+      'Cannot remove participant with existing ledger activity or invites',
+    );
   });
 
   test('dashboard snapshot recovers from legacy malformed ledger.created payload', async () => {

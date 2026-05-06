@@ -19,6 +19,8 @@ type PayerRow = {
   paidAmountText: string;
 };
 
+type EntryStep = 'details' | 'payers' | 'split';
+
 function toMinorAmount(value: string): number {
   const sanitized = value.replace(/[^0-9.]/g, '').trim();
 
@@ -70,6 +72,7 @@ export function ExpenseEntryScreen() {
   const [message, setMessage] = useState('');
   const [panel, setPanel] = useState<'entry' | 'pending' | 'detail'>('entry');
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
+  const [entryStep, setEntryStep] = useState<EntryStep>('details');
 
   const totalAmountMinor = toMinorAmount(totalAmountText);
 
@@ -77,6 +80,11 @@ export function ExpenseEntryScreen() {
     () => payers.reduce((sum, payer) => sum + toMinorAmount(payer.paidAmountText), 0),
     [payers],
   );
+
+  const stepOrder: EntryStep[] = ['details', 'payers', 'split'];
+  const stepIndex = stepOrder.indexOf(entryStep);
+  const detailsValid = description.trim().length > 0 && totalAmountMinor > 0;
+  const payersValid = payers.length > 0 && payerTotalMinor === totalAmountMinor && totalAmountMinor > 0;
 
   function cycleParticipant(currentId: string): string {
     if (participants.length === 0) {
@@ -135,6 +143,32 @@ export function ExpenseEntryScreen() {
         <FeatureCard label="Session error" description={error ?? 'Unknown error'} accent="#b14f2e" selected />
       </AppShell>
     );
+  }
+
+  function goNextStep(): void {
+    if (entryStep === 'details' && !detailsValid) {
+      setMessage('Enter expense name and total amount before continuing.');
+      return;
+    }
+
+    if (entryStep === 'payers' && !payersValid) {
+      setMessage('Payer amounts must add up exactly to the total amount.');
+      return;
+    }
+
+    setMessage('');
+    const next = stepOrder[stepIndex + 1];
+    if (next) {
+      setEntryStep(next);
+    }
+  }
+
+  function goBackStep(): void {
+    const prev = stepOrder[stepIndex - 1];
+    if (prev) {
+      setMessage('');
+      setEntryStep(prev);
+    }
   }
 
   if (!snapshot.hasLedger) {
@@ -199,82 +233,106 @@ export function ExpenseEntryScreen() {
             <Text style={styles.secondaryButtonLabel}>Review pending submissions ({reviewSnapshot.pendingCount})</Text>
           </Pressable>
         ) : null}
-        <LabeledField label="Description" value={description} onChangeText={setDescription} placeholder="Dinner at El Born" helperText="Keep labels specific so review is easy." />
-        <LabeledField label="Currency" value={currency} onChangeText={setCurrency} placeholder="EUR" helperText="Per-currency settlement is preserved in the ledger." autoCapitalize="characters" />
-        <LabeledField label="Expense date" value={expenseDate} onChangeText={setExpenseDate} placeholder="2026-05-04" helperText="Use ISO style for deterministic event replay." />
-        <LabeledField label="Total amount" value={totalAmountText} onChangeText={setTotalAmountText} placeholder="0.00" helperText="Major units are converted to minor units for storage." keyboardType="decimal-pad" />
+        <Text style={styles.stepLabel}>Step {stepIndex + 1} of 3</Text>
 
-        <View style={styles.roleRow}>
-          <Pressable
-            style={[styles.roleButton, creatorRole === 'organizer' ? styles.roleButtonActive : null]}
-            onPress={() => setCreatorRole('organizer')}
-          >
-            <Text style={[styles.roleButtonText, creatorRole === 'organizer' ? styles.roleButtonTextActive : null]}>Organizer</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.roleButton, creatorRole === 'contributor' ? styles.roleButtonActive : null]}
-            onPress={() => setCreatorRole('contributor')}
-          >
-            <Text style={[styles.roleButtonText, creatorRole === 'contributor' ? styles.roleButtonTextActive : null]}>Contributor</Text>
-          </Pressable>
-        </View>
-      </View>
+        {entryStep === 'details' ? (
+          <View style={styles.stepBlock}>
+            <LabeledField label="Description" value={description} onChangeText={setDescription} placeholder="Dinner at El Born" helperText="Keep labels specific so review is easy." />
+            <LabeledField label="Currency" value={currency} onChangeText={setCurrency} placeholder="EUR" helperText="Per-currency settlement is preserved in the ledger." autoCapitalize="characters" />
+            <LabeledField label="Expense date" value={expenseDate} onChangeText={setExpenseDate} placeholder="2026-05-04" helperText="Use ISO style for deterministic event replay." />
+            <LabeledField label="Total amount" value={totalAmountText} onChangeText={setTotalAmountText} placeholder="0.00" helperText="Major units are converted to minor units for storage." keyboardType="decimal-pad" />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Payer rows</Text>
-        {payers.map((payer, index) => {
-          const payerDetails = participants.find((participant) => participant.participantId === payer.participantId);
-
-          return (
-            <View key={payer.rowId} style={styles.payerRow}>
+            <View style={styles.roleRow}>
               <Pressable
-                style={styles.payerNameButton}
-                onPress={() => {
-                  setPayers((current) =>
-                    current.map((candidate) =>
-                      candidate.rowId === payer.rowId
-                        ? { ...candidate, participantId: cycleParticipant(candidate.participantId) }
-                        : candidate,
-                    ),
-                  );
-                }}
+                style={[styles.roleButton, creatorRole === 'organizer' ? styles.roleButtonActive : null]}
+                onPress={() => setCreatorRole('organizer')}
               >
-                <Text style={styles.payerNameText}>{payerDetails?.displayName ?? `Participant ${index + 1}`}</Text>
+                <Text style={[styles.roleButtonText, creatorRole === 'organizer' ? styles.roleButtonTextActive : null]}>Organizer</Text>
               </Pressable>
-              <View style={styles.payerAmountField}>
-                <LabeledField
-                  label="Paid amount"
-                  value={payer.paidAmountText}
-                  onChangeText={(text) => {
-                    setPayers((current) =>
-                      current.map((candidate) =>
-                        candidate.rowId === payer.rowId ? { ...candidate, paidAmountText: text } : candidate,
-                      ),
-                    );
-                  }}
-                  placeholder="0.00"
-                  keyboardType="decimal-pad"
-                />
-              </View>
+              <Pressable
+                style={[styles.roleButton, creatorRole === 'contributor' ? styles.roleButtonActive : null]}
+                onPress={() => setCreatorRole('contributor')}
+              >
+                <Text style={[styles.roleButtonText, creatorRole === 'contributor' ? styles.roleButtonTextActive : null]}>Contributor</Text>
+              </Pressable>
             </View>
-          );
-        })}
-        <Pressable style={styles.secondaryButton} onPress={handleAddPayer}>
-          <Text style={styles.secondaryButtonLabel}>Add payer row</Text>
-        </Pressable>
-        <Text style={styles.helperText}>Payer total {payerTotalMinor / 100} versus expense total {totalAmountMinor / 100}</Text>
+          </View>
+        ) : null}
+
+        {entryStep === 'payers' ? (
+          <View style={styles.stepBlock}>
+            <Text style={styles.helperText}>Step 2: select who paid and how much. Paid total must equal expense total.</Text>
+            {payers.map((payer, index) => {
+              const payerDetails = participants.find((participant) => participant.participantId === payer.participantId);
+
+              return (
+                <View key={payer.rowId} style={styles.payerRow}>
+                  <Pressable
+                    style={styles.payerNameButton}
+                    onPress={() => {
+                      setPayers((current) =>
+                        current.map((candidate) =>
+                          candidate.rowId === payer.rowId
+                            ? { ...candidate, participantId: cycleParticipant(candidate.participantId) }
+                            : candidate,
+                        ),
+                      );
+                    }}
+                  >
+                    <Text style={styles.payerNameText}>{payerDetails?.displayName ?? `Participant ${index + 1}`}</Text>
+                  </Pressable>
+                  <View style={styles.payerAmountField}>
+                    <LabeledField
+                      label="Paid amount"
+                      value={payer.paidAmountText}
+                      onChangeText={(text) => {
+                        setPayers((current) =>
+                          current.map((candidate) =>
+                            candidate.rowId === payer.rowId ? { ...candidate, paidAmountText: text } : candidate,
+                          ),
+                        );
+                      }}
+                      placeholder="0.00"
+                      keyboardType="decimal-pad"
+                    />
+                  </View>
+                </View>
+              );
+            })}
+            <Pressable style={styles.secondaryButton} onPress={handleAddPayer}>
+              <Text style={styles.secondaryButtonLabel}>Add payer row</Text>
+            </Pressable>
+            <Text style={styles.helperText}>Payer total {payerTotalMinor / 100} versus expense total {totalAmountMinor / 100}</Text>
+          </View>
+        ) : null}
+
+        {entryStep === 'split' ? (
+          <View style={styles.stepBlock}>
+            <Text style={styles.helperText}>Step 3: choose how the expense is split. Non-equal modes stay balanced automatically.</Text>
+            <ExpenseSplitEditor
+              participants={participants}
+              totalAmountMinor={totalAmountMinor}
+              split={split}
+              onChange={setSplit}
+            />
+          </View>
+        ) : null}
       </View>
 
-      <ExpenseSplitEditor
-        participants={participants}
-        totalAmountMinor={totalAmountMinor}
-        split={split}
-        onChange={setSplit}
-      />
-
-      <Pressable style={styles.primaryButton} onPress={handleSubmitExpense}>
-        <Text style={styles.primaryButtonLabel}>Submit expense</Text>
-      </Pressable>
+      <View style={styles.flowActionsRow}>
+        <Pressable style={styles.secondaryButton} onPress={goBackStep} disabled={entryStep === 'details'}>
+          <Text style={styles.secondaryButtonLabel}>Back</Text>
+        </Pressable>
+        {entryStep !== 'split' ? (
+          <Pressable style={styles.primaryButton} onPress={goNextStep}>
+            <Text style={styles.primaryButtonLabel}>Next</Text>
+          </Pressable>
+        ) : (
+          <Pressable style={styles.primaryButton} onPress={handleSubmitExpense}>
+            <Text style={styles.primaryButtonLabel}>Submit expense</Text>
+          </Pressable>
+        )}
+      </View>
 
       {message ? (
         <View style={styles.messageBox}>
@@ -340,6 +398,16 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   section: {
+    gap: 12,
+  },
+  stepLabel: {
+    color: '#6e4a7e',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  stepBlock: {
     gap: 12,
   },
   sectionLabel: {
@@ -417,6 +485,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#5b2f73',
     alignSelf: 'flex-start',
+  },
+  flowActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   primaryButtonLabel: {
     color: '#f5efe4',

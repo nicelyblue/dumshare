@@ -15,6 +15,11 @@ export function SyncScreen() {
   const [generatedPayload, setGeneratedPayload] = useState('');
   const [statusTimeline, setStatusTimeline] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [recipientParticipantId, setRecipientParticipantId] = useState<string | null>(null);
+
+  const participants = snapshot.balanceSummary.participants;
+
+  const selectedRecipient = participants.find((participant) => participant.participantId === recipientParticipantId);
 
   const parseResult = useMemo(() => {
     if (!requestPayload.trim()) {
@@ -83,20 +88,60 @@ export function SyncScreen() {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.label}>Recipient participant</Text>
+        <Text style={styles.value}>
+          {selectedRecipient ? `${selectedRecipient.displayName} (${selectedRecipient.participantId})` : 'No recipient selected'}
+        </Text>
+        <View style={styles.recipientRow}>
+          {participants.length > 0 ? (
+            participants.map((participant) => (
+              <Pressable
+                key={participant.participantId}
+                style={[
+                  styles.recipientButton,
+                  recipientParticipantId === participant.participantId ? styles.recipientButtonActive : null,
+                ]}
+                onPress={() => setRecipientParticipantId(participant.participantId)}
+              >
+                <Text
+                  style={[
+                    styles.recipientButtonLabel,
+                    recipientParticipantId === participant.participantId ? styles.recipientButtonLabelActive : null,
+                  ]}
+                >
+                  {participant.displayName}
+                </Text>
+              </Pressable>
+            ))
+          ) : (
+            <Text style={styles.helperText}>Add participants before assigning contributor recipient.</Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <Pressable
           accessibilityRole="button"
+          disabled={!recipientParticipantId}
           onPress={async () => {
             setError(null);
+            if (!recipientParticipantId) {
+              setError('Select a recipient participant before running transfer.');
+              return;
+            }
             try {
-              setStatusTimeline(await runSyncTransfer(requestPayload));
+              setStatusTimeline(await runSyncTransfer(requestPayload, recipientParticipantId));
             } catch (nextError) {
               setError(nextError instanceof Error ? nextError.message : 'Unable to run sync transfer');
             }
           }}
-          style={styles.button}
+          style={[styles.button, !recipientParticipantId ? styles.buttonDisabled : null]}
         >
           <Text style={styles.buttonLabel}>Run transfer</Text>
         </Pressable>
+        {!recipientParticipantId ? (
+          <Text style={styles.helperText}>Select a recipient participant to enable transfer.</Text>
+        ) : null}
       </View>
 
       {statusTimeline.length > 0 ? <SummaryCard label="Transfer timeline" value="Sync progress" detail={statusTimeline.join(' → ')} /> : null}
@@ -137,12 +182,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  helperText: {
+    color: '#51617a',
+    fontSize: 13,
+    lineHeight: 18,
+  },
   button: {
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
     backgroundColor: '#10203a',
     alignSelf: 'flex-start',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   buttonLabel: {
     color: '#f5efe4',
@@ -160,5 +213,29 @@ const styles = StyleSheet.create({
     padding: 12,
     color: '#10203a',
     textAlignVertical: 'top',
+  },
+  recipientRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  recipientButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#2f6f9f',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  recipientButtonActive: {
+    backgroundColor: '#deebf5',
+  },
+  recipientButtonLabel: {
+    color: '#2f6f9f',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  recipientButtonLabelActive: {
+    color: '#10203a',
   },
 });

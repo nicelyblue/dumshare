@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { APP_ROUTES } from '../navigation/routes';
 import type { AppRouteName } from '../navigation/types';
 import { AppShell } from '../ui/AppShell';
@@ -20,7 +21,14 @@ function formatCurrencyMinor(amountMinor: number): string {
 }
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
-  const { snapshot, status, error, refresh } = useLedgerSession();
+  const { snapshot, status, error, refresh, clearSetupState } = useLedgerSession();
+
+  // Clear setup state when dashboard comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      clearSetupState();
+    }, [clearSetupState]),
+  );
 
   const balanceRows = snapshot.balanceSummary.participants.flatMap((participant) =>
     participant.balancesByCurrency.map((row) => ({
@@ -95,6 +103,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Quick navigation</Text>
         <View style={styles.quickActions}>
+          <FeatureCard label="Ledgers" description="Switch or create ledgers" accent="#3f5f7f" onPress={() => onNavigate(APP_ROUTES.ledgers)} actionLabel="Manage ledgers" />
           <FeatureCard label="Ledger Setup" description="Edit title and roster" accent="#2f5d62" onPress={() => onNavigate(APP_ROUTES.setup)} actionLabel="Open setup" />
           <FeatureCard label="Expense Entry" description="Capture a new expense" accent="#6e4a7e" onPress={() => onNavigate(APP_ROUTES.expenseEntry)} actionLabel="Open entry" />
           <FeatureCard label="Sync" description="Prepare QR transfer" accent="#2f6f9f" onPress={() => onNavigate(APP_ROUTES.sync)} actionLabel="Open sync" />

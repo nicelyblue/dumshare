@@ -1,6 +1,8 @@
 export type KnownEventType =
   | "ledger.created"
   | "participant.added"
+  | "participant.renamed"
+  | "participant.removed"
   | "invite.issued"
   | "invite.revoked"
   | "invite.consumed"
@@ -20,6 +22,15 @@ export type LedgerCreatedPayload = {
 export type ParticipantAddedPayload = {
   participantId: string;
   displayName: string;
+};
+
+export type ParticipantRenamedPayload = {
+  participantId: string;
+  displayName: string;
+};
+
+export type ParticipantRemovedPayload = {
+  participantId: string;
 };
 
 export type InviteIssuedPayload = {

@@ -27,8 +27,11 @@ describe('balance detail snapshot', () => {
     });
 
     const snapshot = await loadBalanceDetailSnapshot(dbName);
-    expect(snapshot.participants[0]?.balancesByCurrency[0]).toHaveProperty('currency');
-    expect(snapshot.participants[0]?.balancesByCurrency[0]).not.toHaveProperty('convertedAmount');
+    const firstBalanceRow = snapshot.participants
+      .flatMap((participant) => participant.balancesByCurrency)
+      .at(0);
+    expect(firstBalanceRow).toHaveProperty('currency');
+    expect(firstBalanceRow).not.toHaveProperty('convertedAmount');
   });
 
   test('returns approved-only scope note when pending submissions exist', async () => {

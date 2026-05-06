@@ -10,6 +10,8 @@ export type LedgerDashboardSnapshot = {
   ledgerId: string | null;
   hasLedger: boolean;
   title: string;
+  organizerName: string;
+  organizerParticipantId: string | null;
   settlementContext: string;
   participantCount: number;
   pendingApprovalCount: number;
@@ -32,6 +34,8 @@ function createEmptySnapshot(): LedgerDashboardSnapshot {
     ledgerId: null,
     hasLedger: false,
     title: 'No ledger yet',
+    organizerName: '',
+    organizerParticipantId: null,
     settlementContext: 'Create the trip ledger in Setup to begin.',
     participantCount: 0,
     pendingApprovalCount: 0,
@@ -47,6 +51,10 @@ function formatActivityLabel(eventType: string): string {
       return 'Ledger created';
     case 'participant.added':
       return 'Participant added';
+    case 'participant.renamed':
+      return 'Participant renamed';
+    case 'participant.removed':
+      return 'Participant removed';
     case 'invite.issued':
       return 'Invitation issued';
     case 'invite.revoked':
@@ -107,8 +115,9 @@ function sanitizeLegacyEventsForReplay(events: LedgerEvent[]): LedgerEvent[] {
 
 export async function loadLedgerDashboardSnapshot(
   dbName = 'dumshare-ui',
+  selectedLedgerId?: string | null,
 ): Promise<LedgerDashboardSnapshot> {
-  const ledgerId = await resolveLatestLedgerId(dbName);
+  const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
 
   if (!ledgerId) {
     return createEmptySnapshot();
@@ -133,6 +142,8 @@ export async function loadLedgerDashboardSnapshot(
     ledgerId,
     hasLedger: true,
     title: projection.title,
+    organizerName: projection.organizerName ?? '',
+    organizerParticipantId: projection.organizerParticipantId ?? null,
     settlementContext: projection.settlementContext,
     participantCount: projection.participants.length,
     pendingApprovalCount: projection.pendingSubmissions.length,

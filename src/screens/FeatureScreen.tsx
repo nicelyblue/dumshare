@@ -8,6 +8,7 @@ import { FeatureCard } from '../ui/FeatureCard';
 import { DashboardScreen } from './DashboardScreen';
 import { ExpenseEntryScreen } from './ExpenseEntryScreen';
 import { LedgerSetupScreen } from './LedgerSetupScreen';
+import { LedgerSelectionScreen } from './LedgerSelectionScreen';
 import { SyncScreen } from './SyncScreen';
 import { BalancesScreen } from './BalancesScreen';
 
@@ -23,6 +24,10 @@ export function FeatureScreen({ feature, onNavigate }: FeatureScreenProps) {
 
   if (feature.screenKind === 'setup') {
     return <LedgerSetupScreen />;
+  }
+
+  if (feature.screenKind === 'ledgers') {
+    return <LedgerSelectionScreen />;
   }
 
   if (feature.screenKind === 'expense') {

@@ -17,11 +17,22 @@ import type { LedgerEntry, LedgerParticipant, LedgerProjection } from "./types";
 type LedgerCreatedPayload = {
   title: string;
   settlementContext: string;
+  organizerParticipantId?: string;
+  organizerName?: string;
 };
 
 type ParticipantAddedPayload = {
   participantId: string;
   displayName: string;
+};
+
+type ParticipantRenamedPayload = {
+  participantId: string;
+  displayName: string;
+};
+
+type ParticipantRemovedPayload = {
+  participantId: string;
 };
 
 type InviteIssuedPayload = {
@@ -299,6 +310,14 @@ function parseLedgerCreatedPayload(payloadJson: string): LedgerCreatedPayload {
   return {
     title: parsed.title,
     settlementContext: parsed.settlementContext,
+    organizerParticipantId:
+      typeof parsed.organizerParticipantId === 'string' && parsed.organizerParticipantId.trim().length > 0
+        ? parsed.organizerParticipantId.trim()
+        : undefined,
+    organizerName:
+      typeof parsed.organizerName === 'string' && parsed.organizerName.trim().length > 0
+        ? parsed.organizerName.trim()
+        : undefined,
   };
 }
 
@@ -453,6 +472,36 @@ function parseParticipantAddedPayload(payloadJson: string): ParticipantAddedPayl
   };
 }
 
+function parseParticipantRenamedPayload(payloadJson: string): ParticipantRenamedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<ParticipantRenamedPayload>;
+
+  if (
+    typeof parsed.participantId !== "string" ||
+    parsed.participantId.trim().length === 0 ||
+    typeof parsed.displayName !== "string" ||
+    parsed.displayName.trim().length === 0
+  ) {
+    throw new Error("Invalid payload for eventType participant.renamed");
+  }
+
+  return {
+    participantId: parsed.participantId,
+    displayName: parsed.displayName,
+  };
+}
+
+function parseParticipantRemovedPayload(payloadJson: string): ParticipantRemovedPayload {
+  const parsed = JSON.parse(payloadJson) as Partial<ParticipantRemovedPayload>;
+
+  if (typeof parsed.participantId !== "string" || parsed.participantId.trim().length === 0) {
+    throw new Error("Invalid payload for eventType participant.removed");
+  }
+
+  return {
+    participantId: parsed.participantId,
+  };
+}
+
 function parseInviteIssuedPayload(payloadJson: string): InviteIssuedPayload {
   const parsed = JSON.parse(payloadJson) as Partial<InviteIssuedPayload>;
 
@@ -558,6 +607,8 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       approvalAuthorityDeviceId: "",
       title: "",
       settlementContext: "",
+      organizerParticipantId: "",
+      organizerName: "",
     };
   }
 
@@ -574,7 +625,9 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
     syncHubDeviceId: "",
     approvalAuthorityDeviceId: "",
     title: "",
-    settlementContext: "",
+      settlementContext: "",
+      organizerParticipantId: "",
+      organizerName: "",
   };
 
   for (const event of ordered) {
@@ -589,6 +642,8 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
         const payload = parseLedgerCreatedPayload(event.payloadJson);
         projection.title = payload.title;
         projection.settlementContext = payload.settlementContext;
+        projection.organizerParticipantId = payload.organizerParticipantId ?? projection.organizerParticipantId;
+        projection.organizerName = payload.organizerName ?? projection.organizerName;
         projection.syncHubDeviceId = event.actorDeviceId;
         projection.approvalAuthorityDeviceId = event.actorDeviceId;
         break;
@@ -840,6 +895,50 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       }
       case "participant.added": {
         projection.participants.push(toLedgerParticipant(event));
+        break;
+      }
+      case "participant.renamed": {
+        const payload = parseParticipantRenamedPayload(event.payloadJson);
+        const participant = projection.participants.find(
+          (candidate) => candidate.participantId === payload.participantId,
+        );
+
+        if (!participant) {
+          throw new Error("Participant rename references unknown participant");
+        }
+
+        participant.displayName = payload.displayName;
+        participant.sourceEventId = event.id;
+        break;
+      }
+      case "participant.removed": {
+        const payload = parseParticipantRemovedPayload(event.payloadJson);
+        const participantIndex = projection.participants.findIndex(
+          (candidate) => candidate.participantId === payload.participantId,
+        );
+
+        if (participantIndex === -1) {
+          throw new Error("Participant removal references unknown participant");
+        }
+
+        if (
+          payload.participantId === projection.organizerParticipantId ||
+          projection.entries.some((entry) =>
+            entry.payers.some((payer) => payer.participantId === payload.participantId),
+          ) ||
+          projection.entries.some((entry) =>
+            entry.owedShares.some((share) => share.participantId === payload.participantId),
+          ) ||
+          projection.pendingSubmissions.some(
+            (submission) => submission.submittedByParticipantId === payload.participantId,
+          ) ||
+          projection.invites.some((invite) => invite.participantId === payload.participantId) ||
+          Boolean(projection.participantContributorDeviceClaims[payload.participantId])
+        ) {
+          throw new Error("Participant removal is blocked by existing ledger activity");
+        }
+
+        projection.participants.splice(participantIndex, 1);
         break;
       }
       case "invite.issued": {

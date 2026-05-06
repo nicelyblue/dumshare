@@ -81,4 +81,6 @@ export type LedgerProjection = {
   approvalAuthorityDeviceId: string;
   title: string;
   settlementContext: string;
+  organizerParticipantId?: string;
+  organizerName?: string;
 };

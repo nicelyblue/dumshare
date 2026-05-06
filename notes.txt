@@ -1,0 +1,5 @@
+1. for participants we need to be able to add, delete and edit them
+2. when an expense is not shared equally, we need to have sliders for both exact amounts (with plus and minus to the sides for precision) and percentages
+3. rather than doing all in one view it should be a flow of views: 1. add expense (name, total) then 2. who paid (select one or more) and how much then 3. what is the expense split. similarly, split the flow for each functionality.
+4. it should infer by itself who the organizer is (when creating the ledger you provide the organizer name and then the participant names), when the ledger is shared you declare which of the participants is the recipient and they become contributor
+5. we need to support multiple ledgers: so we need a view to select which ledger and also we need to be able to create and delete ledgers
