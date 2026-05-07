@@ -49,6 +49,8 @@ type LedgerSessionState = {
   setupState: SetupState;
 };
 
+type HydratedLedgerSessionState = Omit<LedgerSessionState, 'setupState'>;
+
 export type LedgerSessionValue = LedgerSessionState & {
   setActiveLedger: (ledgerId: string) => Promise<void>;
   createLedger: (input: { title: string; settlementContext: string; organizerName: string }) => Promise<string>;
@@ -101,7 +103,7 @@ type LedgerSessionProviderProps = {
 
 const LedgerSessionContext = createContext<LedgerSessionValue | null>(null);
 
-function createEmptyState(): LedgerSessionState {
+export function createEmptyState(): LedgerSessionState {
   return {
     status: 'loading',
       activeLedgerId: null,
@@ -151,6 +153,17 @@ function createEmptyState(): LedgerSessionState {
   };
 }
 
+export function mergeHydratedLedgerSessionState(
+  current: LedgerSessionState,
+  next: HydratedLedgerSessionState,
+): LedgerSessionState {
+  return {
+    ...current,
+    ...next,
+    setupState: current.setupState,
+  };
+}
+
 export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: LedgerSessionProviderProps) {
   const [state, setState] = useState<LedgerSessionState>(() => createEmptyState());
   const mutations = useMemo(() => createLedgerSetupMutations(dbName), [dbName]);
@@ -173,15 +186,17 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
           ? activeLedgerId
           : ledgers[0]?.ledgerId ?? null;
 
-      setState({
-        status: snapshot.hasLedger ? 'ready' : 'empty',
-        activeLedgerId: resolvedActiveLedgerId,
-        ledgers,
-        snapshot,
-        reviewSnapshot,
-        balanceDetailSnapshot,
-        error: null,
-      });
+      setState((current) =>
+        mergeHydratedLedgerSessionState(current, {
+          status: snapshot.hasLedger ? 'ready' : 'empty',
+          activeLedgerId: resolvedActiveLedgerId,
+          ledgers,
+          snapshot,
+          reviewSnapshot,
+          balanceDetailSnapshot,
+          error: null,
+        }),
+      );
     } catch (error) {
       setState((current) => ({
         ...current,
@@ -203,16 +218,17 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
         loadBalanceDetailSnapshot(dbName, ledgerId),
         listLedgers(dbName),
       ]);
-      setState((current) => ({
-        ...current,
-        status: snapshot.hasLedger ? 'ready' : 'empty',
-        activeLedgerId: ledgerId,
-        ledgers,
-        snapshot,
-        reviewSnapshot,
-        balanceDetailSnapshot,
-        error: null,
-      }));
+      setState((current) =>
+        mergeHydratedLedgerSessionState(current, {
+          status: snapshot.hasLedger ? 'ready' : 'empty',
+          activeLedgerId: ledgerId,
+          ledgers,
+          snapshot,
+          reviewSnapshot,
+          balanceDetailSnapshot,
+          error: null,
+        }),
+      );
     },
     [dbName],
   );
