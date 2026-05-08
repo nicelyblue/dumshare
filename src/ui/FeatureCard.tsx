@@ -19,12 +19,16 @@ export function FeatureCard({
   actionLabel,
 }: FeatureCardProps) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={[styles.card, selected && styles.cardSelected]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={[styles.card, selected ? styles.cardSelected : styles.cardDefault]}
+    >
       <View style={[styles.dot, { backgroundColor: accent }]} />
       <View style={styles.content}>
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.description}>{description}</Text>
-        {actionLabel ? <Text style={[styles.action, { color: accent }]}>{actionLabel}</Text> : null}
+        {actionLabel ? <Text style={[styles.actionLabel, { color: accent }]}>{actionLabel}</Text> : null}
       </View>
     </Pressable>
   );
@@ -34,45 +38,48 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     gap: 12,
-    borderRadius: 20,
+    borderRadius: 24,
+    borderWidth: 1,
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#d9d0bf',
+  },
+  cardDefault: {
+    borderColor: '#d8e3f6',
   },
   cardSelected: {
-    borderColor: '#10203a',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    borderColor: '#00a7a0',
+    backgroundColor: '#eef4ff',
+    shadowColor: '#284c91',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
   },
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 999,
     marginTop: 5,
+    height: 12,
+    width: 12,
+    borderRadius: 999,
   },
   content: {
     flex: 1,
     gap: 4,
   },
   label: {
-    color: '#10203a',
+    color: '#182743',
     fontSize: 18,
     fontWeight: '700',
   },
   description: {
-    color: '#51617a',
+    color: '#5a6883',
     fontSize: 14,
     lineHeight: 20,
   },
-  action: {
+  actionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1,
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 });

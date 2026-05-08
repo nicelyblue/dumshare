@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppShell } from '../ui/AppShell';
+import { ActionButton } from '../ui/ActionButton';
+import { SurfaceCard } from '../ui/SurfaceCard';
 import { SummaryCard } from '../ui/SummaryCard';
 import { useLedgerSession } from '../state/ledgerSession';
 import { APP_ROUTES } from '../navigation/routes';
@@ -36,23 +38,17 @@ export function SyncScreen() {
       description="Generate a request payload, validate pasted QR text, then run transfer with deterministic status updates."
       accent="#2f6f9f"
     >
-      <Pressable
-        onPress={() => navigation.navigate(APP_ROUTES.dashboard)}
-        accessibilityRole="button"
-        style={styles.backButton}
-      >
-        <Text style={styles.backButtonLabel}>Back to dashboard</Text>
-      </Pressable>
+      <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
-      <View style={styles.section}>
+      <SurfaceCard style={styles.section}>
         <Text style={styles.label}>Current ledger</Text>
         <Text style={styles.value}>{snapshot.ledgerId ?? 'No ledger selected'}</Text>
-      </View>
+      </SurfaceCard>
 
-      <View style={styles.section}>
+      <SurfaceCard style={styles.section}>
         <Text style={styles.label}>Start sync request</Text>
-        <Pressable
-          accessibilityRole="button"
+        <ActionButton
+          label="Generate request payload"
           onPress={async () => {
             setError(null);
             try {
@@ -61,14 +57,11 @@ export function SyncScreen() {
               setError(nextError instanceof Error ? nextError.message : 'Unable to generate request');
             }
           }}
-          style={styles.button}
-        >
-          <Text style={styles.buttonLabel}>Generate request payload</Text>
-        </Pressable>
+        />
         {generatedPayload ? <SummaryCard label="Generated request" value="Share this payload as QR text" detail={generatedPayload} /> : null}
-      </View>
+      </SurfaceCard>
 
-      <View style={styles.section}>
+      <SurfaceCard style={styles.section}>
         <Text style={styles.label}>Paste or scan request payload</Text>
         <TextInput
           multiline
@@ -85,9 +78,9 @@ export function SyncScreen() {
             <SummaryCard label="Payload status" value="Invalid sync request" detail={parseResult.ok === false ? parseResult.error : 'Invalid payload'} tone="warning" />
           )
         ) : null}
-      </View>
+      </SurfaceCard>
 
-      <View style={styles.section}>
+      <SurfaceCard style={styles.section}>
         <Text style={styles.label}>Recipient participant</Text>
         <Text style={styles.value}>
           {selectedRecipient ? `${selectedRecipient.displayName} (${selectedRecipient.participantId})` : 'No recipient selected'}
@@ -117,11 +110,11 @@ export function SyncScreen() {
             <Text style={styles.helperText}>Add participants before assigning contributor recipient.</Text>
           )}
         </View>
-      </View>
+      </SurfaceCard>
 
-      <View style={styles.section}>
-        <Pressable
-          accessibilityRole="button"
+      <SurfaceCard style={styles.section}>
+        <ActionButton
+          label="Run transfer"
           disabled={!recipientParticipantId}
           onPress={async () => {
             setError(null);
@@ -135,14 +128,11 @@ export function SyncScreen() {
               setError(nextError instanceof Error ? nextError.message : 'Unable to run sync transfer');
             }
           }}
-          style={[styles.button, !recipientParticipantId ? styles.buttonDisabled : null]}
-        >
-          <Text style={styles.buttonLabel}>Run transfer</Text>
-        </Pressable>
+        />
         {!recipientParticipantId ? (
           <Text style={styles.helperText}>Select a recipient participant to enable transfer.</Text>
         ) : null}
-      </View>
+      </SurfaceCard>
 
       {statusTimeline.length > 0 ? <SummaryCard label="Transfer timeline" value="Sync progress" detail={statusTimeline.join(' → ')} /> : null}
       {error ? <SummaryCard label="Sync error" value="Action failed" detail={error} tone="warning" /> : null}
@@ -151,22 +141,6 @@ export function SyncScreen() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderWidth: 1,
-    borderColor: '#2f6f9f',
-    backgroundColor: '#f5efe4',
-  },
-  backButtonLabel: {
-    color: '#2f6f9f',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
   section: {
     gap: 10,
   },
@@ -186,23 +160,6 @@ const styles = StyleSheet.create({
     color: '#51617a',
     fontSize: 13,
     lineHeight: 18,
-  },
-  button: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#10203a',
-    alignSelf: 'flex-start',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonLabel: {
-    color: '#f5efe4',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
   },
   input: {
     minHeight: 110,

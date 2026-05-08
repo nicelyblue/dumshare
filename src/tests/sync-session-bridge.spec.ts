@@ -20,7 +20,7 @@ describe('sync session bridge helpers', () => {
     clearLedgerDb(dbName);
     const setup = createLedgerSetupMutations(dbName);
     const expense = createExpenseDraftMutations(dbName);
-    const ledgerId = await setup.saveLedgerSetup({ title: 'Trip', settlementContext: 'Summer' });
+    const ledgerId = await setup.saveLedgerSetup({ title: 'Trip', settlementContext: 'per-currency' });
     const alice = await setup.addParticipant({ displayName: 'Alice' });
     const bob = await setup.addParticipant({ displayName: 'Bob' });
 
@@ -54,7 +54,7 @@ describe('sync session bridge helpers', () => {
     const setup = createLedgerSetupMutations(dbName);
     const ledgerId = await setup.saveLedgerSetup({
       title: 'Trip',
-      settlementContext: 'Summer',
+      settlementContext: 'per-currency',
       organizerName: 'Marko',
     });
     const alice = await setup.addParticipant({ displayName: 'Alice' });

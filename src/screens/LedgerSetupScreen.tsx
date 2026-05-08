@@ -2,14 +2,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AppShell } from '../ui/AppShell';
+import { ActionButton } from '../ui/ActionButton';
 import { FeatureCard } from '../ui/FeatureCard';
 import { LabeledField } from '../ui/LabeledField';
+import { SearchableSelect } from '../ui/SearchableSelect';
+import { SurfaceCard } from '../ui/SurfaceCard';
+import { CURRENCY_OPTIONS } from '../domain/currency/catalog';
+import { isSupportedCurrencyCode } from '../domain/currency/catalog';
+import { parseSettlementContext } from '../domain/currency/settlement';
 import { useLedgerSession } from '../state/ledgerSession';
 import { APP_ROUTES } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export function LedgerSetupScreen() {
+  const settlementModes = ['per-currency', 'by-ledger-currency'] as const;
   const { 
     snapshot, 
     status, 
@@ -27,9 +34,14 @@ export function LedgerSetupScreen() {
     completeSetup,
   } = useLedgerSession();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const parsedSettlement = parseSettlementContext(snapshot.settlementContext);
+  const parsedSettlementMode = parsedSettlement?.mode ?? 'per-currency';
+  const parsedLedgerCurrency = parsedSettlement?.ledgerCurrency ?? 'EUR';
   
   const [title, setTitle] = useState(snapshot.title);
   const [organizerName, setOrganizerName] = useState(snapshot.organizerName);
+  const [settlementMode, setSettlementMode] = useState<(typeof settlementModes)[number]>(parsedSettlementMode);
+  const [ledgerCurrency, setLedgerCurrency] = useState(parsedLedgerCurrency);
   const [participantName, setParticipantName] = useState('');
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const [editingParticipantName, setEditingParticipantName] = useState('');
@@ -62,6 +74,11 @@ export function LedgerSetupScreen() {
       return;
     }
 
+    if (settlementMode === 'by-ledger-currency' && !isSupportedCurrencyCode(ledgerCurrency)) {
+      setErrorMessage('Select a ledger currency to continue.');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setErrorMessage('');
@@ -72,7 +89,8 @@ export function LedgerSetupScreen() {
       // Create the ledger
       await saveLedgerSetup({ 
         title: titleTrimmed, 
-        settlementContext: organizerNameTrimmed 
+        settlementContext:
+          settlementMode === 'by-ledger-currency' ? `by-ledger-currency:${ledgerCurrency}` : 'per-currency',
       });
       
       await refresh();
@@ -174,7 +192,10 @@ export function LedgerSetupScreen() {
     }
   }
 
-  const isStep1Valid = title.trim().length > 0 && organizerName.trim().length > 0;
+  const isStep1Valid =
+    title.trim().length > 0 &&
+    organizerName.trim().length > 0 &&
+    (settlementMode !== 'by-ledger-currency' || ledgerCurrency.trim().length > 0);
 
   return (
     <AppShell
@@ -183,22 +204,16 @@ export function LedgerSetupScreen() {
       description="Create the trip ledger and keep the participant roster organized."
       accent="#2f5d62"
     >
-      <Pressable
-        onPress={() => navigation.navigate(APP_ROUTES.dashboard)}
-        accessibilityRole="button"
-        style={styles.backButton}
-      >
-        <Text style={styles.backButtonLabel}>Back to dashboard</Text>
-      </Pressable>
+      <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
-      <View style={styles.section}>
-        <Text style={styles.stepLabel}>
+      <View className="gap-3">
+        <Text className="text-xs font-extrabold uppercase tracking-[1px] text-accentA">
           Step {setupState.activeStep === 'step1' ? 1 : 2} of 2
         </Text>
 
         {setupState.activeStep === 'step1' ? (
-          <View style={styles.stepBlock}>
-            <Text style={styles.sectionLabel}>Ledger details</Text>
+          <View className="gap-3">
+            <Text className="text-xs font-bold uppercase tracking-[1.6px] text-muted">Ledger details</Text>
             <LabeledField 
               label="Ledger title" 
               value={title} 
@@ -213,36 +228,53 @@ export function LedgerSetupScreen() {
               placeholder="Your name" 
               helperText="Who is organizing this trip?" 
             />
-            <Pressable 
+            <View className="gap-2">
+              <Text className="text-xs font-bold uppercase tracking-[1.2px] text-muted">Settlement mode</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {settlementModes.map((mode) => {
+                  const selected = settlementMode === mode;
+                  return (
+                    <Pressable
+                      key={mode}
+                       className={`rounded-full border px-3 py-2 ${selected ? 'border-accentA bg-shellSoft' : 'border-border bg-panel'}`}
+                      onPress={() => setSettlementMode(mode)}
+                    >
+                       <Text className={`text-xs font-bold tracking-[0.8px] ${selected ? 'text-accentA' : 'text-ink'}`}>{mode}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+            {settlementMode === 'by-ledger-currency' ? (
+              <SearchableSelect
+                label="Ledger currency"
+                value={ledgerCurrency}
+                options={CURRENCY_OPTIONS}
+                onChange={setLedgerCurrency}
+                helperText="Choose the single settlement currency for this ledger."
+              />
+            ) : null}
+            <ActionButton
+              label={isLoading ? 'Loading...' : 'Continue to Step 2'}
+              disabled={!isStep1Valid || isLoading}
               onPress={() => {
                 void handleStep1Submit();
-              }} 
-              accessibilityRole="button" 
-              disabled={!isStep1Valid || isLoading}
-              style={[styles.primaryButton, (!isStep1Valid || isLoading) ? styles.primaryButtonDisabled : null]}
-            >
-              <Text style={styles.primaryButtonLabel}>{isLoading ? 'Loading...' : 'Continue to Step 2'}</Text>
-            </Pressable>
+              }}
+            />
             {errorMessage ? (
-              <View style={styles.errorBlock}>
-                <Text style={styles.errorMessage}>{errorMessage}</Text>
-                <Pressable 
-                  onPress={() => {
-                    void handleStep1Submit();
-                  }}
-                  accessibilityRole="button"
-                  style={styles.retryButton}
-                >
-                  <Text style={styles.retryButtonLabel}>Retry</Text>
-                </Pressable>
+               <View className="mt-2 gap-2.5 rounded-xl border border-danger bg-[#fff1f5] p-3">
+                 <Text className="text-sm leading-5 text-danger">{errorMessage}</Text>
+                <ActionButton tone="danger" compact label="Retry" onPress={() => {
+                  void handleStep1Submit();
+                }} />
               </View>
             ) : null}
           </View>
         ) : null}
 
         {setupState.activeStep === 'step2' ? (
-          <View style={styles.stepBlock}>
-            <Text style={styles.sectionLabel}>Add participants</Text>
+          <View className="gap-3">
+            <Text className="text-xs font-bold uppercase tracking-[1.6px] text-muted">Add participants</Text>
             <LabeledField 
               label="Participant name" 
               value={participantName} 
@@ -250,22 +282,15 @@ export function LedgerSetupScreen() {
               placeholder="Alice" 
               helperText="Add names one at a time." 
             />
-            <Pressable
-              onPress={() => {
-                void handleAddParticipant();
-              }}
-              accessibilityRole="button"
-              disabled={!snapshot.hasLedger}
-              style={[styles.secondaryButton, !snapshot.hasLedger ? styles.secondaryButtonDisabled : null]}
-            >
-              <Text style={styles.secondaryButtonLabel}>Add to roster</Text>
-            </Pressable>
+            <ActionButton tone="secondary" label="Add to roster" disabled={!snapshot.hasLedger} onPress={() => {
+              void handleAddParticipant();
+            }} />
 
-            <Text style={styles.sectionLabel}>Roster ({rosterCards.length})</Text>
+            <Text className="text-xs font-bold uppercase tracking-[1.6px] text-muted">Roster ({rosterCards.length})</Text>
             <View style={styles.rosterList}>
               {rosterCards.length > 0 ? (
                 rosterCards.map((participant) => (
-                  <View key={participant.participantId} style={styles.rosterCard}>
+                  <SurfaceCard key={participant.participantId} style={styles.rosterCard}>
                     <Text style={styles.rosterName}>{participant.displayName}</Text>
                     {snapshot.organizerParticipantId === participant.participantId ? (
                       <Text style={styles.organizerTag}>Organizer</Text>
@@ -273,24 +298,12 @@ export function LedgerSetupScreen() {
                     <Text style={styles.rosterId}>{participant.participantId}</Text>
 
                     <View style={styles.rosterActionsRow}>
-                      <Pressable
-                        accessibilityRole="button"
-                        style={styles.rowActionButton}
-                        onPress={() => {
-                          handleStartEditParticipant(participant.participantId, participant.displayName);
-                        }}
-                      >
-                        <Text style={styles.rowActionLabel}>Edit</Text>
-                      </Pressable>
-                      <Pressable
-                        accessibilityRole="button"
-                        style={[styles.rowActionButton, styles.rowDangerActionButton]}
-                        onPress={() => {
-                          void handleDeleteParticipant(participant.participantId);
-                        }}
-                      >
-                        <Text style={[styles.rowActionLabel, styles.rowDangerActionLabel]}>Delete</Text>
-                      </Pressable>
+                      <ActionButton tone="secondary" compact label="Edit" onPress={() => {
+                        handleStartEditParticipant(participant.participantId, participant.displayName);
+                      }} />
+                      <ActionButton tone="danger" compact label="Delete" onPress={() => {
+                        void handleDeleteParticipant(participant.participantId);
+                      }} />
                     </View>
 
                     {editingParticipantId === participant.participantId ? (
@@ -302,25 +315,17 @@ export function LedgerSetupScreen() {
                           placeholder="Updated name"
                         />
                         <View style={styles.editActionsRow}>
-                          <Pressable accessibilityRole="button" style={styles.rowActionButton} onPress={() => {
+                          <ActionButton tone="secondary" compact label="Save" onPress={() => {
                             void handleSaveParticipantEdit();
-                          }}>
-                            <Text style={styles.rowActionLabel}>Save</Text>
-                          </Pressable>
-                          <Pressable
-                            accessibilityRole="button"
-                            style={styles.rowActionButton}
-                            onPress={() => {
-                              setEditingParticipantId(null);
-                              setEditingParticipantName('');
-                            }}
-                          >
-                            <Text style={styles.rowActionLabel}>Cancel</Text>
-                          </Pressable>
+                          }} />
+                          <ActionButton tone="secondary" compact label="Cancel" onPress={() => {
+                            setEditingParticipantId(null);
+                            setEditingParticipantName('');
+                          }} />
                         </View>
                       </View>
                     ) : null}
-                  </View>
+                  </SurfaceCard>
                 ))
               ) : (
                 <FeatureCard
@@ -332,28 +337,19 @@ export function LedgerSetupScreen() {
               )}
             </View>
 
-            <Pressable 
+            <ActionButton
+              label={isLoading ? 'Completing...' : 'Complete Setup'}
+              disabled={rosterCards.length === 0 || isLoading}
               onPress={() => {
                 void handleStep2Complete();
               }}
-              accessibilityRole="button"
-              disabled={rosterCards.length === 0 || isLoading}
-              style={[styles.primaryButton, (rosterCards.length === 0 || isLoading) ? styles.primaryButtonDisabled : null]}
-            >
-              <Text style={styles.primaryButtonLabel}>{isLoading ? 'Completing...' : 'Complete Setup'}</Text>
-            </Pressable>
-            {errorMessage ? (
-              <View style={styles.errorBlock}>
-                <Text style={styles.errorMessage}>{errorMessage}</Text>
-                <Pressable 
-                  onPress={() => {
-                    void handleStep2Complete();
-                  }}
-                  accessibilityRole="button"
-                  style={styles.retryButton}
-                >
-                  <Text style={styles.retryButtonLabel}>Retry</Text>
-                </Pressable>
+            />
+             {errorMessage ? (
+               <View className="mt-2 gap-2.5 rounded-xl border border-danger bg-[#fff1f5] p-3">
+                 <Text className="text-sm leading-5 text-danger">{errorMessage}</Text>
+                <ActionButton tone="danger" compact label="Retry" onPress={() => {
+                  void handleStep2Complete();
+                }} />
               </View>
             ) : null}
           </View>
@@ -401,6 +397,42 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
     textTransform: 'uppercase',
   },
+  modeSection: {
+    gap: 8,
+  },
+  modeLabel: {
+    color: '#7a634b',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  modeButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#d9d0bf',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  modeButtonActive: {
+    borderColor: '#2f5d62',
+    backgroundColor: '#e8f1ef',
+  },
+  modeButtonText: {
+    color: '#38485f',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  modeButtonTextActive: {
+    color: '#2f5d62',
+  },
   primaryButton: {
     borderRadius: 999,
     paddingHorizontal: 16,
@@ -441,11 +473,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rosterCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#d9d0bf',
-    backgroundColor: '#ffffff',
-    padding: 12,
     gap: 8,
   },
   rosterName: {
@@ -455,45 +482,23 @@ const styles = StyleSheet.create({
   },
   organizerTag: {
     alignSelf: 'flex-start',
-    color: '#2f5d62',
+    color: '#007f7a',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    backgroundColor: '#e9f2ef',
+    backgroundColor: '#eafcf8',
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   rosterId: {
-    color: '#6b5e4c',
+    color: '#5a6883',
     fontSize: 12,
   },
   rosterActionsRow: {
     flexDirection: 'row',
     gap: 8,
-  },
-  rowActionButton: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#2f5d62',
-    backgroundColor: '#f5efe4',
-  },
-  rowActionLabel: {
-    color: '#2f5d62',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  rowDangerActionButton: {
-    borderColor: '#b14f2e',
-    backgroundColor: '#fff1ee',
-  },
-  rowDangerActionLabel: {
-    color: '#b14f2e',
   },
   editBlock: {
     gap: 10,

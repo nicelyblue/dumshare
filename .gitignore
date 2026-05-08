@@ -3,6 +3,7 @@ node_modules/
 .opencode/
 .vscode/
 .idea/
+docs/
 
 # Expo / React Native generated files
 .expo/

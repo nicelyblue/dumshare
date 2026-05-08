@@ -5,9 +5,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ExpenseSplitPayload } from '../domain/events/types';
 import { useLedgerSession } from '../state/ledgerSession';
 import { AppShell } from '../ui/AppShell';
+import { ActionButton } from '../ui/ActionButton';
 import { ExpenseSplitEditor } from '../ui/ExpenseSplitEditor';
 import { FeatureCard } from '../ui/FeatureCard';
 import { LabeledField } from '../ui/LabeledField';
+import { SearchableSelect } from '../ui/SearchableSelect';
+import { SurfaceCard } from '../ui/SurfaceCard';
+import { CURRENCY_OPTIONS } from '../domain/currency/catalog';
+import { isSupportedCurrencyCode } from '../domain/currency/catalog';
 import { APP_ROUTES } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import { PendingReviewScreen } from './PendingReviewScreen';
@@ -83,7 +88,7 @@ export function ExpenseEntryScreen() {
 
   const stepOrder: EntryStep[] = ['details', 'payers', 'split'];
   const stepIndex = stepOrder.indexOf(entryStep);
-  const detailsValid = description.trim().length > 0 && totalAmountMinor > 0;
+  const detailsValid = description.trim().length > 0 && totalAmountMinor > 0 && isSupportedCurrencyCode(currency);
   const payersValid = payers.length > 0 && payerTotalMinor === totalAmountMinor && totalAmountMinor > 0;
 
   function cycleParticipant(currentId: string): string {
@@ -147,7 +152,7 @@ export function ExpenseEntryScreen() {
 
   function goNextStep(): void {
     if (entryStep === 'details' && !detailsValid) {
-      setMessage('Enter expense name and total amount before continuing.');
+      setMessage('Enter expense name, total amount, and a supported currency before continuing.');
       return;
     }
 
@@ -222,23 +227,25 @@ export function ExpenseEntryScreen() {
       description="Capture organizer or contributor expenses with payer rows and split controls."
       accent="#6e4a7e"
     >
-      <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
-        <Text style={styles.backButtonLabel}>Back to dashboard</Text>
-      </Pressable>
+      <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Expense details</Text>
+      <View className="gap-3">
+        <Text className="text-xs font-bold uppercase tracking-[1.6px] text-muted">Expense details</Text>
         {reviewSnapshot.pendingCount > 0 ? (
-          <Pressable style={styles.secondaryButton} onPress={() => setPanel('pending')}>
-            <Text style={styles.secondaryButtonLabel}>Review pending submissions ({reviewSnapshot.pendingCount})</Text>
-          </Pressable>
+          <ActionButton tone="secondary" label={`Review pending submissions (${reviewSnapshot.pendingCount})`} onPress={() => setPanel('pending')} />
         ) : null}
-        <Text style={styles.stepLabel}>Step {stepIndex + 1} of 3</Text>
+        <Text className="text-xs font-extrabold uppercase tracking-[1px] text-accentB">Step {stepIndex + 1} of 3</Text>
 
         {entryStep === 'details' ? (
-          <View style={styles.stepBlock}>
+          <View className="gap-3">
             <LabeledField label="Description" value={description} onChangeText={setDescription} placeholder="Dinner at El Born" helperText="Keep labels specific so review is easy." />
-            <LabeledField label="Currency" value={currency} onChangeText={setCurrency} placeholder="EUR" helperText="Per-currency settlement is preserved in the ledger." autoCapitalize="characters" />
+            <SearchableSelect
+              label="Currency"
+              value={currency}
+              options={CURRENCY_OPTIONS}
+              onChange={setCurrency}
+              helperText="Select a supported currency using fuzzy search."
+            />
             <LabeledField label="Expense date" value={expenseDate} onChangeText={setExpenseDate} placeholder="2026-05-04" helperText="Use ISO style for deterministic event replay." />
             <LabeledField label="Total amount" value={totalAmountText} onChangeText={setTotalAmountText} placeholder="0.00" helperText="Major units are converted to minor units for storage." keyboardType="decimal-pad" />
 
@@ -260,13 +267,13 @@ export function ExpenseEntryScreen() {
         ) : null}
 
         {entryStep === 'payers' ? (
-          <View style={styles.stepBlock}>
-            <Text style={styles.helperText}>Step 2: select who paid and how much. Paid total must equal expense total.</Text>
+          <View className="gap-3">
+            <Text className="text-[13px] leading-[18px] text-muted">Step 2: select who paid and how much. Paid total must equal expense total.</Text>
             {payers.map((payer, index) => {
               const payerDetails = participants.find((participant) => participant.participantId === payer.participantId);
 
               return (
-                <View key={payer.rowId} style={styles.payerRow}>
+                <SurfaceCard key={payer.rowId} style={styles.payerRow}>
                   <Pressable
                     style={styles.payerNameButton}
                     onPress={() => {
@@ -296,19 +303,17 @@ export function ExpenseEntryScreen() {
                       keyboardType="decimal-pad"
                     />
                   </View>
-                </View>
+                </SurfaceCard>
               );
             })}
-            <Pressable style={styles.secondaryButton} onPress={handleAddPayer}>
-              <Text style={styles.secondaryButtonLabel}>Add payer row</Text>
-            </Pressable>
-            <Text style={styles.helperText}>Payer total {payerTotalMinor / 100} versus expense total {totalAmountMinor / 100}</Text>
+            <ActionButton tone="secondary" label="Add payer row" onPress={handleAddPayer} />
+            <Text className="text-[13px] leading-[18px] text-muted">Payer total {payerTotalMinor / 100} versus expense total {totalAmountMinor / 100}</Text>
           </View>
         ) : null}
 
         {entryStep === 'split' ? (
-          <View style={styles.stepBlock}>
-            <Text style={styles.helperText}>Step 3: choose how the expense is split. Non-equal modes stay balanced automatically.</Text>
+          <View className="gap-3">
+            <Text className="text-[13px] leading-[18px] text-muted">Step 3: choose how the expense is split. Non-equal modes stay balanced automatically.</Text>
             <ExpenseSplitEditor
               participants={participants}
               totalAmountMinor={totalAmountMinor}
@@ -319,18 +324,12 @@ export function ExpenseEntryScreen() {
         ) : null}
       </View>
 
-      <View style={styles.flowActionsRow}>
-        <Pressable style={styles.secondaryButton} onPress={goBackStep} disabled={entryStep === 'details'}>
-          <Text style={styles.secondaryButtonLabel}>Back</Text>
-        </Pressable>
+      <View className="flex-row gap-2">
+        <ActionButton tone="secondary" label="Back" onPress={goBackStep} disabled={entryStep === 'details'} />
         {entryStep !== 'split' ? (
-          <Pressable style={styles.primaryButton} onPress={goNextStep}>
-            <Text style={styles.primaryButtonLabel}>Next</Text>
-          </Pressable>
+          <ActionButton label="Next" onPress={goNextStep} />
         ) : (
-          <Pressable style={styles.primaryButton} onPress={handleSubmitExpense}>
-            <Text style={styles.primaryButtonLabel}>Submit expense</Text>
-          </Pressable>
+          <ActionButton label="Submit expense" onPress={handleSubmitExpense} />
         )}
       </View>
 
@@ -344,9 +343,7 @@ export function ExpenseEntryScreen() {
         <View style={styles.section}>
           <View style={styles.panelHeaderRow}>
             <Text style={styles.sectionLabel}>Pending review</Text>
-            <Pressable style={styles.secondaryButton} onPress={() => setPanel('entry')}>
-              <Text style={styles.secondaryButtonLabel}>Back to entry</Text>
-            </Pressable>
+            <ActionButton tone="secondary" label="Back to entry" onPress={() => setPanel('entry')} />
           </View>
           <PendingReviewScreen
             items={reviewSnapshot.items}
@@ -362,9 +359,7 @@ export function ExpenseEntryScreen() {
         <View style={styles.section}>
           <View style={styles.panelHeaderRow}>
             <Text style={styles.sectionLabel}>Submission detail</Text>
-            <Pressable style={styles.secondaryButton} onPress={() => setPanel('pending')}>
-              <Text style={styles.secondaryButtonLabel}>Back to list</Text>
-            </Pressable>
+            <ActionButton tone="secondary" label="Back to list" onPress={() => setPanel('pending')} />
           </View>
           <SubmissionDetailScreen
             item={activeSubmission}
@@ -387,11 +382,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderWidth: 1,
-    borderColor: '#6e4a7e',
-    backgroundColor: '#f5efe4',
+    borderColor: '#5f6fff',
+    backgroundColor: '#eef4ff',
   },
   backButtonLabel: {
-    color: '#6e4a7e',
+    color: '#5f6fff',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.1,
@@ -430,29 +425,29 @@ const styles = StyleSheet.create({
   roleButton: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
+    borderColor: '#d8e3f6',
     backgroundColor: '#ffffff',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   roleButtonActive: {
-    borderColor: '#6e4a7e',
-    backgroundColor: '#efe6f4',
+    borderColor: '#5f6fff',
+    backgroundColor: '#eef4ff',
   },
   roleButtonText: {
-    color: '#38485f',
+    color: '#182743',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   roleButtonTextActive: {
-    color: '#5b2f73',
+    color: '#4f57d8',
   },
   payerRow: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
+    borderColor: '#d8e3f6',
     backgroundColor: '#ffffff',
     padding: 12,
     gap: 10,
@@ -460,12 +455,12 @@ const styles = StyleSheet.create({
   payerNameButton: {
     alignSelf: 'flex-start',
     borderRadius: 999,
-    backgroundColor: '#efe6f4',
+    backgroundColor: '#eef4ff',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   payerNameText: {
-    color: '#5b2f73',
+    color: '#4f57d8',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -479,48 +474,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  primaryButton: {
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#5b2f73',
-    alignSelf: 'flex-start',
-  },
   flowActionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
   },
-  primaryButtonLabel: {
-    color: '#f5efe4',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  secondaryButton: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#6e4a7e',
-    backgroundColor: '#ffffff',
-    alignSelf: 'flex-start',
-  },
-  secondaryButtonLabel: {
-    color: '#6e4a7e',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
   messageBox: {
     borderRadius: 16,
-    backgroundColor: '#efe6f4',
+    backgroundColor: '#eef4ff',
     padding: 12,
   },
   messageText: {
-    color: '#5b2f73',
+    color: '#4f57d8',
     fontSize: 14,
     lineHeight: 20,
   },

@@ -1,10 +1,12 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useLedgerSession } from '../state/ledgerSession';
 import { AppShell } from '../ui/AppShell';
+import { ActionButton } from '../ui/ActionButton';
 import { CurrencyBalanceCard } from '../ui/CurrencyBalanceCard';
+import { SurfaceCard } from '../ui/SurfaceCard';
 import { SummaryCard } from '../ui/SummaryCard';
 import { APP_ROUTES } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
@@ -20,13 +22,7 @@ export function BalancesScreen() {
       description="Participant-first, per-currency settlement totals sourced from approved entries only."
       accent="#8a6b2d"
     >
-      <Pressable
-        onPress={() => navigation.navigate(APP_ROUTES.dashboard)}
-        accessibilityRole="button"
-        style={styles.backButton}
-      >
-        <Text style={styles.backButtonLabel}>Back to dashboard</Text>
-      </Pressable>
+      <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
       {balanceDetailSnapshot.metadata.approvalScopeNote ? (
         <SummaryCard
@@ -45,7 +41,7 @@ export function BalancesScreen() {
         />
       ) : (
         balanceDetailSnapshot.participants.map((participant) => (
-          <View key={participant.participantId} style={styles.participantSection}>
+          <SurfaceCard key={participant.participantId} style={styles.participantSection}>
             <Text style={styles.participantName}>{participant.displayName}</Text>
             <View style={styles.currencyList}>
               {participant.balancesByCurrency.map((row) => (
@@ -58,7 +54,7 @@ export function BalancesScreen() {
                 />
               ))}
             </View>
-          </View>
+          </SurfaceCard>
         ))
       )}
     </AppShell>
@@ -66,22 +62,6 @@ export function BalancesScreen() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderWidth: 1,
-    borderColor: '#8a6b2d',
-    backgroundColor: '#f5efe4',
-  },
-  backButtonLabel: {
-    color: '#8a6b2d',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
   participantSection: {
     gap: 8,
   },

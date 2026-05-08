@@ -73,7 +73,7 @@ describe('ledger-session-state', () => {
         {
           ledgerId: 'ledger-1',
           title: 'Barcelona Weekend',
-          settlementContext: 'per-currency balances',
+          settlementContext: 'per-currency',
           createdAt: '2026-05-07T10:00:00.000Z',
         } satisfies LedgerListItem,
       ],
@@ -83,7 +83,7 @@ describe('ledger-session-state', () => {
         title: 'Barcelona Weekend',
         organizerName: 'Alex',
         organizerParticipantId: 'participant-organizer',
-        settlementContext: 'per-currency balances',
+        settlementContext: 'per-currency',
         participantCount: 2,
         pendingApprovalCount: 0,
         latestActivityLabel: 'Ledger created',

@@ -1,6 +1,7 @@
 import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import type { EventInput, ExpenseCreatedPayload, ExpenseSplitPayload } from '../../domain/events/types';
+import { isSupportedCurrencyCode } from '../../domain/currency/catalog';
 import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type ExpenseDraftInput = {
@@ -82,6 +83,10 @@ export function normalizeExpenseDraft(input: ExpenseDraftInput): ExpenseCreatedP
 
   if (!currency) {
     throw new Error('Expense currency is required');
+  }
+
+  if (!isSupportedCurrencyCode(currency)) {
+    throw new Error('Select a supported expense currency');
   }
 
   if (!Number.isInteger(input.totalAmountMinor) || input.totalAmountMinor <= 0) {

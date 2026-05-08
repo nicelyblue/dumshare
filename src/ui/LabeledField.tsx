@@ -1,5 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { initializeKeyboardFocusTracking, scrollFocusedElementIntoView } from './focusScroll';
 
 type LabeledFieldProps = TextInputProps & {
   label: string;
@@ -7,39 +8,24 @@ type LabeledFieldProps = TextInputProps & {
 };
 
 export function LabeledField({ label, helperText, style, ...props }: LabeledFieldProps) {
+  useEffect(() => {
+    initializeKeyboardFocusTracking();
+  }, []);
+
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput {...props} style={[styles.input, style]} placeholderTextColor="#8a8a8a" />
-      {helperText ? <Text style={styles.helperText}>{helperText}</Text> : null}
+    <View className="gap-2">
+      {label ? <Text className="text-xs font-bold uppercase tracking-[1.2px] text-muted">{label}</Text> : null}
+      <TextInput
+        {...props}
+        style={style}
+        className="rounded-field border border-border bg-panel px-3.5 py-3 text-base text-ink"
+        placeholderTextColor="#8090ad"
+        onFocus={(event) => {
+          scrollFocusedElementIntoView((event as { target?: unknown }).target);
+          props.onFocus?.(event);
+        }}
+      />
+      {helperText ? <Text className="text-[13px] leading-[18px] text-muted">{helperText}</Text> : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  field: {
-    gap: 8,
-  },
-  label: {
-    color: '#7a634b',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d9d0bf',
-    borderRadius: 16,
-    backgroundColor: '#ffffff',
-    color: '#10203a',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  helperText: {
-    color: '#51617a',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-});

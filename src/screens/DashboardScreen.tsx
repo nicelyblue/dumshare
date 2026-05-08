@@ -1,10 +1,12 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { APP_ROUTES } from '../navigation/routes';
 import type { AppRouteName } from '../navigation/types';
 import { AppShell } from '../ui/AppShell';
+import { ActionButton } from '../ui/ActionButton';
 import { FeatureCard } from '../ui/FeatureCard';
+import { SurfaceCard } from '../ui/SurfaceCard';
 import { SummaryCard } from '../ui/SummaryCard';
 import { useLedgerSession } from '../state/ledgerSession';
 
@@ -84,7 +86,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         <View style={styles.balanceList}>
           {balanceRows.length > 0 ? (
             balanceRows.map((row) => (
-              <View key={`${row.participantId}-${row.currency}`} style={styles.balanceRow}>
+              <SurfaceCard key={`${row.participantId}-${row.currency}`}>
                 <View style={styles.balanceRowHeader}>
                   <Text style={styles.balanceName}>{row.displayName}</Text>
                   <Text style={styles.balanceCurrency}>{row.currency}</Text>
@@ -92,7 +94,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
                 <Text style={styles.balanceDetail}>
                   Paid {formatCurrencyMinor(row.paidTotalMinor)} · Owed {formatCurrencyMinor(row.owedTotalMinor)} · Net {formatCurrencyMinor(row.netMinor)}
                 </Text>
-              </View>
+              </SurfaceCard>
             ))
           ) : (
             <SummaryCard label="No balances yet" value="Balances appear after the first expense" detail="Approved entries feed the per-currency snapshot." />
@@ -111,9 +113,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         </View>
       </View>
 
-      <Pressable onPress={refresh} accessibilityRole="button" style={styles.refreshButton}>
-        <Text style={styles.refreshLabel}>Refresh dashboard</Text>
-      </Pressable>
+      <ActionButton label="Refresh dashboard" onPress={refresh} />
     </AppShell>
   );
 }
@@ -150,14 +150,6 @@ const styles = StyleSheet.create({
   balanceList: {
     gap: 10,
   },
-  balanceRow: {
-    borderRadius: 18,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#d9d0bf',
-    padding: 14,
-    gap: 6,
-  },
   balanceRowHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -182,19 +174,5 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     gap: 12,
-  },
-  refreshButton: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#10203a',
-  },
-  refreshLabel: {
-    color: '#f5efe4',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
   },
 });

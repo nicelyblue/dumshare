@@ -2,6 +2,7 @@ import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import type { EventRepository } from '../../domain/events/repository';
 import { replayLedger } from '../../domain/projections';
+import { assertValidSettlementContext } from '../../domain/currency/settlement';
 import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type LedgerSetupInput = {
@@ -64,6 +65,8 @@ function normalizeLedgerSetupInput(input: LedgerSetupInput): NormalizedLedgerSet
   if (!settlementContext) {
     throw new Error('Enter a settlement context before creating the ledger');
   }
+
+  assertValidSettlementContext(settlementContext);
 
   return { title, settlementContext, organizerName };
 }

@@ -25,13 +25,13 @@ describe('ledger-setup-mutations', () => {
 
     await setup.saveLedgerSetup({
       title: '  Barcelona Weekend  ',
-      settlementContext: '  per-currency balances  ',
+      settlementContext: '  per-currency  ',
     });
 
     const snapshot = await loadLedgerDashboardSnapshot(dbName);
     expect(snapshot.hasLedger).toBe(true);
     expect(snapshot.title).toBe('Barcelona Weekend');
-    expect(snapshot.settlementContext).toBe('per-currency balances');
+    expect(snapshot.settlementContext).toBe('per-currency');
   });
 
   test('saveLedgerSetup rejects empty required values before writing invalid ledger.created payload', async () => {
@@ -45,12 +45,35 @@ describe('ledger-setup-mutations', () => {
     ).rejects.toThrow('Enter a settlement context before creating the ledger');
   });
 
+  test('saveLedgerSetup rejects invalid settlement context values', async () => {
+    const setup = createLedgerSetupMutations(dbName);
+
+    await expect(
+      setup.saveLedgerSetup({
+        title: 'Trip',
+        settlementContext: 'custom settlement text',
+      }),
+    ).rejects.toThrow('Settlement mode must be per-currency or by-ledger-currency:<ISO code>');
+  });
+
+  test('saveLedgerSetup accepts by-ledger-currency with valid ISO code', async () => {
+    const setup = createLedgerSetupMutations(dbName);
+
+    await setup.saveLedgerSetup({
+      title: 'Trip',
+      settlementContext: 'by-ledger-currency:EUR',
+    });
+
+    const snapshot = await loadLedgerDashboardSnapshot(dbName);
+    expect(snapshot.settlementContext).toBe('by-ledger-currency:EUR');
+  });
+
   test('clearLedgerDb resets setup snapshot to clean state', async () => {
     const setup = createLedgerSetupMutations(dbName);
 
     await setup.saveLedgerSetup({
       title: 'Weekend Trip',
-      settlementContext: 'per-currency balances',
+      settlementContext: 'per-currency',
     });
     await setup.addParticipant({ displayName: 'Alice' });
 
@@ -68,7 +91,7 @@ describe('ledger-setup-mutations', () => {
 
     await setup.saveLedgerSetup({
       title: 'Weekend Trip',
-      settlementContext: 'per-currency balances',
+      settlementContext: 'per-currency',
     });
     const participantId = await setup.addParticipant({ displayName: 'Alice' });
 
@@ -85,7 +108,7 @@ describe('ledger-setup-mutations', () => {
 
     await setup.saveLedgerSetup({
       title: 'Weekend Trip',
-      settlementContext: 'per-currency balances',
+      settlementContext: 'per-currency',
     });
     await setup.addParticipant({ displayName: 'Alice' });
     const removableId = await setup.addParticipant({ displayName: 'Bob' });
@@ -106,7 +129,7 @@ describe('ledger-setup-mutations', () => {
 
     await setup.saveLedgerSetup({
       title: 'Weekend Trip',
-      settlementContext: 'per-currency balances',
+      settlementContext: 'per-currency',
     });
     const aliceId = await setup.addParticipant({ displayName: 'Alice' });
     const bobId = await setup.addParticipant({ displayName: 'Bob' });

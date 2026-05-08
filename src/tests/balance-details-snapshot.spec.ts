@@ -12,7 +12,7 @@ describe('balance detail snapshot', () => {
     clearLedgerDb(dbName);
     const setup = createLedgerSetupMutations(dbName);
     const expense = createExpenseDraftMutations(dbName);
-    await setup.saveLedgerSetup({ title: 'Trip', settlementContext: 'Beach' });
+    await setup.saveLedgerSetup({ title: 'Trip', settlementContext: 'per-currency' });
     const alice = await setup.addParticipant({ displayName: 'Alice' });
     const bob = await setup.addParticipant({ displayName: 'Bob' });
 
@@ -39,7 +39,7 @@ describe('balance detail snapshot', () => {
     clearLedgerDb(dbName);
     const setup = createLedgerSetupMutations(dbName);
     const expense = createExpenseDraftMutations(dbName);
-    const ledgerId = await setup.saveLedgerSetup({ title: 'Trip', settlementContext: 'Hike' });
+    const ledgerId = await setup.saveLedgerSetup({ title: 'Trip', settlementContext: 'per-currency' });
     const alice = await setup.addParticipant({ displayName: 'Alice' });
     const bob = await setup.addParticipant({ displayName: 'Bob' });
     const repository = createEventRepository(openLedgerDb(dbName));

@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOptionalLedgerSession } from '../state/ledgerSession';
 
@@ -12,32 +12,58 @@ type AppShellProps = {
 };
 
 export function AppShell({ eyebrow, title, description, accent, children }: AppShellProps) {
+  const [keyboardInset, setKeyboardInset] = useState(0);
   const session = useOptionalLedgerSession();
   const activeLedger =
     session?.activeLedgerId
       ? session.ledgers.find((ledger) => ledger.ledgerId === session.activeLedgerId)
       : null;
 
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardInset(event.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardInset(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.accentBand, { backgroundColor: accent }]} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.shell}>
-          <View style={styles.header}>
-            <Text style={[styles.eyebrow, { color: accent }]}>{eyebrow}</Text>
-            {activeLedger ? (
-              <View style={styles.activeLedgerBadge}>
-                <Text style={styles.activeLedgerLabel}>Active ledger</Text>
-                <Text style={styles.activeLedgerValue}>{activeLedger.title}</Text>
-              </View>
-            ) : null}
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.description}>{description}</Text>
-          </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 + keyboardInset }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="gap-5 rounded-card border border-border bg-panel p-6" style={styles.shellShadow}>
+            <View className="gap-2">
+              <Text style={[styles.eyebrow, { color: accent }]}>{eyebrow}</Text>
+              {activeLedger ? (
+                <View className="self-start flex-row items-center gap-1.5 rounded-full border border-border bg-shellSoft px-3 py-1.5">
+                  <Text className="text-[10px] font-extrabold uppercase tracking-[0.8px] text-muted">Active ledger</Text>
+                  <Text className="text-[11px] font-extrabold text-ink">{activeLedger.title}</Text>
+                </View>
+              ) : null}
+              <Text className="text-[34px] font-extrabold leading-10 text-ink">{title}</Text>
+              <Text className="text-base leading-6 text-muted">{description}</Text>
+            </View>
 
-          <View style={styles.body}>{children}</View>
-        </View>
-      </ScrollView>
+            <View className="gap-4">{children}</View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -45,29 +71,18 @@ export function AppShell({ eyebrow, title, description, accent, children }: AppS
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#10203a',
+    backgroundColor: '#f3f8ff',
   },
   accentBand: {
     height: 6,
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     padding: 20,
     justifyContent: 'center',
-  },
-  shell: {
-    gap: 20,
-    borderRadius: 28,
-    backgroundColor: '#f5efe4',
-    padding: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
-  },
-  header: {
-    gap: 8,
   },
   eyebrow: {
     fontSize: 12,
@@ -75,42 +90,11 @@ const styles = StyleSheet.create({
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
-  activeLedgerBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#d9d0bf',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-  },
-  activeLedgerLabel: {
-    color: '#6f7a89',
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  activeLedgerValue: {
-    color: '#10203a',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  title: {
-    color: '#10203a',
-    fontSize: 34,
-    fontWeight: '800',
-    lineHeight: 40,
-  },
-  description: {
-    color: '#38485f',
-    fontSize: 16,
-    lineHeight: 23,
-  },
-  body: {
-    gap: 16,
+  shellShadow: {
+    shadowColor: '#284c91',
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
 });

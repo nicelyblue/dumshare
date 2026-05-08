@@ -3,6 +3,7 @@ import { openLedgerDb } from '../sqlite/client';
 import { events } from '../sqlite/schema';
 import { resolveLatestLedgerId } from './latestLedgerId';
 import { createEventRepository } from '../../domain/events/repository';
+import { assertValidSettlementContext } from '../../domain/currency/settlement';
 
 export type LedgerListItem = {
   ledgerId: string;
@@ -68,6 +69,8 @@ export async function createLedger(
   if (!settlementContext) {
     throw new Error('Enter a settlement context before creating the ledger');
   }
+
+  assertValidSettlementContext(settlementContext);
 
   if (!organizerName) {
     throw new Error('Enter organizer name before creating the ledger');
