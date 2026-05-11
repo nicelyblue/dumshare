@@ -54,11 +54,12 @@ type InviteConsumedPayload = {
 
 function parseExpenseCreatedPayloadObject(parsed: Partial<ExpenseCreatedPayload>): ExpenseCreatedPayload {
   const split = parseSplitPayload(parsed.split);
+  const payers = parsed.payers;
 
   const payersAreValid =
-    Array.isArray(parsed.payers) &&
-    parsed.payers.length > 0 &&
-    parsed.payers.every(
+    Array.isArray(payers) &&
+    payers.length > 0 &&
+    payers.every(
       (payer) =>
         typeof payer?.participantId === "string" &&
         payer.participantId.trim().length > 0 &&
@@ -92,7 +93,7 @@ function parseExpenseCreatedPayloadObject(parsed: Partial<ExpenseCreatedPayload>
     totalAmountMinor: parsed.totalAmountMinor,
     expenseDate: parsed.expenseDate,
     creatorRole: parsed.creatorRole,
-    payers: parsed.payers,
+    payers,
     split,
   };
 }

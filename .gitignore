@@ -1,6 +1,7 @@
 node_modules/
 .local/
 .opencode/
+.openspec/
 .vscode/
 .idea/
 docs/
