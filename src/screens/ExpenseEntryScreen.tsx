@@ -57,7 +57,7 @@ function createPayerRow(participantId: string, paidAmountText: string): PayerRow
   };
 }
 
-export function ExpenseEntryScreen() {
+export function ExpenseEntryScreen({ initialEntryStep = 'details' }: { initialEntryStep?: EntryStep }) {
   const { snapshot, reviewSnapshot, status, error, submitExpenseDraft, submitExpenseReview } = useLedgerSession();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const participants = snapshot.balanceSummary.participants.map((participant) => ({
@@ -78,7 +78,7 @@ export function ExpenseEntryScreen() {
   const [message, setMessage] = useState('');
   const [panel, setPanel] = useState<'entry' | 'pending' | 'detail'>('entry');
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
-  const [entryStep, setEntryStep] = useState<EntryStep>('details');
+  const [entryStep, setEntryStep] = useState<EntryStep>(initialEntryStep);
 
   const totalAmountMinor = toMinorAmount(totalAmountText);
 
@@ -227,6 +227,9 @@ export function ExpenseEntryScreen() {
       title="Expense Entry"
       description="Capture organizer or contributor expenses with payer rows and split controls."
       accent={screenAccents.expense}
+      activeRoute={APP_ROUTES.addExpense}
+      onNavigate={(routeName) => navigation.navigate(routeName)}
+      enableShellNav
     >
       <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 

@@ -195,7 +195,7 @@ export function LedgerSetupScreen() {
       completeSetup();
       
       // Navigate to Dashboard
-      navigation.navigate(APP_ROUTES.dashboard);
+      navigation.navigate(APP_ROUTES.homeDashboard);
       
       setSavedMessage('');
     } catch (err) {
@@ -217,7 +217,7 @@ export function LedgerSetupScreen() {
       description="Create the trip ledger and keep the participant roster organized."
       accent={screenAccents.setup}
     >
-      <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
+      <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.homeDashboard)} />
 
       <View className="gap-3">
         <Text className="text-xs font-extrabold uppercase tracking-[1px] text-accentA">

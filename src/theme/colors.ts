@@ -67,6 +67,17 @@ export const colors = {
     blue: palette.shadowBlue,
   },
   placeholder: '#8090ad',
+  neutral: {
+    white: '#ffffff',
+    black: '#000000',
+    slate950: '#111827',
+    slate600: '#4b5563',
+    slate300: '#cbd5e1',
+    slate200: '#e5e7eb',
+    indigo50: '#eef2ff',
+    overlay: 'rgba(0,0,0,0.35)',
+    statusNavy: '#0f2346',
+  },
 } as const;
 
 export const screenAccents = {

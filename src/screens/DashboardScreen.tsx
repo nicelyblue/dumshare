@@ -1,8 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { APP_ROUTES } from '../navigation/routes';
-import type { AppRouteName } from '../navigation/types';
+import type { AppRouteName, RootStackParamList } from '../navigation/types';
 import { AppShell } from '../ui/AppShell';
 import { ActionButton } from '../ui/ActionButton';
 import { FeatureCard } from '../ui/FeatureCard';
@@ -12,7 +14,7 @@ import { useLedgerSession } from '../state/ledgerSession';
 import { colors, screenAccents } from '../theme/colors';
 
 type DashboardScreenProps = {
-  onNavigate: (routeName: AppRouteName) => void;
+  onNavigate?: (routeName: AppRouteName) => void;
 };
 
 function formatCurrencyMinor(amountMinor: number): string {
@@ -24,6 +26,8 @@ function formatCurrencyMinor(amountMinor: number): string {
 }
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigateTo = onNavigate ?? ((routeName: AppRouteName) => navigation.navigate(routeName));
   const { snapshot, status, error, refresh, clearSetupState } = useLedgerSession();
   const hasLedger = snapshot.hasLedger;
 
@@ -55,6 +59,9 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       title={hasLedger ? snapshot.title : 'Dashboard'}
       description={hasLedger ? snapshot.settlementContext : 'Create the trip ledger in Setup to begin.'}
       accent={screenAccents.dashboard}
+      activeRoute={APP_ROUTES.homeDashboard}
+      onNavigate={navigateTo}
+      enableShellNav
     >
       <View style={styles.headerBlock}>
         <Text style={styles.headerLabel}>Dashboard status</Text>
@@ -107,10 +114,10 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Quick navigation</Text>
         <View style={styles.quickActions}>
-          <FeatureCard label="Ledgers" description="Switch or create ledgers" accent={screenAccents.ledgers} onPress={() => onNavigate(APP_ROUTES.ledgers)} actionLabel="Manage ledgers" />
-          <FeatureCard label="Ledger Setup" description="Edit title and roster" accent={screenAccents.setup} onPress={() => onNavigate(APP_ROUTES.setup)} actionLabel="Open setup" />
-          <FeatureCard label="Expense Entry" description="Capture a new expense" accent={screenAccents.expense} onPress={() => onNavigate(APP_ROUTES.expenseEntry)} actionLabel="Open entry" />
-          <FeatureCard label="Balances" description="Inspect settlement detail" accent={screenAccents.balances} onPress={() => onNavigate(APP_ROUTES.balances)} actionLabel="Open balances" />
+          <FeatureCard label="Ledgers" description="Switch or create ledgers" accent={screenAccents.ledgers} onPress={() => navigateTo(APP_ROUTES.ledgerEntries)} actionLabel="Manage ledgers" />
+          <FeatureCard label="Ledger Setup" description="Edit title and roster" accent={screenAccents.setup} onPress={() => navigateTo(APP_ROUTES.setup)} actionLabel="Open setup" />
+          <FeatureCard label="Expense Entry" description="Capture a new expense" accent={screenAccents.expense} onPress={() => navigateTo(APP_ROUTES.addExpense)} actionLabel="Open entry" />
+          <FeatureCard label="Balances" description="Inspect settlement detail" accent={screenAccents.balances} onPress={() => navigateTo(APP_ROUTES.settleUp)} actionLabel="Open balances" />
         </View>
       </View>
 
