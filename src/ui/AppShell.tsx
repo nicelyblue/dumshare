@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useOptionalLedgerSession } from '../state/ledgerSession';
+import { colors } from '../theme/colors';
 
 type AppShellProps = {
   eyebrow: string;
@@ -71,7 +72,7 @@ export function AppShell({ eyebrow, title, description, accent, children }: AppS
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f3f8ff',
+    backgroundColor: colors.background.app,
   },
   accentBand: {
     height: 6,
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   eyebrow: {
     fontSize: 12,
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   shellShadow: {
-    shadowColor: '#284c91',
+    shadowColor: colors.shadow.blue,
     shadowOpacity: 0.16,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },

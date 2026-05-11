@@ -10,6 +10,7 @@ import { SurfaceCard } from '../ui/SurfaceCard';
 import { SummaryCard } from '../ui/SummaryCard';
 import { APP_ROUTES } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
+import { colors, screenAccents } from '../theme/colors';
 
 export function BalancesScreen() {
   const { balanceDetailSnapshot } = useLedgerSession();
@@ -20,7 +21,7 @@ export function BalancesScreen() {
       eyebrow="Settlement"
       title="Balances"
       description="Participant-first, per-currency settlement totals sourced from approved entries only."
-      accent="#8a6b2d"
+      accent={screenAccents.balances}
     >
       <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   participantName: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '800',
   },

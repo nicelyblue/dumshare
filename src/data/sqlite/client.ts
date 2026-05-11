@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 
-import { events, syncCheckpoints } from "./schema";
+import { events } from "./schema";
 
 export type LedgerDb = {
   readonly name: string;
@@ -25,10 +25,6 @@ function ensureSchema(sqlite: Database.Database): void {
       sequence INTEGER NOT NULL UNIQUE
     );
 
-    CREATE TABLE IF NOT EXISTS sync_checkpoints (
-      peer_id TEXT PRIMARY KEY,
-      last_sequence INTEGER NOT NULL
-    );
   `);
 }
 
@@ -62,7 +58,6 @@ export function openLedgerDb(dbName: string): LedgerDb {
   const orm = drizzle(sqlite, {
     schema: {
       events,
-      syncCheckpoints,
     },
   });
 

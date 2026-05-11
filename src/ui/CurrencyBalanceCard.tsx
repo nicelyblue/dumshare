@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 
 type CurrencyBalanceCardProps = {
   currency: string;
@@ -33,8 +34,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     padding: 12,
     gap: 6,
   },
@@ -44,22 +45,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   currency: {
-    color: '#8a6b2d',
+    color: colors.text.warning,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   net: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 14,
     fontWeight: '700',
   },
   detail: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 13,
   },
   settlement: {
-    color: '#38485f',
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '600',
   },

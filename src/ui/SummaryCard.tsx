@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 
 type SummaryCardProps = {
   label: string;
@@ -20,16 +21,16 @@ export function SummaryCard({ label, value, detail, tone = 'default' }: SummaryC
 
 const stylesByTone = StyleSheet.create({
   default: {
-    borderColor: '#d9d0bf',
+    borderColor: colors.border.default,
   },
   accent: {
-    borderColor: '#2f6f9f',
+    borderColor: colors.border.accent,
   },
   warning: {
-    borderColor: '#b14f2e',
+    borderColor: colors.border.danger,
   },
   muted: {
-    borderColor: '#bfb7a7',
+    borderColor: colors.border.muted,
   },
 });
 
@@ -37,24 +38,24 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderRadius: 18,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background.panel,
     padding: 16,
     gap: 6,
   },
   label: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   value: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 20,
     fontWeight: '800',
   },
   detail: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 13,
     lineHeight: 18,
   },

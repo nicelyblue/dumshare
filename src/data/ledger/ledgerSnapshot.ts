@@ -56,11 +56,11 @@ function formatActivityLabel(eventType: string): string {
     case 'participant.removed':
       return 'Participant removed';
     case 'invite.issued':
-      return 'Invitation issued';
+      return 'Access request created';
     case 'invite.revoked':
-      return 'Invitation revoked';
+      return 'Access request revoked';
     case 'invite.consumed':
-      return 'Invitation consumed';
+      return 'Contributor access linked';
     case 'expense.created':
       return 'Expense recorded';
     case 'expense.submission-created':

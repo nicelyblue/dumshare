@@ -17,6 +17,7 @@ import { APP_ROUTES } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import { PendingReviewScreen } from './PendingReviewScreen';
 import { SubmissionDetailScreen } from './SubmissionDetailScreen';
+import { colors, screenAccents } from '../theme/colors';
 
 type PayerRow = {
   rowId: string;
@@ -140,12 +141,12 @@ export function ExpenseEntryScreen() {
         eyebrow="Expense capture"
         title="Expense Entry"
         description="Could not load the local ledger state."
-        accent="#6e4a7e"
+        accent={screenAccents.expense}
       >
         <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
           <Text style={styles.backButtonLabel}>Back to dashboard</Text>
         </Pressable>
-        <FeatureCard label="Session error" description={error ?? 'Unknown error'} accent="#b14f2e" selected />
+        <FeatureCard label="Session error" description={error ?? 'Unknown error'} accent={screenAccents.danger} selected />
       </AppShell>
     );
   }
@@ -182,7 +183,7 @@ export function ExpenseEntryScreen() {
         eyebrow="Expense capture"
         title="Expense Entry"
         description="Create the ledger in Setup before recording expenses."
-        accent="#6e4a7e"
+        accent={screenAccents.expense}
       >
         <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
           <Text style={styles.backButtonLabel}>Back to dashboard</Text>
@@ -190,7 +191,7 @@ export function ExpenseEntryScreen() {
         <FeatureCard
           label="Ledger not ready"
           description="Open Setup and create the ledger plus participant roster first."
-          accent="#6e4a7e"
+          accent={screenAccents.expense}
           selected
         />
       </AppShell>
@@ -203,7 +204,7 @@ export function ExpenseEntryScreen() {
         eyebrow="Expense capture"
         title="Expense Entry"
         description="Add participants before creating expense rows."
-        accent="#6e4a7e"
+        accent={screenAccents.expense}
       >
         <Pressable onPress={() => navigation.navigate(APP_ROUTES.dashboard)} accessibilityRole="button" style={styles.backButton}>
           <Text style={styles.backButtonLabel}>Back to dashboard</Text>
@@ -211,7 +212,7 @@ export function ExpenseEntryScreen() {
         <FeatureCard
           label="No participants"
           description="Go to Setup and add participants so payer rows can reference real members."
-          accent="#6e4a7e"
+          accent={screenAccents.expense}
           selected
         />
       </AppShell>
@@ -225,7 +226,7 @@ export function ExpenseEntryScreen() {
       eyebrow="Expense capture"
       title="Expense Entry"
       description="Capture organizer or contributor expenses with payer rows and split controls."
-      accent="#6e4a7e"
+      accent={screenAccents.expense}
     >
       <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
@@ -382,11 +383,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderWidth: 1,
-    borderColor: '#5f6fff',
-    backgroundColor: '#eef4ff',
+    borderColor: colors.accent.secondary,
+    backgroundColor: colors.background.panelSoft,
   },
   backButtonLabel: {
-    color: '#5f6fff',
+    color: colors.text.link,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.1,
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stepLabel: {
-    color: '#6e4a7e',
+    color: colors.text.link,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionLabel: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.6,
@@ -425,42 +426,42 @@ const styles = StyleSheet.create({
   roleButton: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#d8e3f6',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   roleButtonActive: {
-    borderColor: '#5f6fff',
-    backgroundColor: '#eef4ff',
+    borderColor: colors.accent.secondary,
+    backgroundColor: colors.background.panelSoft,
   },
   roleButtonText: {
-    color: '#182743',
+    color: colors.text.strong,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   roleButtonTextActive: {
-    color: '#4f57d8',
+    color: colors.text.link,
   },
   payerRow: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#d8e3f6',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     padding: 12,
     gap: 10,
   },
   payerNameButton: {
     alignSelf: 'flex-start',
     borderRadius: 999,
-    backgroundColor: '#eef4ff',
+    backgroundColor: colors.background.panelSoft,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   payerNameText: {
-    color: '#4f57d8',
+    color: colors.text.link,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   helperText: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -481,11 +482,11 @@ const styles = StyleSheet.create({
   },
   messageBox: {
     borderRadius: 16,
-    backgroundColor: '#eef4ff',
+    backgroundColor: colors.background.panelSoft,
     padding: 12,
   },
   messageText: {
-    color: '#4f57d8',
+    color: colors.text.link,
     fontSize: 14,
     lineHeight: 20,
   },

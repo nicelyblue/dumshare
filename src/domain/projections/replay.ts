@@ -447,7 +447,7 @@ function participantIdForContributorDevice(
 }
 
 function isExpenseCreatorAuthorized(projection: LedgerProjection, actorDeviceId: string): boolean {
-  if (actorDeviceId === projection.syncHubDeviceId) {
+  if (actorDeviceId === projection.organizerDeviceId) {
     return true;
   }
 
@@ -603,7 +603,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
       participantContributorDeviceClaims: {},
       pendingSubmissions: [],
       reviewedSubmissions: [],
-      syncHubDeviceId: "",
+      organizerDeviceId: "",
       approvalAuthorityDeviceId: "",
       title: "",
       settlementContext: "",
@@ -622,7 +622,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
     participantContributorDeviceClaims: {},
     pendingSubmissions: [],
     reviewedSubmissions: [],
-    syncHubDeviceId: "",
+    organizerDeviceId: "",
     approvalAuthorityDeviceId: "",
     title: "",
       settlementContext: "",
@@ -644,7 +644,7 @@ export function replayLedger(events: LedgerEvent[]): LedgerProjection {
         projection.settlementContext = payload.settlementContext;
         projection.organizerParticipantId = payload.organizerParticipantId ?? projection.organizerParticipantId;
         projection.organizerName = payload.organizerName ?? projection.organizerName;
-        projection.syncHubDeviceId = event.actorDeviceId;
+        projection.organizerDeviceId = event.actorDeviceId;
         projection.approvalAuthorityDeviceId = event.actorDeviceId;
         break;
       }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 
 type FeatureCardProps = {
   label: string;
@@ -40,17 +41,17 @@ const styles = StyleSheet.create({
     gap: 12,
     borderRadius: 24,
     borderWidth: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background.panel,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   cardDefault: {
-    borderColor: '#d8e3f6',
+    borderColor: colors.border.default,
   },
   cardSelected: {
-    borderColor: '#00a7a0',
-    backgroundColor: '#eef4ff',
-    shadowColor: '#284c91',
+    borderColor: colors.border.success,
+    backgroundColor: colors.background.panelSoft,
+    shadowColor: colors.shadow.blue,
     shadowOpacity: 0.12,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
@@ -67,12 +68,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   label: {
-    color: '#182743',
+    color: colors.text.strong,
     fontSize: 18,
     fontWeight: '700',
   },
   description: {
-    color: '#5a6883',
+    color: colors.text.muted,
     fontSize: 14,
     lineHeight: 20,
   },

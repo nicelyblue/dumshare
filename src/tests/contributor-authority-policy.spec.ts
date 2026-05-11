@@ -4,7 +4,7 @@ import type { LedgerProjection } from "../domain/projections/types";
 import type { LedgerEvent } from "../domain/events/types";
 import {
   assertOrganizerApprovalAuthority,
-  assertOrganizerSyncHub,
+  assertOrganizerLedgerAuthority,
 } from "../domain/onboarding/authority";
 import { replayLedger } from "../domain/projections";
 
@@ -19,19 +19,19 @@ describe("contributor-authority-policy guards", () => {
     participantContributorDeviceClaims: {},
     pendingSubmissions: [],
     reviewedSubmissions: [],
-    syncHubDeviceId: "device-organizer-1",
+    organizerDeviceId: "device-organizer-1",
     approvalAuthorityDeviceId: "device-organizer-1",
     title: "Phase 3 Onboarding",
     settlementContext: "per-currency balances",
   };
 
-  test("organizer device passes sync hub authority check", () => {
-    expect(() => assertOrganizerSyncHub(projection, "device-organizer-1")).not.toThrow();
+  test("organizer device passes organizer-only authority check", () => {
+    expect(() => assertOrganizerLedgerAuthority(projection, "device-organizer-1")).not.toThrow();
   });
 
-  test("non-organizer device is rejected for sync hub authority", () => {
-    expect(() => assertOrganizerSyncHub(projection, "device-contributor-1")).toThrow(
-      "Only organizer device can run sync hub actions",
+  test("non-organizer device is rejected for organizer-only authority", () => {
+    expect(() => assertOrganizerLedgerAuthority(projection, "device-contributor-1")).toThrow(
+      "Only organizer device can run organizer-only actions",
     );
   });
 
@@ -79,13 +79,13 @@ describe("contributor-authority-policy guards", () => {
 
     const replayProjection = replayLedger(events);
 
-    expect(() => assertOrganizerSyncHub(replayProjection, "device-organizer-1")).not.toThrow();
+    expect(() => assertOrganizerLedgerAuthority(replayProjection, "device-organizer-1")).not.toThrow();
     expect(() =>
       assertOrganizerApprovalAuthority(replayProjection, "device-organizer-1"),
     ).not.toThrow();
 
-    expect(() => assertOrganizerSyncHub(replayProjection, "device-contributor-1")).toThrow(
-      "Only organizer device can run sync hub actions",
+    expect(() => assertOrganizerLedgerAuthority(replayProjection, "device-contributor-1")).toThrow(
+      "Only organizer device can run organizer-only actions",
     );
     expect(() =>
       assertOrganizerApprovalAuthority(replayProjection, "device-contributor-1"),

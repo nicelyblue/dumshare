@@ -77,7 +77,7 @@ export type LedgerProjection = {
     sourceEventId: string;
     reviewReason: string;
   }[];
-  syncHubDeviceId: string;
+  organizerDeviceId: string;
   approvalAuthorityDeviceId: string;
   title: string;
   settlementContext: string;

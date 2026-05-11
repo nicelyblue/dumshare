@@ -13,6 +13,7 @@ import { useLedgerSession } from '../state/ledgerSession';
 import { CURRENCY_OPTIONS } from '../domain/currency/catalog';
 import { isSupportedCurrencyCode } from '../domain/currency/catalog';
 import { SearchableSelect } from '../ui/SearchableSelect';
+import { colors, screenAccents } from '../theme/colors';
 
 export function LedgerSelectionScreen() {
   const settlementModes = ['per-currency', 'by-ledger-currency'] as const;
@@ -24,6 +25,8 @@ export function LedgerSelectionScreen() {
     createLedger,
     deleteLedger,
     resetAppData,
+    setStep1Data,
+    progressToStep2,
   } = useLedgerSession();
 
   const [title, setTitle] = useState('');
@@ -46,11 +49,17 @@ export function LedgerSelectionScreen() {
           ? `by-ledger-currency:${ledgerCurrency.trim().toUpperCase()}`
           : 'per-currency';
       const ledgerId = await createLedger({ title, settlementContext: normalizedSettlement, organizerName });
+      setStep1Data({
+        title: title.trim(),
+        organizerName: organizerName.trim(),
+      });
+      progressToStep2();
       setTitle('');
       setSettlementContext('per-currency');
       setLedgerCurrency('EUR');
       setOrganizerName('');
       setMessage(`Created ledger ${ledgerId}.`);
+      navigation.navigate(APP_ROUTES.setup);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to create ledger.');
     }
@@ -82,7 +91,7 @@ export function LedgerSelectionScreen() {
       eyebrow="Ledger management"
       title="Ledgers"
       description="Switch the active ledger, create a new trip ledger, and remove old local ledgers."
-      accent="#3f5f7f"
+      accent={screenAccents.ledgers}
     >
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Active ledger</Text>
@@ -90,7 +99,7 @@ export function LedgerSelectionScreen() {
           <FeatureCard
             label="No ledgers yet"
             description="Create your first ledger below to start tracking expenses."
-            accent="#3f5f7f"
+            accent={screenAccents.ledgers}
             selected
           />
         ) : (
@@ -131,7 +140,7 @@ export function LedgerSelectionScreen() {
                 <FeatureCard
                   label="Confirm ledger delete"
                   description="This removes all events for this ledger from local storage."
-                  accent="#b14f2e"
+                  accent={screenAccents.danger}
                   selected
                   actionLabel="Tap to confirm"
                   onPress={() => {
@@ -190,7 +199,7 @@ export function LedgerSelectionScreen() {
           <FeatureCard
             label="Confirm app data delete"
             description="This removes all ledgers and local state from this device."
-            accent="#b14f2e"
+            accent={screenAccents.danger}
             selected
             actionLabel="Tap to confirm"
             onPress={() => {
@@ -214,7 +223,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionLabel: {
-    color: '#5a6883',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.6,
@@ -224,7 +233,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   modeLabel: {
-    color: '#5a6883',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -238,48 +247,48 @@ const styles = StyleSheet.create({
   modeButton: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#d8e3f6',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   modeButtonActive: {
-    borderColor: '#5f6fff',
-    backgroundColor: '#eef4ff',
+    borderColor: colors.accent.secondary,
+    backgroundColor: colors.background.panelSoft,
   },
   modeButtonText: {
-    color: '#182743',
+    color: colors.text.strong,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   modeButtonTextActive: {
-    color: '#4f57d8',
+    color: colors.text.link,
   },
   ledgerMeta: {
     gap: 4,
   },
   ledgerTitle: {
-    color: '#182743',
+    color: colors.text.strong,
     fontSize: 16,
     fontWeight: '800',
   },
   ledgerContext: {
-    color: '#5a6883',
+    color: colors.text.muted,
     fontSize: 13,
   },
   ledgerId: {
-    color: '#5a6883',
+    color: colors.text.muted,
     fontSize: 11,
   },
   activeTag: {
     alignSelf: 'flex-start',
-    color: '#4f57d8',
+    color: colors.text.link,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    backgroundColor: '#eef4ff',
+    backgroundColor: colors.background.panelSoft,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -290,13 +299,13 @@ const styles = StyleSheet.create({
   },
   messageBox: {
     borderRadius: 18,
-    backgroundColor: '#eafcf8',
+    backgroundColor: colors.background.panelSoft,
     borderWidth: 1,
-    borderColor: '#00a7a0',
+    borderColor: colors.border.success,
     padding: 14,
   },
   messageText: {
-    color: '#007f7a',
+    color: colors.status.success,
     fontSize: 14,
     lineHeight: 20,
   },

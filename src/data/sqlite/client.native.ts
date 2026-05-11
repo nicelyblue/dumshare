@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { deleteDatabaseSync, openDatabaseSync, type SQLiteDatabase } from "expo-sqlite";
 
-import { events, syncCheckpoints } from "./schema";
+import { events } from "./schema";
 
 export type LedgerDb = {
   readonly name: string;
@@ -24,10 +24,6 @@ function ensureSchema(sqlite: SQLiteDatabase): void {
       sequence INTEGER NOT NULL UNIQUE
     );
 
-    CREATE TABLE IF NOT EXISTS sync_checkpoints (
-      peer_id TEXT PRIMARY KEY,
-      last_sequence INTEGER NOT NULL
-    );
   `);
 }
 
@@ -43,7 +39,6 @@ export function openLedgerDb(dbName: string): LedgerDb {
   const orm = drizzle(sqlite, {
     schema: {
       events,
-      syncCheckpoints,
     },
   });
 

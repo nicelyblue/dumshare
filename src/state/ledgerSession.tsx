@@ -9,11 +9,8 @@ import {
 } from '../data/ledger/expenseReview';
 import { loadBalanceDetailSnapshot, type BalanceDetailSnapshot } from '../data/ledger/balanceDetails';
 import {
-  buildSyncRequestQr as buildSyncRequestQrData,
-  parseSyncRequestQr as parseSyncRequestQrData,
-  runSyncTransfer as runSyncTransferData,
-} from '../data/ledger/syncSession';
-import { clearLedgerDb } from '../data/sqlite/client';
+  clearLedgerDb,
+} from '../data/sqlite/client';
 import {
   createLedger,
   deleteLedger,
@@ -83,9 +80,6 @@ export type LedgerSessionValue = LedgerSessionState & {
     decision: 'approved' | 'rejected';
     reviewReason: string;
   }) => Promise<string>;
-  buildSyncRequestQr: () => Promise<string>;
-  parseSyncRequestQr: (raw: string) => { ok: true; payload: { ledgerId: string; requesterDeviceId: string; lastSeenSequence: number; requestedAt: string; nonce: string } } | { ok: false; error: string };
-  runSyncTransfer: (rawRequestQr: string, recipientParticipantId?: string | null) => Promise<string[]>;
   resetAppData: () => Promise<void>;
   // Setup state machine actions
   startSetup: () => void;
@@ -332,25 +326,6 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
     [expenseReviewMutations, refresh, state.activeLedgerId],
   );
 
-  const buildSyncRequestQr = useCallback(
-    async () => buildSyncRequestQrData(dbName, 'device-contributor-ui', state.activeLedgerId),
-    [dbName, state.activeLedgerId],
-  );
-  const parseSyncRequestQr = useCallback((raw: string) => parseSyncRequestQrData(raw), []);
-  const runSyncTransfer = useCallback(
-    async (rawRequestQr: string, recipientParticipantId?: string | null) => {
-      const result = await runSyncTransferData({
-        dbName,
-        rawRequestQr,
-        selectedLedgerId: state.activeLedgerId,
-        recipientParticipantId,
-      });
-      await refresh();
-      return result.statusTimeline;
-    },
-    [dbName, refresh, state.activeLedgerId],
-  );
-
   const resetAppData = useCallback(async () => {
     clearLedgerDb(dbName);
     setState(createEmptyState());
@@ -441,9 +416,6 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
       removeParticipant,
       submitExpenseDraft,
       submitExpenseReview,
-      buildSyncRequestQr,
-      parseSyncRequestQr,
-      runSyncTransfer,
       resetAppData,
       startSetup,
       setStep1Data,
@@ -452,7 +424,7 @@ export function LedgerSessionProvider({ children, dbName = 'dumshare-ui' }: Ledg
       completeSetup,
       clearSetupState,
     }),
-    [addParticipant, buildSyncRequestQr, clearSetupState, completeSetup, createLedgerAction, deleteLedgerAction, parseSyncRequestQr, progressToStep2, refresh, removeParticipant, renameParticipant, resetAppData, runSyncTransfer, saveLedgerSetup, setActiveLedger, setStep1Data, setStep2Data, startSetup, state, submitExpenseDraft, submitExpenseReview],
+    [addParticipant, clearSetupState, completeSetup, createLedgerAction, deleteLedgerAction, progressToStep2, refresh, removeParticipant, renameParticipant, resetAppData, saveLedgerSetup, setActiveLedger, setStep1Data, setStep2Data, startSetup, state, submitExpenseDraft, submitExpenseReview],
   );
 
   return <LedgerSessionContext.Provider value={value}>{children}</LedgerSessionContext.Provider>;

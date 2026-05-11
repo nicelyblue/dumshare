@@ -9,6 +9,7 @@ import { FeatureCard } from '../ui/FeatureCard';
 import { SurfaceCard } from '../ui/SurfaceCard';
 import { SummaryCard } from '../ui/SummaryCard';
 import { useLedgerSession } from '../state/ledgerSession';
+import { colors, screenAccents } from '../theme/colors';
 
 type DashboardScreenProps = {
   onNavigate: (routeName: AppRouteName) => void;
@@ -24,6 +25,7 @@ function formatCurrencyMinor(amountMinor: number): string {
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { snapshot, status, error, refresh, clearSetupState } = useLedgerSession();
+  const hasLedger = snapshot.hasLedger;
 
   // Clear setup state when dashboard comes into focus
   useFocusEffect(
@@ -49,10 +51,10 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   return (
     <AppShell
-      eyebrow="Trip overview"
-      title={snapshot.title}
-      description={snapshot.settlementContext}
-      accent="#2f6f9f"
+      eyebrow="Dashboard"
+      title={hasLedger ? snapshot.title : 'Dashboard'}
+      description={hasLedger ? snapshot.settlementContext : 'Create the trip ledger in Setup to begin.'}
+      accent={screenAccents.dashboard}
     >
       <View style={styles.headerBlock}>
         <Text style={styles.headerLabel}>Dashboard status</Text>
@@ -105,50 +107,49 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Quick navigation</Text>
         <View style={styles.quickActions}>
-          <FeatureCard label="Ledgers" description="Switch or create ledgers" accent="#3f5f7f" onPress={() => onNavigate(APP_ROUTES.ledgers)} actionLabel="Manage ledgers" />
-          <FeatureCard label="Ledger Setup" description="Edit title and roster" accent="#2f5d62" onPress={() => onNavigate(APP_ROUTES.setup)} actionLabel="Open setup" />
-          <FeatureCard label="Expense Entry" description="Capture a new expense" accent="#6e4a7e" onPress={() => onNavigate(APP_ROUTES.expenseEntry)} actionLabel="Open entry" />
-          <FeatureCard label="Sync" description="Prepare QR transfer" accent="#2f6f9f" onPress={() => onNavigate(APP_ROUTES.sync)} actionLabel="Open sync" />
-          <FeatureCard label="Balances" description="Inspect settlement detail" accent="#8a6b2d" onPress={() => onNavigate(APP_ROUTES.balances)} actionLabel="Open balances" />
+          <FeatureCard label="Ledgers" description="Switch or create ledgers" accent={screenAccents.ledgers} onPress={() => onNavigate(APP_ROUTES.ledgers)} actionLabel="Manage ledgers" />
+          <FeatureCard label="Ledger Setup" description="Edit title and roster" accent={screenAccents.setup} onPress={() => onNavigate(APP_ROUTES.setup)} actionLabel="Open setup" />
+          <FeatureCard label="Expense Entry" description="Capture a new expense" accent={screenAccents.expense} onPress={() => onNavigate(APP_ROUTES.expenseEntry)} actionLabel="Open entry" />
+          <FeatureCard label="Balances" description="Inspect settlement detail" accent={screenAccents.balances} onPress={() => onNavigate(APP_ROUTES.balances)} actionLabel="Open balances" />
         </View>
       </View>
 
-      <ActionButton label="Refresh dashboard" onPress={refresh} />
+      <ActionButton label="Refresh dashboard" fullWidth onPress={refresh} />
     </AppShell>
   );
 }
 
 const styles = StyleSheet.create({
   headerBlock: {
-    gap: 4,
+    gap: 6,
   },
   headerLabel: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.4,
     textTransform: 'uppercase',
   },
   headerValue: {
-    color: '#38485f',
+    color: colors.text.secondary,
     fontSize: 14,
     lineHeight: 20,
   },
   metricsGrid: {
-    gap: 12,
+    gap: 14,
   },
   section: {
-    gap: 12,
+    gap: 14,
   },
   sectionLabel: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.6,
     textTransform: 'uppercase',
   },
   balanceList: {
-    gap: 10,
+    gap: 12,
   },
   balanceRowHeader: {
     flexDirection: 'row',
@@ -157,22 +158,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   balanceName: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '700',
   },
   balanceCurrency: {
-    color: '#2f6f9f',
+    color: colors.accent.primary,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   balanceDetail: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 14,
     lineHeight: 20,
   },
   quickActions: {
-    gap: 12,
+    gap: 14,
   },
 });

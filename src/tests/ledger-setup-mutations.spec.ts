@@ -148,7 +148,7 @@ describe('ledger-setup-mutations', () => {
     });
 
     await expect(setup.removeParticipant({ participantId: bobId })).rejects.toThrow(
-      'Cannot remove participant with existing ledger activity or invites',
+      'Cannot remove participant with existing ledger activity or access links',
     );
   });
 

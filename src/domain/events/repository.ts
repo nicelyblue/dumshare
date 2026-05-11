@@ -1,7 +1,7 @@
 import type { LedgerDb } from "../../data/sqlite/client";
 import { and, asc, eq, gt, sql } from "drizzle-orm";
 
-import { events, syncCheckpoints } from "../../data/sqlite/schema";
+import { events } from "../../data/sqlite/schema";
 import type { EventInput, LedgerEvent } from "./types";
 
 export type AppendEventInput = EventInput;
@@ -11,8 +11,6 @@ export type EventRepository = {
   appendEvent(input: AppendEventInput): Promise<void>;
   listEventsByLedger(ledgerId: string): Promise<StoredEvent[]>;
   listEventsAfterSequence(ledgerId: string, afterSequence: number): Promise<StoredEvent[]>;
-  getSyncCheckpoint(peerId: string): Promise<number>;
-  setSyncCheckpoint(peerId: string, lastSequence: number): Promise<void>;
 };
 
 function mapRowToStoredEvent(row: typeof events.$inferSelect): StoredEvent {
@@ -70,34 +68,6 @@ export function createEventRepository(db: LedgerDb): EventRepository {
         .orderBy(asc(events.sequence));
 
       return rows.map(mapRowToStoredEvent);
-    },
-
-    async getSyncCheckpoint(peerId: string): Promise<number> {
-      const rows = await db.orm
-        .select({ lastSequence: syncCheckpoints.last_sequence })
-        .from(syncCheckpoints)
-        .where(eq(syncCheckpoints.peer_id, peerId));
-
-      return rows[0]?.lastSequence ?? 0;
-    },
-
-    async setSyncCheckpoint(peerId: string, lastSequence: number): Promise<void> {
-      if (!Number.isInteger(lastSequence) || lastSequence < 0) {
-        throw new Error("lastSequence must be a non-negative integer");
-      }
-
-      await db.orm
-        .insert(syncCheckpoints)
-        .values({
-          peer_id: peerId,
-          last_sequence: lastSequence,
-        })
-        .onConflictDoUpdate({
-          target: syncCheckpoints.peer_id,
-          set: {
-            last_sequence: lastSequence,
-          },
-        });
     },
   };
 }

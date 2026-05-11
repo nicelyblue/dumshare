@@ -1,11 +1,11 @@
 import type { LedgerProjection } from "../projections/types";
 
-export function assertOrganizerSyncHub(
+export function assertOrganizerLedgerAuthority(
   projection: LedgerProjection,
   actorDeviceId: string,
 ): void {
-  if (projection.syncHubDeviceId !== actorDeviceId) {
-    throw new Error("Only organizer device can run sync hub actions");
+  if (projection.organizerDeviceId !== actorDeviceId) {
+    throw new Error("Only organizer device can run organizer-only actions");
   }
 }
 

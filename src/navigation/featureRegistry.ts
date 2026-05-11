@@ -1,8 +1,9 @@
 import { APP_ROUTES } from './routes';
 import type { AppScreenContract } from './types';
+import { screenAccents } from '../theme/colors';
 
 export type FeatureRegistryItem = AppScreenContract & {
-  screenKind: 'dashboard' | 'ledgers' | 'setup' | 'expense' | 'sync' | 'balances';
+  screenKind: 'dashboard' | 'ledgers' | 'setup' | 'expense' | 'balances';
   accent: string;
   eyebrow: string;
   primaryAction: string;
@@ -18,7 +19,7 @@ export const FEATURE_REGISTRY = [
     eyebrow: 'Trip overview',
     primaryAction: 'See current ledger status',
     secondaryAction: 'Check pending approvals',
-    accent: '#b14f2e',
+    accent: screenAccents.dashboard,
   },
   {
     name: APP_ROUTES.ledgers,
@@ -28,7 +29,7 @@ export const FEATURE_REGISTRY = [
     eyebrow: 'Ledger management',
     primaryAction: 'Manage ledgers',
     secondaryAction: 'Switch active ledger',
-    accent: '#3f5f7f',
+    accent: screenAccents.ledgers,
   },
   {
     name: APP_ROUTES.setup,
@@ -38,7 +39,7 @@ export const FEATURE_REGISTRY = [
     eyebrow: 'Trip setup',
     primaryAction: 'Open ledger setup',
     secondaryAction: 'Review participant roster',
-    accent: '#2f5d62',
+    accent: screenAccents.setup,
   },
   {
     name: APP_ROUTES.expenseEntry,
@@ -48,17 +49,7 @@ export const FEATURE_REGISTRY = [
     eyebrow: 'Expense capture',
     primaryAction: 'Start a new expense',
     secondaryAction: 'Review split modes',
-    accent: '#6e4a7e',
-  },
-  {
-    name: APP_ROUTES.sync,
-    screenKind: 'sync',
-    label: 'Sync',
-    description: 'Prepare QR transfer and in-person exchange states.',
-    eyebrow: 'Sync status',
-    primaryAction: 'Begin sync exchange',
-    secondaryAction: 'Check transfer state',
-    accent: '#2f6f9f',
+    accent: screenAccents.expense,
   },
   {
     name: APP_ROUTES.balances,
@@ -68,6 +59,6 @@ export const FEATURE_REGISTRY = [
     eyebrow: 'Settlement',
     primaryAction: 'Review balances',
     secondaryAction: 'Check per-currency totals',
-    accent: '#8a6b2d',
+    accent: screenAccents.balances,
   },
 ] as const satisfies readonly FeatureRegistryItem[];

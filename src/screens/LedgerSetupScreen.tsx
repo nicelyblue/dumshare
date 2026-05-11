@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AppShell } from '../ui/AppShell';
 import { ActionButton } from '../ui/ActionButton';
@@ -14,6 +14,7 @@ import { useLedgerSession } from '../state/ledgerSession';
 import { APP_ROUTES } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { colors, screenAccents } from '../theme/colors';
 
 export function LedgerSetupScreen() {
   const settlementModes = ['per-currency', 'by-ledger-currency'] as const;
@@ -48,6 +49,7 @@ export function LedgerSetupScreen() {
   const [savedMessage, setSavedMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const participantInputRef = useRef<TextInput>(null);
 
   // Initialize setup state on mount
   useEffect(() => {
@@ -55,6 +57,16 @@ export function LedgerSetupScreen() {
       startSetup();
     }
   }, [startSetup, setupState.step1Data, setupState.isComplete]);
+
+  useEffect(() => {
+    if (setupState.activeStep === 'step2') {
+      const timeout = setTimeout(() => {
+        participantInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+    return undefined;
+  }, [setupState.activeStep]);
 
   const rosterCards = useMemo(
     () =>
@@ -98,6 +110,7 @@ export function LedgerSetupScreen() {
       // Move to Step 2
       progressToStep2();
       setSavedMessage('');
+      setIsLoading(false);
     } catch (setupError) {
       const errorMsg = setupError instanceof Error ? setupError.message : 'Unable to save ledger. Please try again.';
       setErrorMessage(errorMsg);
@@ -202,7 +215,7 @@ export function LedgerSetupScreen() {
       eyebrow="Trip setup"
       title="Ledger Setup"
       description="Create the trip ledger and keep the participant roster organized."
-      accent="#2f5d62"
+      accent={screenAccents.setup}
     >
       <ActionButton tone="secondary" compact label="Back to dashboard" onPress={() => navigation.navigate(APP_ROUTES.dashboard)} />
 
@@ -212,7 +225,7 @@ export function LedgerSetupScreen() {
         </Text>
 
         {setupState.activeStep === 'step1' ? (
-          <View className="gap-3">
+          <SurfaceCard emphasis="soft" style={styles.stepCard}>
             <Text className="text-xs font-bold uppercase tracking-[1.6px] text-muted">Ledger details</Text>
             <LabeledField 
               label="Ledger title" 
@@ -262,20 +275,21 @@ export function LedgerSetupScreen() {
               }}
             />
             {errorMessage ? (
-               <View className="mt-2 gap-2.5 rounded-xl border border-danger bg-[#fff1f5] p-3">
+               <View className="mt-2 gap-2.5 rounded-xl border p-3" style={styles.inlineErrorBlock}>
                  <Text className="text-sm leading-5 text-danger">{errorMessage}</Text>
                 <ActionButton tone="danger" compact label="Retry" onPress={() => {
                   void handleStep1Submit();
                 }} />
               </View>
             ) : null}
-          </View>
+          </SurfaceCard>
         ) : null}
 
         {setupState.activeStep === 'step2' ? (
-          <View className="gap-3">
+          <SurfaceCard emphasis="soft" style={styles.stepCard}>
             <Text className="text-xs font-bold uppercase tracking-[1.6px] text-muted">Add participants</Text>
             <LabeledField 
+              ref={participantInputRef}
               label="Participant name" 
               value={participantName} 
               onChangeText={setParticipantName} 
@@ -331,7 +345,7 @@ export function LedgerSetupScreen() {
                 <FeatureCard
                   label="No participants yet"
                   description="Add people to the trip roster after creating the ledger."
-                  accent="#2f5d62"
+                  accent={screenAccents.setup}
                   selected
                 />
               )}
@@ -345,14 +359,14 @@ export function LedgerSetupScreen() {
               }}
             />
              {errorMessage ? (
-               <View className="mt-2 gap-2.5 rounded-xl border border-danger bg-[#fff1f5] p-3">
+               <View className="mt-2 gap-2.5 rounded-xl border p-3" style={styles.inlineErrorBlock}>
                  <Text className="text-sm leading-5 text-danger">{errorMessage}</Text>
                 <ActionButton tone="danger" compact label="Retry" onPress={() => {
                   void handleStep2Complete();
                 }} />
               </View>
             ) : null}
-          </View>
+          </SurfaceCard>
         ) : null}
 
       </View>
@@ -365,7 +379,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stepLabel: {
-    color: '#2f5d62',
+    color: colors.status.success,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -374,24 +388,27 @@ const styles = StyleSheet.create({
   stepBlock: {
     gap: 12,
   },
+  stepCard: {
+    gap: 12,
+  },
   backButton: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderWidth: 1,
-    borderColor: '#2f5d62',
-    backgroundColor: '#f5efe4',
+    borderColor: colors.status.success,
+    backgroundColor: colors.background.panelSoft,
   },
   backButtonLabel: {
-    color: '#2f5d62',
+    color: colors.status.success,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
   sectionLabel: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.6,
@@ -401,7 +418,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   modeLabel: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -415,36 +432,36 @@ const styles = StyleSheet.create({
   modeButton: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   modeButtonActive: {
-    borderColor: '#2f5d62',
-    backgroundColor: '#e8f1ef',
+    borderColor: colors.status.success,
+    backgroundColor: colors.background.panelSoft,
   },
   modeButtonText: {
-    color: '#38485f',
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
   },
   modeButtonTextActive: {
-    color: '#2f5d62',
+    color: colors.status.success,
   },
   primaryButton: {
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#2f5d62',
+    backgroundColor: colors.status.success,
     alignSelf: 'flex-start',
   },
   primaryButtonDisabled: {
     opacity: 0.5,
   },
   primaryButtonLabel: {
-    color: '#f5efe4',
+    color: colors.text.onAccent,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -454,16 +471,16 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f5efe4',
+    backgroundColor: colors.background.panelSoft,
     borderWidth: 1,
-    borderColor: '#2f5d62',
+    borderColor: colors.status.success,
     alignSelf: 'flex-start',
   },
   secondaryButtonDisabled: {
     opacity: 0.5,
   },
   secondaryButtonLabel: {
-    color: '#2f5d62',
+    color: colors.status.success,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -476,24 +493,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rosterName: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '700',
   },
   organizerTag: {
     alignSelf: 'flex-start',
-    color: '#007f7a',
+    color: colors.status.success,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    backgroundColor: '#eafcf8',
+    backgroundColor: colors.background.panelSoft,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   rosterId: {
-    color: '#5a6883',
+    color: colors.text.muted,
     fontSize: 12,
   },
   rosterActionsRow: {
@@ -509,16 +526,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   errorMessage: {
-    color: '#b14f2e',
+    color: colors.text.danger,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
   },
   errorBlock: {
     borderRadius: 12,
-    backgroundColor: '#fff1ee',
+    backgroundColor: colors.background.dangerSoft,
     borderWidth: 1,
-    borderColor: '#d9a8a0',
+    borderColor: colors.border.danger,
     padding: 12,
     gap: 10,
     marginTop: 8,
@@ -529,14 +546,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#b14f2e',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.danger,
+    backgroundColor: colors.background.panel,
   },
   retryButtonLabel: {
-    color: '#b14f2e',
+    color: colors.text.danger,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+  inlineErrorBlock: {
+    borderColor: colors.border.danger,
+    backgroundColor: colors.background.dangerSoft,
   },
 });

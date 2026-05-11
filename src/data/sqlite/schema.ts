@@ -10,8 +10,3 @@ export const events = sqliteTable("events", {
   payload_json: text("payload_json").notNull(),
   sequence: int("sequence").notNull().unique(),
 });
-
-export const syncCheckpoints = sqliteTable("sync_checkpoints", {
-  peer_id: text("peer_id").primaryKey(),
-  last_sequence: int("last_sequence").notNull(),
-});

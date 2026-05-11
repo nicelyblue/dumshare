@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ExpenseReviewItem } from '../data/ledger/expenseReview';
 import { LabeledField } from '../ui/LabeledField';
 import { ReviewStatusPill } from '../ui/ReviewStatusPill';
+import { colors } from '../theme/colors';
 
 type SubmissionDetailScreenProps = {
   item: ExpenseReviewItem;
@@ -68,13 +69,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: '700',
     flex: 1,
   },
   detail: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 13,
   },
   actionsRow: {
@@ -87,20 +88,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   approve: {
-    backgroundColor: '#2f6f46',
+    backgroundColor: colors.status.success,
   },
   reject: {
-    backgroundColor: '#a33e2c',
+    backgroundColor: colors.status.danger,
   },
   actionLabel: {
-    color: '#f5efe4',
+    color: colors.text.onAccent,
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
   message: {
-    color: '#5b2f73',
+    color: colors.text.link,
     fontSize: 13,
   },
 });

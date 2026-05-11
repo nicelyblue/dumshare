@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import type { ExpenseSplitPayload } from '../domain/events/types';
 import { LabeledField } from './LabeledField';
+import { colors } from '../theme/colors';
 
 type ParticipantOption = {
   participantId: string;
@@ -227,9 +228,9 @@ export function ExpenseSplitEditor({ participants, totalAmountMinor, split, onCh
                     maximumValue={Math.max(0, totalAmountMinor)}
                     step={1}
                     value={participant.owedAmountMinor}
-                    minimumTrackTintColor="#6e4a7e"
-                    maximumTrackTintColor="#d9d0bf"
-                    thumbTintColor="#6e4a7e"
+                    minimumTrackTintColor={colors.accent.secondary}
+                    maximumTrackTintColor={colors.border.default}
+                    thumbTintColor={colors.accent.secondary}
                     onValueChange={(value) => {
                       onChange({
                         mode: 'exact',
@@ -312,9 +313,9 @@ export function ExpenseSplitEditor({ participants, totalAmountMinor, split, onCh
                     maximumValue={10000}
                     step={1}
                     value={participant.percentageBps}
-                    minimumTrackTintColor="#6e4a7e"
-                    maximumTrackTintColor="#d9d0bf"
-                    thumbTintColor="#6e4a7e"
+                    minimumTrackTintColor={colors.accent.secondary}
+                    maximumTrackTintColor={colors.border.default}
+                    thumbTintColor={colors.accent.secondary}
                     onValueChange={(value) => {
                       onChange({
                         mode: 'percentage',
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   label: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -387,45 +388,45 @@ const styles = StyleSheet.create({
   modeButton: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   modeButtonActive: {
-    borderColor: '#6e4a7e',
-    backgroundColor: '#efe6f4',
+    borderColor: colors.accent.secondary,
+    backgroundColor: colors.background.panelSoft,
   },
   modeButtonLabel: {
-    color: '#38485f',
+    color: colors.text.secondary,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   modeButtonLabelActive: {
-    color: '#5b2f73',
+    color: colors.text.link,
   },
   helperText: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 13,
     lineHeight: 18,
   },
   sliderRow: {
     gap: 8,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
+    borderColor: colors.border.default,
     borderRadius: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background.panel,
     padding: 10,
   },
   sliderLabel: {
-    color: '#38485f',
+    color: colors.text.secondary,
     fontSize: 13,
     fontWeight: '700',
   },
   sliderValue: {
-    color: '#5b2f73',
+    color: colors.text.link,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -443,13 +444,13 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: '#6e4a7e',
+    borderColor: colors.accent.secondary,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#efe6f4',
+    backgroundColor: colors.background.panelSoft,
   },
   adjustButtonLabel: {
-    color: '#5b2f73',
+    color: colors.text.link,
     fontSize: 18,
     fontWeight: '800',
     lineHeight: 20,

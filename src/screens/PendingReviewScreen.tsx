@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ExpenseReviewItem } from '../data/ledger/expenseReview';
 import { ReviewStatusPill } from '../ui/ReviewStatusPill';
 import { SummaryCard } from '../ui/SummaryCard';
+import { colors } from '../theme/colors';
 
 type PendingReviewScreenProps = {
   items: ExpenseReviewItem[];
@@ -16,8 +17,8 @@ export function PendingReviewScreen({ items, onOpenSubmission }: PendingReviewSc
     return (
       <SummaryCard
         label="Pending review"
-        value="No contributor submissions pending"
-        detail="New contributor submissions will appear here for organizer approval."
+        value="No submissions pending"
+        detail="New submissions will appear here for organizer approval."
       />
     );
   }
@@ -48,8 +49,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#d9d0bf',
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.default,
+    backgroundColor: colors.background.panel,
     padding: 12,
     gap: 8,
   },
@@ -60,17 +61,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
-    color: '#10203a',
+    color: colors.text.primary,
     fontSize: 15,
     fontWeight: '700',
     flex: 1,
   },
   meta: {
-    color: '#51617a',
+    color: colors.text.subtle,
     fontSize: 13,
   },
   link: {
-    color: '#6e4a7e',
+    color: colors.text.link,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,

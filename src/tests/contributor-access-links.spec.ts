@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import type { LedgerEvent } from "../domain/events/types";
 import { replayLedger } from "../domain/projections";
 
-describe("contributor-onboarding-invitations contracts", () => {
+describe("contributor-access-links contracts", () => {
   test("event contract includes invite lifecycle event names", () => {
     const eventsTypesSource = readFileSync(
       resolve(process.cwd(), "src/domain/events/types.ts"),
@@ -44,7 +44,7 @@ describe("contributor-onboarding-invitations contracts", () => {
   });
 });
 
-describe("contributor-onboarding-invitations replay invariants", () => {
+describe("contributor-access-links replay invariants", () => {
   const ledgerId = "ledger-trip-003";
   const organizerDeviceId = "device-organizer-1";
 

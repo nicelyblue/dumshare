@@ -3,7 +3,6 @@ export const APP_ROUTES = {
   ledgers: 'ledgers',
   setup: 'setup',
   expenseEntry: 'expenseEntry',
-  sync: 'sync',
   balances: 'balances',
 } as const;
 
@@ -27,11 +26,6 @@ export const APP_FEATURES = [
     name: APP_ROUTES.expenseEntry,
     label: 'Expense Entry',
     description: 'Capture trip costs with payer rows and split controls.',
-  },
-  {
-    name: APP_ROUTES.sync,
-    label: 'Sync',
-    description: 'Prepare QR transfer and in-person exchange states.',
   },
   {
     name: APP_ROUTES.balances,

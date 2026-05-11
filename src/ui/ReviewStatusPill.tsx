@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 
 type ReviewStatusPillProps = {
   status: 'pending' | 'approved' | 'rejected';
@@ -23,19 +24,19 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   pending: {
-    borderColor: '#8a6b2d',
-    backgroundColor: '#f9f1dd',
+    borderColor: colors.border.warning,
+    backgroundColor: colors.status.warningSoft,
   },
   approved: {
-    borderColor: '#2f6f46',
-    backgroundColor: '#e1f2e8',
+    borderColor: colors.border.success,
+    backgroundColor: colors.background.panelSoft,
   },
   rejected: {
-    borderColor: '#a33e2c',
-    backgroundColor: '#f8e4df',
+    borderColor: colors.status.danger,
+    backgroundColor: colors.status.dangerSoft,
   },
   label: {
-    color: '#203047',
+    color: colors.text.strong,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,

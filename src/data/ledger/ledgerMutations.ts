@@ -256,7 +256,7 @@ export function createLedgerSetupMutations(dbName = 'dumshare-ui'): LedgerSetupM
       }
 
       if (hasParticipantReferences(projection, input.participantId)) {
-        throw new Error('Cannot remove participant with existing ledger activity or invites');
+        throw new Error('Cannot remove participant with existing ledger activity or access links');
       }
 
       await repository.appendEvent({

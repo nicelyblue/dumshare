@@ -9,8 +9,8 @@ import { DashboardScreen } from './DashboardScreen';
 import { ExpenseEntryScreen } from './ExpenseEntryScreen';
 import { LedgerSetupScreen } from './LedgerSetupScreen';
 import { LedgerSelectionScreen } from './LedgerSelectionScreen';
-import { SyncScreen } from './SyncScreen';
 import { BalancesScreen } from './BalancesScreen';
+import { colors } from '../theme/colors';
 
 type FeatureScreenProps = {
   feature: FeatureRegistryItem;
@@ -32,10 +32,6 @@ export function FeatureScreen({ feature, onNavigate }: FeatureScreenProps) {
 
   if (feature.screenKind === 'expense') {
     return <ExpenseEntryScreen />;
-  }
-
-  if (feature.screenKind === 'sync') {
-    return <SyncScreen />;
   }
 
   if (feature.screenKind === 'balances') {
@@ -81,7 +77,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionLabel: {
-    color: '#7a634b',
+    color: colors.text.muted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.6,
