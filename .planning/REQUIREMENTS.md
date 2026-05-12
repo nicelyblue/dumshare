@@ -24,9 +24,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Dashboard and Snapshot Views
 
-- [ ] **DASH-01**: User can view per-participant financial status (net, owed, owes) for the active share
-- [ ] **DASH-02**: User can view the latest entered expense summary on the home dashboard
-- [ ] **DASH-03**: User can view an expense review snapshot with clear split and participant impact details
+- [x] **DASH-01**: User can view per-participant financial status (net, owed, owes) for the active share
+- [x] **DASH-02**: User can view the latest entered expense summary on the home dashboard
+- [x] **DASH-03**: User can view an expense review snapshot with clear split and participant impact details
 
 ### Expense Capture and Ledger Entries
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SETUP-04 | Phase 1 | Complete |
 | SETUP-05 | Phase 1 | Complete |
 | SETUP-06 | Phase 1 | Complete |
-| DASH-01 | Phase 2 | Pending |
-| DASH-02 | Phase 2 | Pending |
-| DASH-03 | Phase 2 | Pending |
+| DASH-01 | Phase 2 | Complete |
+| DASH-02 | Phase 2 | Complete |
+| DASH-03 | Phase 2 | Complete |
 | EXP-01 | Phase 3 | Pending |
 | EXP-02 | Phase 3 | Pending |
 | EXP-03 | Phase 3 | Pending |

@@ -45,7 +45,10 @@ Plans:
   1. User can view per-participant net/owed/owes status for the active share.
   2. User can see the latest entered expense summary directly on Home.
   3. User can open an expense review snapshot that clearly explains split details and participant impact.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [x] 02-01-PLAN.md — Add snapshot service/controller contracts with test-backed UI model mapping.
+- [x] 02-02-PLAN.md — Implement Home and Review snapshot screens wired to active share context.
 **UI hint**: yes
 
 ### Phase 3: Expense Capture and Ledger Correction Loop
