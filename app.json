@@ -1,0 +1,8 @@
+{
+  "expo": {
+    "scheme": "dumshare",
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

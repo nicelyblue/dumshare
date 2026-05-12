@@ -1,12 +1,10 @@
-import { Drawer } from 'expo-router/drawer';
+import { Stack } from 'expo-router';
 import { AppProviders } from '../src/mobile/providers/AppProviders';
 
 export default function RootLayout(): JSX.Element {
   return (
     <AppProviders>
-      <Drawer screenOptions={{ headerShown: false }}>
-        <Drawer.Screen name="(tabs)" options={{ title: 'Dumshare' }} />
-      </Drawer>
+      <Stack screenOptions={{ headerShown: false }} />
     </AppProviders>
   );
 }
