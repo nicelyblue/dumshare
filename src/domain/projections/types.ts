@@ -50,37 +50,8 @@ export type LedgerProjection = {
   participants: LedgerParticipant[];
   invites: LedgerInvite[];
   participantContributorDeviceClaims: Record<string, string>;
-  pendingSubmissions: ({
-    submissionType: "expense-create";
-    submissionId: string;
-    submittedByParticipantId: string;
-    proposedExpense: ExpenseCreatedPayload;
-    submittedAt: string;
-    submittedByDeviceId: string;
-    sourceEventId: string;
-  } | {
-    submissionType: "expense-amendment";
-    submissionId: string;
-    submittedByParticipantId: string;
-    targetExpenseId: string;
-    reason: string;
-    proposedExpense: ExpenseCreatedPayload;
-    submittedAt: string;
-    submittedByDeviceId: string;
-    sourceEventId: string;
-  })[];
-  reviewedSubmissions: {
-    submissionId: string;
-    decision: "approved" | "rejected";
-    reviewedAt: string;
-    reviewedByDeviceId: string;
-    sourceEventId: string;
-    reviewReason: string;
-  }[];
   organizerDeviceId: string;
-  approvalAuthorityDeviceId: string;
   title: string;
-  settlementContext: string;
   organizerParticipantId?: string;
   organizerName?: string;
 };

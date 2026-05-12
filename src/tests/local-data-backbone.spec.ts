@@ -18,10 +18,8 @@ test("ledger setup contracts include ledger.created payload and projection metad
 
   expect(eventsTypesSource).toContain('"ledger.created"');
   expect(eventsTypesSource).toContain("title");
-  expect(eventsTypesSource).toContain("settlementContext");
 
   expect(projectionTypesSource).toContain("title");
-  expect(projectionTypesSource).toContain("settlementContext");
 });
 
 describe("local-data-backbone", () => {
@@ -278,20 +276,21 @@ describe("local-data-backbone", () => {
     expect(projectionAfterReopen).toEqual(projectionBeforeClose);
   });
 
-  test("throws explicit error for unsupported eventType", () => {
-    expect(() =>
-      replayLedger([
-        {
-          id: "evt-unknown-1",
-          ledgerId,
-          eventType: "expense.unknown",
-          eventVersion: 1,
-          occurredAt: "2026-04-20T16:40:00.000Z",
-          actorDeviceId: deviceId,
-          payloadJson: JSON.stringify({ some: "payload" }),
-          sequence: 1,
-        },
-      ]),
-    ).toThrow(/Unsupported eventType/);
+  test("ignores unknown event types during replay", () => {
+    const projection = replayLedger([
+      {
+        id: "evt-unknown-1",
+        ledgerId,
+        eventType: "expense.unknown",
+        eventVersion: 1,
+        occurredAt: "2026-04-20T16:40:00.000Z",
+        actorDeviceId: deviceId,
+        payloadJson: JSON.stringify({ some: "payload" }),
+        sequence: 1,
+      },
+    ]);
+
+    expect(projection).toBeDefined();
+    expect(projection.entries).toHaveLength(0);
   });
 });

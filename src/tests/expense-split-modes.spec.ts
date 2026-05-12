@@ -24,7 +24,6 @@ describe("expense split mode contracts", () => {
 
     expect(projectionTypesSource).toContain("split");
     expect(projectionTypesSource).toContain("owedShares");
-    expect(projectionTypesSource).toContain("pendingSubmissions");
   });
 });
 

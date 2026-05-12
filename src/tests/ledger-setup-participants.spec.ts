@@ -47,7 +47,6 @@ describe("ledger-setup-participants", () => {
         actorDeviceId: organizerDeviceId,
         payloadJson: JSON.stringify({
           title: "Barcelona Weekend",
-          settlementContext: "per-currency balances",
         }),
         sequence: 1,
       },
@@ -56,7 +55,6 @@ describe("ledger-setup-participants", () => {
     expect(projection).toMatchObject({
       ledgerId,
       title: "Barcelona Weekend",
-      settlementContext: "per-currency balances",
       lastSequence: 1,
       appliedEventIds: ["evt-ledger-created-1"],
       entries: [],
@@ -96,7 +94,6 @@ describe("ledger-setup-participants", () => {
         actorDeviceId: organizerDeviceId,
         payloadJson: JSON.stringify({
           title: "Barcelona Weekend",
-          settlementContext: "per-currency balances",
         }),
         sequence: 1,
       },
@@ -126,24 +123,24 @@ describe("ledger-setup-participants", () => {
     ]);
     expect(firstReplay.lastSequence).toBe(3);
     expect(firstReplay.title).toBe("Barcelona Weekend");
-    expect(firstReplay.settlementContext).toBe("per-currency balances");
   });
 
-  test("replayLedger keeps explicit unsupported eventType errors", () => {
-    expect(() =>
-      replayLedger([
-        {
-          id: "evt-unknown-1",
-          ledgerId,
-          eventType: "expense.unknown",
-          eventVersion: 1,
-          occurredAt: "2026-04-20T17:10:00.000Z",
-          actorDeviceId: organizerDeviceId,
-          payloadJson: JSON.stringify({ some: "payload" }),
-          sequence: 1,
-        },
-      ]),
-    ).toThrow(/Unsupported eventType/);
+  test("replayLedger ignores unknown event types", () => {
+    const projection = replayLedger([
+      {
+        id: "evt-unknown-1",
+        ledgerId,
+        eventType: "expense.unknown",
+        eventVersion: 1,
+        occurredAt: "2026-04-20T17:10:00.000Z",
+        actorDeviceId: organizerDeviceId,
+        payloadJson: JSON.stringify({ some: "payload" }),
+        sequence: 1,
+      },
+    ]);
+
+    expect(projection).toBeDefined();
+    expect(projection.entries).toHaveLength(0);
   });
 
   test("replayLedger includes participant names from participant.added events", () => {
@@ -157,7 +154,6 @@ describe("ledger-setup-participants", () => {
         actorDeviceId: organizerDeviceId,
         payloadJson: JSON.stringify({
           title: "Barcelona Weekend",
-          settlementContext: "per-currency balances",
         }),
         sequence: 1,
       },
@@ -198,7 +194,6 @@ describe("ledger-setup-participants", () => {
       actorDeviceId: organizerDeviceId,
       payloadJson: JSON.stringify({
         title: "Barcelona Weekend",
-        settlementContext: "per-currency balances",
       }),
     });
 
@@ -252,7 +247,6 @@ describe("ledger-setup-participants", () => {
         actorDeviceId: organizerDeviceId,
         payloadJson: JSON.stringify({
           title: "Barcelona Weekend",
-          settlementContext: "per-currency balances",
         }),
         sequence: 1,
       },
@@ -293,7 +287,6 @@ describe("ledger-setup-participants", () => {
           actorDeviceId: organizerDeviceId,
           payloadJson: JSON.stringify({
             title: "Barcelona Weekend",
-            settlementContext: "per-currency balances",
           }),
           sequence: 1,
         },

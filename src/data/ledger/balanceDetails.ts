@@ -17,11 +17,7 @@ export async function loadBalanceDetailSnapshot(dbName = 'dumshare-ui', selected
     return {
       hasLedger: false,
       participants: [],
-      metadata: {
-        pendingSubmissionCount: 0,
-        reviewedSubmissionCount: 0,
-        approvalScopeNote: '',
-      },
+      metadata: {},
     };
   }
 

@@ -26,6 +26,7 @@ type BuildExpenseEventInput = {
 
 type ExpenseDraftMutations = {
   submitExpenseDraft: (input: ExpenseDraftInput, selectedLedgerId?: string | null) => Promise<string>;
+  deleteExpense: (expenseId: string, selectedLedgerId?: string | null) => Promise<void>;
 };
 
 function createEventId(prefix: string): string {
@@ -164,6 +165,24 @@ export function createExpenseDraftMutations(dbName = 'dumshare-ui'): ExpenseDraf
 
       await repository.appendEvent(event);
       return payload.expenseId;
+    },
+
+    async deleteExpense(expenseId: string, selectedLedgerId?: string | null): Promise<void> {
+      const ledgerId = selectedLedgerId ?? (await resolveLatestLedgerId(dbName));
+
+      if (!ledgerId) {
+        throw new Error('Create the ledger before deleting expenses');
+      }
+
+      await repository.appendEvent({
+        id: createEventId('expense-deleted'),
+        ledgerId,
+        eventType: 'expense.deleted',
+        eventVersion: 1,
+        occurredAt: new Date().toISOString(),
+        actorDeviceId: 'device-organizer-ui',
+        payloadJson: JSON.stringify({ expenseId }),
+      });
     },
   };
 }

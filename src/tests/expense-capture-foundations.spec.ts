@@ -52,7 +52,6 @@ describe("expense-capture-foundations replay invariants", () => {
       actorDeviceId: organizerDeviceId,
       payloadJson: JSON.stringify({
         title: "Phase 4 Expense Capture",
-        settlementContext: "per-currency balances",
       }),
       sequence: 1,
     };
@@ -161,7 +160,7 @@ describe("expense-capture-foundations replay invariants", () => {
     ]);
   });
 
-  test("claimed contributor submissions remain pending until organizer review (EXPS-02)", () => {
+  test("contributor can create expense and it appears directly in entries (EXPS-02)", () => {
     const projection = replayLedger([
       ledgerCreatedEvent(),
       participantAddedEvent("participant-001", "Alice", 2),
@@ -188,17 +187,11 @@ describe("expense-capture-foundations replay invariants", () => {
       },
     ]);
 
-    expect(projection.entries).toHaveLength(0);
-    expect(projection.pendingSubmissions).toHaveLength(1);
-    expect(projection.pendingSubmissions[0]).toMatchObject({
-      submissionType: "expense-create",
-      submissionId: "evt-expense-created-2",
-      submittedByParticipantId: "participant-001",
-      submittedByDeviceId: "device-contributor-1",
-      proposedExpense: {
-        expenseId: "expense-002",
-        creatorRole: "contributor",
-      },
+    expect(projection.entries).toHaveLength(1);
+    expect(projection.entries[0]).toMatchObject({
+      expenseId: "expense-002",
+      description: "Taxi",
+      creatorRole: "contributor",
     });
   });
 

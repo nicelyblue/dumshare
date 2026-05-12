@@ -7,16 +7,12 @@ export type KnownEventType =
   | "invite.revoked"
   | "invite.consumed"
   | "expense.created"
-  | "expense.submission-created"
-  | "expense.submission-reviewed"
-  | "expense.amendment-submitted"
-  | "expense.note-added";
+  | "expense.deleted";
 
 export type EventType = KnownEventType | string;
 
 export type LedgerCreatedPayload = {
   title: string;
-  settlementContext: string;
 };
 
 export type ParticipantAddedPayload = {
@@ -99,26 +95,8 @@ export type ExpenseSplitPayload =
   | PercentageSplitPayload;
 
 export type ExpenseAmendmentSubmittedPayload = {
-  amendmentId: string;
-  targetExpenseId: string;
-  reason: string;
-  proposedExpense: ExpenseCreatedPayload;
-};
-
-export type ExpenseSubmissionCreatedPayload = {
-  submissionId: string;
-  submissionType: "expense-create" | "expense-amendment";
-  submittedByParticipantId: string;
-  proposedExpense: ExpenseCreatedPayload;
-  targetExpenseId?: string;
-  reason?: string;
-};
-
-export type ExpenseSubmissionReviewedPayload = {
-  submissionId: string;
-  decision: "approved" | "rejected";
-  reviewReason: string;
-};
+  amendmentId: striDeletedPayload = {
+  expenseId
 
 export type EventInput = {
   id: string;

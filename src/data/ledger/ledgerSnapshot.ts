@@ -12,9 +12,7 @@ export type LedgerDashboardSnapshot = {
   title: string;
   organizerName: string;
   organizerParticipantId: string | null;
-  settlementContext: string;
   participantCount: number;
-  pendingApprovalCount: number;
   latestActivityLabel: string;
   latestActivityAt: string | null;
   balanceSummary: ApprovedBalanceSummary;
@@ -22,11 +20,7 @@ export type LedgerDashboardSnapshot = {
 
 const EMPTY_BALANCE_SUMMARY: ApprovedBalanceSummary = {
   participants: [],
-  metadata: {
-    pendingSubmissionCount: 0,
-    reviewedSubmissionCount: 0,
-    approvalScopeNote: '',
-  },
+  metadata: {},
 };
 
 function createEmptySnapshot(): LedgerDashboardSnapshot {
@@ -36,9 +30,7 @@ function createEmptySnapshot(): LedgerDashboardSnapshot {
     title: 'No ledger yet',
     organizerName: '',
     organizerParticipantId: null,
-    settlementContext: 'Create the trip ledger in Setup to begin.',
     participantCount: 0,
-    pendingApprovalCount: 0,
     latestActivityLabel: 'Waiting for the first ledger event',
     latestActivityAt: null,
     balanceSummary: EMPTY_BALANCE_SUMMARY,
@@ -63,14 +55,8 @@ function formatActivityLabel(eventType: string): string {
       return 'Contributor access linked';
     case 'expense.created':
       return 'Expense recorded';
-    case 'expense.submission-created':
-      return 'Submission queued';
-    case 'expense.submission-reviewed':
-      return 'Submission reviewed';
-    case 'expense.amendment-submitted':
-      return 'Amendment submitted';
-    case 'expense.note-added':
-      return 'Expense note added';
+    case 'expense.deleted':
+      return 'Expense deleted';
     default:
       return 'Ledger updated';
   }
@@ -78,24 +64,19 @@ function formatActivityLabel(eventType: string): string {
 
 function sanitizeLedgerCreatedPayload(payloadJson: string): string {
   const fallbackTitle = 'Recovered ledger';
-  const fallbackContext = 'Legacy ledger metadata was repaired during load.';
 
   try {
     const parsed = JSON.parse(payloadJson) as Record<string, unknown>;
     const titleCandidates = [parsed.title, parsed.ledgerTitle, parsed.name];
-    const contextCandidates = [parsed.settlementContext, parsed.settlement, parsed.context, parsed.description];
 
     const title = titleCandidates.find((value) => typeof value === 'string' && value.trim().length > 0);
-    const settlementContext = contextCandidates.find((value) => typeof value === 'string' && value.trim().length > 0);
 
     return JSON.stringify({
       title: typeof title === 'string' ? title.trim() : fallbackTitle,
-      settlementContext: typeof settlementContext === 'string' ? settlementContext.trim() : fallbackContext,
     });
   } catch {
     return JSON.stringify({
       title: fallbackTitle,
-      settlementContext: fallbackContext,
     });
   }
 }
@@ -144,9 +125,7 @@ export async function loadLedgerDashboardSnapshot(
     title: projection.title,
     organizerName: projection.organizerName ?? '',
     organizerParticipantId: projection.organizerParticipantId ?? null,
-    settlementContext: projection.settlementContext,
     participantCount: projection.participants.length,
-    pendingApprovalCount: projection.pendingSubmissions.length,
     latestActivityLabel: formatActivityLabel(latestEvent.eventType),
     latestActivityAt: latestEvent.occurredAt,
     balanceSummary: buildApprovedBalanceSummary(projection),

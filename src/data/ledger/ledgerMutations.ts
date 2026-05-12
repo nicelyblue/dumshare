@@ -2,12 +2,10 @@ import { openLedgerDb } from '../../data/sqlite/client';
 import { createEventRepository } from '../../domain/events/repository';
 import type { EventRepository } from '../../domain/events/repository';
 import { replayLedger } from '../../domain/projections';
-import { assertValidSettlementContext } from '../../domain/currency/settlement';
 import { resolveLatestLedgerId } from './latestLedgerId';
 
 export type LedgerSetupInput = {
   title: string;
-  settlementContext: string;
   organizerName?: string;
 };
 
@@ -33,7 +31,6 @@ type LedgerSetupMutations = {
 
 type NormalizedLedgerSetupInput = {
   title: string;
-  settlementContext: string;
   organizerName: string;
 };
 
@@ -55,20 +52,13 @@ function createEventId(prefix: string): string {
 
 function normalizeLedgerSetupInput(input: LedgerSetupInput): NormalizedLedgerSetupInput {
   const title = input.title.trim();
-  const settlementContext = input.settlementContext.trim();
   const organizerName = (input.organizerName ?? '').trim();
 
   if (!title) {
     throw new Error('Enter a ledger title before creating the ledger');
   }
 
-  if (!settlementContext) {
-    throw new Error('Enter a settlement context before creating the ledger');
-  }
-
-  assertValidSettlementContext(settlementContext);
-
-  return { title, settlementContext, organizerName };
+  return { title, organizerName };
 }
 
 function normalizeParticipantNameInput(input: { displayName: string }): NormalizedParticipantNameInput {
@@ -96,7 +86,6 @@ async function appendLedgerCreatedEvent(
     actorDeviceId: 'device-organizer-ui',
     payloadJson: JSON.stringify({
       title: input.title,
-      settlementContext: input.settlementContext,
       organizerName: input.organizerName,
       organizerParticipantId,
     }),
@@ -140,14 +129,6 @@ function hasParticipantReferences(projection: ReturnType<typeof replayLedger>, p
   }
 
   if (projection.entries.some((entry) => entry.owedShares.some((share) => share.participantId === participantId))) {
-    return true;
-  }
-
-  if (projection.pendingSubmissions.some((submission) => submission.submittedByParticipantId === participantId)) {
-    return true;
-  }
-
-  if (projection.invites.some((invite) => invite.participantId === participantId)) {
     return true;
   }
 

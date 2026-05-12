@@ -5,7 +5,7 @@ node_modules/
 .vscode/
 .idea/
 docs/
-html_examples/
+frontend mock/
 notes.txt
 
 # Expo / React Native generated files

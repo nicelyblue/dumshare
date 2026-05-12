@@ -3,29 +3,22 @@ import { openLedgerDb } from '../sqlite/client';
 import { events } from '../sqlite/schema';
 import { resolveLatestLedgerId } from './latestLedgerId';
 import { createEventRepository } from '../../domain/events/repository';
-import { assertValidSettlementContext } from '../../domain/currency/settlement';
 
 export type LedgerListItem = {
   ledgerId: string;
   title: string;
-  settlementContext: string;
   createdAt: string;
 };
 
-function safeParseLedgerCreated(payloadJson: string): { title: string; settlementContext: string } {
+function safeParseLedgerCreated(payloadJson: string): { title: string } {
   const fallback = {
     title: 'Untitled ledger',
-    settlementContext: 'No settlement context',
   };
 
   try {
     const parsed = JSON.parse(payloadJson) as Record<string, unknown>;
     const title = typeof parsed.title === 'string' && parsed.title.trim() ? parsed.title.trim() : fallback.title;
-    const settlementContext =
-      typeof parsed.settlementContext === 'string' && parsed.settlementContext.trim()
-        ? parsed.settlementContext.trim()
-        : fallback.settlementContext;
-    return { title, settlementContext };
+    return { title };
   } catch {
     return fallback;
   }
@@ -46,7 +39,6 @@ export async function listLedgers(dbName = 'dumshare-ui'): Promise<LedgerListIte
     byLedger.set(row.ledger_id, {
       ledgerId: row.ledger_id,
       title: payload.title,
-      settlementContext: payload.settlementContext,
       createdAt: row.occurred_at,
     });
   });
@@ -55,22 +47,15 @@ export async function listLedgers(dbName = 'dumshare-ui'): Promise<LedgerListIte
 }
 
 export async function createLedger(
-  input: { title: string; settlementContext: string; organizerName: string },
+  input: { title: string; organizerName: string },
   dbName = 'dumshare-ui',
 ): Promise<string> {
   const title = input.title.trim();
-  const settlementContext = input.settlementContext.trim();
   const organizerName = input.organizerName.trim();
 
   if (!title) {
     throw new Error('Enter a ledger title before creating the ledger');
   }
-
-  if (!settlementContext) {
-    throw new Error('Enter a settlement context before creating the ledger');
-  }
-
-  assertValidSettlementContext(settlementContext);
 
   if (!organizerName) {
     throw new Error('Enter organizer name before creating the ledger');
@@ -89,7 +74,7 @@ export async function createLedger(
     eventVersion: 1,
     occurredAt: new Date().toISOString(),
     actorDeviceId: 'device-organizer-ui',
-    payloadJson: JSON.stringify({ title, settlementContext, organizerName, organizerParticipantId }),
+    payloadJson: JSON.stringify({ title, organizerName, organizerParticipantId }),
   });
 
   await repository.appendEvent({
