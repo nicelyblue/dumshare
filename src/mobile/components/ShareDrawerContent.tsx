@@ -1,13 +1,21 @@
 import type { LedgerListItem } from '../../data/ledger/ledgers';
 import { createShareMenuController } from '../controllers/shareMenuController';
+import { createShareActionsController } from '../controllers/shareActionsController';
 import { createLedgerAppService } from '../services/ledgerAppService';
 import { getThemePreference, toggleThemePreference } from '../state/preferencesStore';
 import { resetLocalData } from '../actions/resetLocalData';
+import type { ActionSheetOption } from './LongPressActionSheet';
 
 const shareMenuController = createShareMenuController({
   listShares: () => createLedgerAppService().listShares(),
   deleteShare: (ledgerId: string) => createLedgerAppService().deleteShare(ledgerId),
   clearAllData: () => resetLocalData('CONFIRM_DELETE_ALL'),
+});
+
+const shareActionsController = createShareActionsController({
+  deleteShare: (ledgerId: string) => createLedgerAppService().deleteShare(ledgerId),
+  makeActive: async () => undefined,
+  editShare: async () => undefined,
 });
 
 export type ShareDrawerContentModel = {
@@ -25,6 +33,19 @@ export async function buildShareDrawerContent(activeShareId: string | null): Pro
 
 export function onThemeToggle(): 'light' | 'dark' {
   return toggleThemePreference();
+}
+
+export function getShareLongPressOptions(ledgerId: string, activeShareId: string | null): ActionSheetOption[] {
+  return shareActionsController.getActions({ ledgerId, activeShareId }).map((action) => ({
+    key: action,
+    label:
+      action === 'make-active'
+        ? 'Make active'
+        : action === 'edit'
+          ? 'Edit share'
+          : 'Delete share permanently',
+    destructive: action === 'delete',
+  }));
 }
 
 export default function ShareDrawerContent(): null {
