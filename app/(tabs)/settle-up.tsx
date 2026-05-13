@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import { createSettleUpFlowController } from '../../src/mobile/controllers/settleUpFlowController';
 import { SettlementRecommendationList } from '../../src/mobile/components/SettlementRecommendationList';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
@@ -85,7 +86,16 @@ export default function SettleUpScreen(): JSX.Element {
       )}
 
       <View style={styles.card}>
-        <Pressable style={styles.confirmButton} accessibilityRole="button">
+        <Pressable
+          style={styles.confirmButton}
+          accessibilityRole="button"
+          onPress={() => {
+            if (model.recommendations.length === 0) {
+              return;
+            }
+            router.navigate(flowController.buildCompletionRoute());
+          }}
+        >
           <Text style={styles.confirmButtonText}>Mark as settled</Text>
         </Pressable>
       </View>
