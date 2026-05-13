@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { loadExpenseReviewModel, type ExpenseReviewModel } from '../../src/mobile/controllers/expenseReviewController';
-import { ExpenseReviewList } from '../../src/mobile/components/ExpenseReviewList';
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { deleteExpenseById, loadLedgerHistoryModel, type LedgerHistoryModel } from '../../src/mobile/controllers/ledgerHistoryController';
+import { LedgerHistoryList } from '../../src/mobile/components/LedgerHistoryList';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
+import { LongPressActionSheet } from '../../src/mobile/components/LongPressActionSheet';
+import { setPendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
+import { router } from 'expo-router';
 
 export default function LedgerScreen(): JSX.Element {
   const [activeShareId, setActiveShareId] = useState<string | null>(getActiveShareState().activeShareId);
-  const [model, setModel] = useState<ExpenseReviewModel>({ items: [] });
+  const [model, setModel] = useState<LedgerHistoryModel>({ entries: [] });
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const requestVersion = useRef(0);
 
   useEffect(() => subscribeActiveShare((state) => setActiveShareId(state.activeShareId)), []);
@@ -18,7 +23,7 @@ export default function LedgerScreen(): JSX.Element {
     const version = requestVersion.current;
 
     try {
-      const nextModel = await loadExpenseReviewModel({ selectedLedgerId: nextShareId });
+      const nextModel = await loadLedgerHistoryModel({ selectedLedgerId: nextShareId });
       if (version !== requestVersion.current) {
         return;
       }
@@ -56,14 +61,51 @@ export default function LedgerScreen(): JSX.Element {
       <Text style={styles.title}>Ledger</Text>
       <Text style={styles.body}>Active share: {activeShareId ?? 'None selected'}</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {model.items.length === 0 ? (
+      {model.entries.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyHeading}>No expenses yet</Text>
           <Text style={styles.emptyBody}>Add the first expense to see who owes what and how the split works.</Text>
         </View>
       ) : (
-        <ExpenseReviewList model={model} />
+        <LedgerHistoryList
+          model={model}
+          onLongPressEntry={(expenseId) => {
+            setSelectedExpenseId(expenseId);
+            setActionSheetVisible(true);
+          }}
+        />
       )}
+      <LongPressActionSheet
+        visible={actionSheetVisible}
+        onClose={() => setActionSheetVisible(false)}
+        title="Expense actions"
+        options={[
+          { key: 'edit', label: 'Edit' },
+          { key: 'delete', label: 'Delete', destructive: true },
+        ]}
+        onSelect={(key) => {
+          if (!selectedExpenseId) {
+            return;
+          }
+
+          if (key === 'edit') {
+            setPendingExpenseDraft({ expenseId: selectedExpenseId, selectedLedgerId: activeShareId });
+            router.navigate('/(tabs)/add-expense');
+            return;
+          }
+
+          Alert.alert('Delete expense?', 'This action cannot be undone.', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Delete',
+              style: 'destructive',
+              onPress: () => {
+                void deleteExpenseById({ expenseId: selectedExpenseId, selectedLedgerId: activeShareId }).then(() => reload(activeShareId));
+              },
+            },
+          ]);
+        }}
+      />
     </ScrollView>
   );
 }

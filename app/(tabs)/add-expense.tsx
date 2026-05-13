@@ -1,21 +1,73 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { loadExpenseFormModel, submitExpenseForm } from '../../src/mobile/controllers/expenseFormController';
+import { ExpenseSplitEditor } from '../../src/mobile/components/ExpenseSplitEditor';
+import { consumePendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
+import { getActiveShareState } from '../../src/mobile/state/activeShareStore';
 
 export default function AddExpenseScreen(): JSX.Element {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('EUR');
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
+  const [splitMode, setSplitMode] = useState<'equal' | 'exact'>('equal');
+  const [exactValues, setExactValues] = useState<Record<string, string>>({});
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const pending = consumePendingExpenseDraft();
+    if (!pending) {
+      return;
+    }
+    setEditingExpenseId(pending.expenseId);
+    void loadExpenseFormModel({ selectedLedgerId: pending.selectedLedgerId, editExpenseId: pending.expenseId }).then((model) => {
+      setDescription(model.defaults.description);
+      setAmount(model.defaults.totalAmountInput);
+      setCurrency(model.defaults.currency);
+      setExpenseDate(model.defaults.expenseDate);
+      setSplitMode(model.defaults.splitMode);
+    });
+  }, []);
+
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Add Expense</Text>
-      <Text style={styles.body}>Capture screen skeleton is ready for interaction flow.</Text>
+      <Text style={styles.body}>{editingExpenseId ? 'Editing existing expense' : 'Create a new expense'}</Text>
       <View style={styles.card}>
-        <Text style={styles.label}>Who paid?</Text>
-        <Pressable style={styles.inputLike} accessibilityRole="button">
-          <Text style={styles.inputLikeText}>Select participant</Text>
-        </Pressable>
+        <Text style={styles.label}>Description</Text>
+        <TextInput style={styles.inputLike} value={description} onChangeText={setDescription} />
         <Text style={styles.label}>Amount</Text>
-        <View style={styles.inputLike}>
-          <Text style={styles.inputLikeText}>0.00</Text>
-        </View>
-        <Pressable style={styles.primaryButton} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>Review split</Text>
+        <TextInput style={styles.inputLike} value={amount} onChangeText={setAmount} keyboardType="numeric" />
+        <Text style={styles.label}>Currency</Text>
+        <TextInput style={styles.inputLike} value={currency} onChangeText={setCurrency} autoCapitalize="characters" />
+        <Text style={styles.label}>Date</Text>
+        <TextInput style={styles.inputLike} value={expenseDate} onChangeText={setExpenseDate} />
+        <ExpenseSplitEditor
+          participantIds={['participant-1']}
+          splitMode={splitMode}
+          exactValues={exactValues}
+          onSplitModeChange={setSplitMode}
+          onExactValueChange={(participantId, value) => setExactValues((prev) => ({ ...prev, [participantId]: value }))}
+        />
+        <Pressable
+          style={styles.primaryButton}
+          accessibilityRole="button"
+          onPress={() =>
+            void submitExpenseForm({
+              selectedLedgerId: getActiveShareState().activeShareId,
+              editExpenseId: editingExpenseId,
+              description,
+              totalAmountInput: amount,
+              currency,
+              expenseDate,
+              payerParticipantId: 'participant-1',
+              splitMode,
+              splitParticipantIds: ['participant-1'],
+              splitExactAmountsMinor: Object.fromEntries(Object.entries(exactValues).map(([k, v]) => [k, Math.round(Number.parseFloat(v || '0') * 100)])),
+            })
+          }
+        >
+          <Text style={styles.primaryButtonText}>Save expense</Text>
         </Pressable>
       </View>
     </View>
