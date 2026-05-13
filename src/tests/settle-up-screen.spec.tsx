@@ -3,6 +3,22 @@ import { describe, expect, test } from 'vitest';
 import { createSettleUpFlowController } from '../mobile/controllers/settleUpFlowController';
 
 describe('settle up screen flow', () => {
+  test('completion payload uses explicit settlement summary language', async () => {
+    const controller = createSettleUpFlowController({
+      loadSettlementModel: async () => ({
+        hasLedger: true,
+        selectedCurrencyCode: 'EUR',
+        currencyOptions: [{ code: 'EUR', label: 'Euro' }],
+        recommendations: [{ fromLabel: 'Alex', toLabel: 'Sam', amountLabel: '42.50 EUR' }],
+      }),
+    });
+
+    await controller.load({ selectedLedgerId: 'ledger-1', selectedCurrencyCode: 'EUR' });
+    await controller.generateRecommendations();
+
+    expect(controller.buildCompletionRoute().params.summary).toContain('pays');
+  });
+
   test('currency selection updates selected settlement currency', async () => {
     const controller = createSettleUpFlowController({
       loadSettlementModel: async (input) => ({
