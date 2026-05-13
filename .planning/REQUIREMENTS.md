@@ -30,12 +30,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Expense Capture and Ledger Entries
 
-- [ ] **EXP-01**: User can create an expense with name, amount, currency, payer, and participant selection
-- [ ] **EXP-02**: User can choose equal or custom split mode for selected participants
-- [ ] **EXP-03**: User can save expense and return to home with updated snapshot data
-- [ ] **LEDG-01**: User can see a chronological list of expense entries with overview details
-- [ ] **LEDG-02**: User can long-press a ledger entry to edit or delete it
-- [ ] **LEDG-03**: User can edit an existing ledger entry using a prefilled expense form and save changes
+- [x] **EXP-01**: User can create an expense with name, amount, currency, payer, and participant selection
+- [x] **EXP-02**: User can choose equal or custom split mode for selected participants
+- [x] **EXP-03**: User can save expense and return to home with updated snapshot data
+- [x] **LEDG-01**: User can see a chronological list of expense entries with overview details
+- [x] **LEDG-02**: User can long-press a ledger entry to edit or delete it
+- [x] **LEDG-03**: User can edit an existing ledger entry using a prefilled expense form and save changes
 
 ### Settlement and App Utilities
 
@@ -83,12 +83,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-01 | Phase 2 | Complete |
 | DASH-02 | Phase 2 | Complete |
 | DASH-03 | Phase 2 | Complete |
-| EXP-01 | Phase 3 | Pending |
-| EXP-02 | Phase 3 | Pending |
-| EXP-03 | Phase 3 | Pending |
-| LEDG-01 | Phase 3 | Pending |
-| LEDG-02 | Phase 3 | Pending |
-| LEDG-03 | Phase 3 | Pending |
+| EXP-01 | Phase 3 | Complete |
+| EXP-02 | Phase 3 | Complete |
+| EXP-03 | Phase 3 | Complete |
+| LEDG-01 | Phase 3 | Complete |
+| LEDG-02 | Phase 3 | Complete |
+| LEDG-03 | Phase 3 | Complete |
 | SETTLE-01 | Phase 4 | Pending |
 | SETTLE-02 | Phase 4 | Pending |
 | SETTLE-03 | Phase 4 | Pending |

@@ -60,7 +60,11 @@ Plans:
   2. User can select equal or custom split mode and save the expense back into the active share.
   3. User can view a chronological ledger list with clear entry overview details.
   4. User can long-press ledger entries to edit or delete, and edited entries open with prefilled values that save successfully.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [x] 03-01-PLAN.md — Define and test expense form/ledger history service-controller contracts.
+- [x] 03-02-PLAN.md — Implement Add Expense create/edit form with split-mode workflows.
+- [x] 03-03-PLAN.md — Implement chronological ledger list and long-press edit/delete correction actions.
 **UI hint**: yes
 
 ### Phase 4: Settlement Recommendations and Completion
