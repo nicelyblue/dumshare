@@ -75,7 +75,10 @@ Plans:
   1. User can select a settlement currency from a searchable ISO currency list.
   2. User can generate settle-up recommendations showing who owes whom and exact amounts.
   3. User can view a settlement completion screen with final breakdown details for closure.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [x] 04-01-PLAN.md — Define and test settlement currency/recommendation controller contracts.
+- [x] 04-02-PLAN.md — Implement settle-up tab flow and completion breakdown screen.
 **UI hint**: yes
 
 ## Progress
@@ -88,4 +91,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 (Phase 2 and Phase 3 are pa
 | 1. Shell, Share Context, and Setup Flows | 4/4 | Complete   | 2026-05-12 |
 | 2. Home Snapshot and Review Views | 0/TBD | Not started | - |
 | 3. Expense Capture and Ledger Correction Loop | 0/TBD | Not started | - |
-| 4. Settlement Recommendations and Completion | 0/TBD | Not started | - |
+| 4. Settlement Recommendations and Completion | 0/2 | Not started | - |

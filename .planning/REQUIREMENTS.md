@@ -39,9 +39,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Settlement and App Utilities
 
-- [ ] **SETTLE-01**: User can choose settlement currency from searchable ISO currency list
-- [ ] **SETTLE-02**: User can generate settle-up recommendations showing who owes whom and how much
-- [ ] **SETTLE-03**: User can view settlement completion screen with final settlement breakdown
+- [x] **SETTLE-01**: User can choose settlement currency from searchable ISO currency list
+- [x] **SETTLE-02**: User can generate settle-up recommendations showing who owes whom and how much
+- [x] **SETTLE-03**: User can view settlement completion screen with final settlement breakdown
 - [x] **UTIL-01**: User can toggle light/dark mode from the side menu
 - [x] **UTIL-02**: User can delete all local app data from side menu with explicit confirmation
 
@@ -89,9 +89,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LEDG-01 | Phase 3 | Complete |
 | LEDG-02 | Phase 3 | Complete |
 | LEDG-03 | Phase 3 | Complete |
-| SETTLE-01 | Phase 4 | Pending |
-| SETTLE-02 | Phase 4 | Pending |
-| SETTLE-03 | Phase 4 | Pending |
+| SETTLE-01 | Phase 4 | Complete |
+| SETTLE-02 | Phase 4 | Complete |
+| SETTLE-03 | Phase 4 | Complete |
 | UTIL-01 | Phase 1 | Complete |
 | UTIL-02 | Phase 1 | Complete |
 

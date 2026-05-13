@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-05-13T09:58:01.626Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-05-13T10:10:15.984Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 11
+  completed_plans: 11
   percent: 100
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Any group can reliably capture shared expenses and instantly see an accurate, explainable settle-up outcome.
-**Current focus:** Phase 03 — expense-capture-and-ledger-correction-loop
+**Current focus:** Phase 04 — settlement-recommendations-and-completion
 
 ## Current Position
 
-Phase: 03 (expense-capture-and-ledger-correction-loop) — EXECUTING
-Plan: 3 of 3
+Phase: 04 (settlement-recommendations-and-completion) — EXECUTING
+Plan: 2 of 2
 Status: Phase complete — ready for verification
 Last activity: 2026-05-13
 
@@ -53,6 +53,8 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase 02-home-snapshot-and-review-views P01 | 18min | 2 tasks | 5 files |
 | Phase 02-home-snapshot-and-review-views P02 | 16min | 2 tasks | 4 files |
+| Phase 04 P01 | 20 | 2 tasks | 3 files |
+| Phase 04 P02 | 24 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -65,6 +67,9 @@ Recent decisions affecting current work:
 - [Roadmap Init]: Sequence Phase 2 and Phase 3 as parallel-friendly after Phase 1 completion.
 - [Phase 02-home-snapshot-and-review-views]: Added typed service snapshot reads so UI models consume replay-backed data only.
 - [Phase 02-home-snapshot-and-review-views]: Added request-version stale response guards on Home and Ledger tab reload flows.
+- [Phase 04]: Validated selected settlement currency against supported ISO options with EUR fallback.
+- [Phase 04]: Derived settlement recommendation rows from replay-backed per-currency net balances.
+- [Phase 04]: Added settle-up flow controller with stale-response guards and completion routing payload generation.
 
 ### Pending Todos
 
@@ -85,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T09:58:01.623Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-05-13T10:10:06.963Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
