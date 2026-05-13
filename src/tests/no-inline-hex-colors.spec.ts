@@ -25,6 +25,6 @@ describe('design token guardrails', () => {
       }
     }
 
-    expect(offenders).toEqual([]);
+    expect(offenders).toEqual([]); // Phase 05 policy: TSX styles should consume tokenized values, not inline hex literals.
   });
 });
