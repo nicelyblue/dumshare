@@ -1,12 +1,14 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../src/mobile/theme/tokens';
+import { typographyTokens } from '../src/mobile/theme/typography';
 
 export default function SettlementCompleteScreen(): JSX.Element {
   const params = useLocalSearchParams<{ currency?: string; recommendationCount?: string; summary?: string }>();
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Settlement complete 🎉</Text>
+      <Text style={styles.title}>Settlement Calculated!</Text>
       <Text style={styles.body}>All suggested transfers were reviewed for {params.currency ?? 'your selected currency'}.</Text>
 
       <View style={styles.card}>
@@ -25,43 +27,43 @@ export default function SettlementCompleteScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 20,
+    backgroundColor: colorTokens.appBackground,
+    padding: spacingTokens.lg,
     gap: 12,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
+    ...typographyTokens.heading,
   },
   body: {
-    color: '#334155',
+    color: colorTokens.textMuted,
   },
   card: {
     marginTop: 8,
-    borderRadius: 12,
+    borderRadius: radiusTokens.md,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
+    borderColor: colorTokens.border,
+    backgroundColor: colorTokens.card,
     padding: 14,
     gap: 6,
   },
   heading: {
     fontWeight: '700',
-    color: '#0f172a',
+    color: colorTokens.textPrimary,
   },
   detail: {
-    color: '#475569',
+    color: colorTokens.textMuted,
   },
   button: {
     marginTop: 10,
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    paddingVertical: 11,
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
+    justifyContent: 'center',
   },
   buttonText: {
-    color: '#f8fafc',
+    color: colorTokens.card,
     fontWeight: '600',
   },
 });

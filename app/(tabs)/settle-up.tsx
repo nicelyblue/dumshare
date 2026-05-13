@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { createSettleUpFlowController } from '../../src/mobile/controllers/settleUpFlowController';
 import { SettlementRecommendationList } from '../../src/mobile/components/SettlementRecommendationList';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 const flowController = createSettleUpFlowController();
 
@@ -72,8 +74,8 @@ export default function SettleUpScreen(): JSX.Element {
               void flowController.generateRecommendations().then((nextModel) => setModel(nextModel));
             }}
           >
-            <Text style={styles.confirmButtonText}>Settle up</Text>
-          </Pressable>
+             <Text style={styles.confirmButtonText}>Calculate Settlement</Text>
+           </Pressable>
         </View>
       </View>
 
@@ -82,7 +84,10 @@ export default function SettleUpScreen(): JSX.Element {
           <Text style={styles.description}>Create or select a share to generate settlement recommendations.</Text>
         </View>
       ) : (
-        <SettlementRecommendationList model={{ recommendations: model.recommendations }} />
+        <View style={styles.requiredPaymentsWrap}>
+          <Text style={styles.requiredPaymentsLabel}>REQUIRED PAYMENTS</Text>
+          <SettlementRecommendationList model={{ recommendations: model.recommendations }} />
+        </View>
       )}
 
       <View style={styles.card}>
@@ -106,40 +111,39 @@ export default function SettleUpScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 20,
+    backgroundColor: colorTokens.appBackground,
+    padding: spacingTokens.lg,
     gap: 8,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0f172a',
+    ...typographyTokens.heading,
   },
   body: {
-    fontSize: 16,
-    color: '#334155',
+    ...typographyTokens.body,
+    color: colorTokens.textMuted,
   },
   card: {
     marginTop: 6,
     padding: 14,
-    borderRadius: 12,
+    borderRadius: radiusTokens.md,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
+    borderColor: colorTokens.border,
+    backgroundColor: colorTokens.card,
     gap: 6,
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#334155',
+    color: colorTokens.textPrimary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.md,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: colorTokens.inputBackground,
+    minHeight: touchTarget.minimum,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -149,12 +153,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#0f172a',
-    borderRadius: 10,
+    borderColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
     paddingVertical: 11,
   },
   secondaryButtonText: {
-    color: '#0f172a',
+    color: colorTokens.textPrimary,
     fontWeight: '600',
   },
   amount: {
@@ -163,17 +167,23 @@ const styles = StyleSheet.create({
     color: '#0f172a',
   },
   description: {
-    color: '#475569',
+    color: colorTokens.textMuted,
   },
   confirmButton: {
     marginTop: 6,
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
     paddingVertical: 11,
   },
   confirmButtonText: {
-    color: '#f8fafc',
+    color: colorTokens.card,
     fontWeight: '600',
+  },
+  requiredPaymentsWrap: {
+    gap: spacingTokens.sm,
+  },
+  requiredPaymentsLabel: {
+    ...typographyTokens.sectionLabel,
   },
 });

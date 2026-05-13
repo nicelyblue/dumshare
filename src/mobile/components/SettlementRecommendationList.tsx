@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
 
 export type SettlementRecommendationListModel = {
   recommendations: Array<{
@@ -31,37 +32,37 @@ export function SettlementRecommendationList({ model }: { model: SettlementRecom
 }
 
 const styles = StyleSheet.create({
-  list: { gap: 8 },
+  list: { gap: spacingTokens.sm },
   row: {
-    padding: 12,
-    borderRadius: 12,
+    padding: spacingTokens.md,
+    borderRadius: radiusTokens.md,
     borderWidth: 1,
-    borderColor: 'lightsteelblue',
-    backgroundColor: 'white',
+    borderColor: colorTokens.border,
+    backgroundColor: colorTokens.card,
     gap: 4,
   },
   route: {
     fontSize: 15,
-    color: 'midnightblue',
+    color: colorTokens.textPrimary,
     fontWeight: '600',
   },
   amount: {
-    color: 'slategray',
+    color: colorTokens.textMuted,
   },
   emptyState: {
-    borderRadius: 12,
+    borderRadius: radiusTokens.md,
     padding: 14,
-    backgroundColor: 'white',
+    backgroundColor: colorTokens.card,
     borderWidth: 1,
-    borderColor: 'aliceblue',
+    borderColor: colorTokens.border,
     gap: 6,
   },
   emptyHeading: {
     fontSize: 16,
     fontWeight: '700',
-    color: 'midnightblue',
+    color: colorTokens.textPrimary,
   },
   emptyBody: {
-    color: 'slategray',
+    color: colorTokens.textMuted,
   },
 });
