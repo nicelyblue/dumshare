@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
 
 export function ExpenseSplitEditor(props: {
   participantIds: string[];
@@ -14,7 +15,13 @@ export function ExpenseSplitEditor(props: {
           <Text style={styles.modeText}>Equal</Text>
         </Pressable>
         <Pressable onPress={() => props.onSplitModeChange('exact')} style={styles.modeButton}>
-          <Text style={styles.modeText}>Custom</Text>
+          <Text style={styles.modeText}>Exact</Text>
+        </Pressable>
+        <Pressable onPress={() => props.onSplitModeChange('exact')} style={styles.modeButton}>
+          <Text style={styles.modeText}>Percent</Text>
+        </Pressable>
+        <Pressable onPress={() => props.onSplitModeChange('exact')} style={styles.modeButton}>
+          <Text style={styles.modeText}>Shares</Text>
         </Pressable>
       </View>
       {props.splitMode === 'exact'
@@ -30,16 +37,38 @@ export function ExpenseSplitEditor(props: {
             </View>
           ))
         : null}
+      <Text style={styles.balanceStatus}>Balanced split status is required before saving.</Text>
+      <Pressable style={styles.confirmButton} accessibilityRole="button">
+        <Text style={styles.confirmLabel}>Confirm Split</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { gap: 8 },
-  row: { flexDirection: 'row', gap: 8 },
-  modeButton: { borderWidth: 1, borderColor: 'lightgray', borderRadius: 8, padding: 8 },
-  modeText: { color: 'black' },
+  root: { gap: spacingTokens.sm },
+  row: { flexDirection: 'row', gap: spacingTokens.xs, flexWrap: 'wrap' },
+  modeButton: {
+    borderWidth: 1,
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.sm,
+    paddingHorizontal: spacingTokens.sm,
+    paddingVertical: spacingTokens.xs,
+    minHeight: touchTarget.minimum,
+    justifyContent: 'center',
+    backgroundColor: colorTokens.card,
+  },
+  modeText: { color: colorTokens.textPrimary },
   exactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { color: 'dimgrey' },
-  input: { borderWidth: 1, borderColor: 'lightgray', borderRadius: 8, minWidth: 80, padding: 6 },
+  label: { color: colorTokens.textMuted },
+  input: { borderWidth: 1, borderColor: colorTokens.border, borderRadius: radiusTokens.sm, minWidth: 80, padding: 6, backgroundColor: colorTokens.inputBackground },
+  balanceStatus: { color: colorTokens.textMuted, fontSize: 12 },
+  confirmButton: {
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmLabel: { color: colorTokens.card, fontWeight: '600' },
 });

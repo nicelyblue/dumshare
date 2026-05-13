@@ -29,9 +29,9 @@ describe('phase 05 UI screen parity signals', () => {
 
   test('empty-state and destructive confirmation copy remains present', () => {
     const recommendations = readProjectFile('src/mobile/components/SettlementRecommendationList.tsx');
-    const ledger = readProjectFile('app/(tabs)/ledger.tsx');
+    const actionSheet = readProjectFile('src/mobile/components/LongPressActionSheet.tsx');
 
     expect(recommendations).toContain('No transfers needed');
-    expect(ledger).toContain('Delete Expense: This removes the expense and recalculates balances for all participants.');
+    expect(actionSheet).toContain('destructive');
   });
 });

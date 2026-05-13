@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
 
 export type ActionSheetOption = {
   key: string;
@@ -47,44 +48,44 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    backgroundColor: 'rgba(61, 60, 79, 0.3)',
   },
   backdrop: {
     flex: 1,
   },
   sheet: {
-    backgroundColor: 'white',
+    backgroundColor: colorTokens.card,
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: spacingTokens.lg,
+    paddingTop: spacingTokens.md,
     paddingBottom: 24,
     gap: 2,
   },
   title: {
     fontSize: 13,
-    color: 'slategray',
+    color: colorTokens.textMuted,
     marginBottom: 8,
   },
   row: {
     paddingVertical: 14,
   },
   label: {
-    color: 'black',
+    color: colorTokens.textPrimary,
     fontSize: 16,
     fontWeight: '600',
   },
   destructiveLabel: {
-    color: 'firebrick',
+    color: colorTokens.destructive,
   },
   cancelRow: {
     marginTop: 8,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: 'lightgray',
+    borderTopColor: colorTokens.border,
   },
   cancelLabel: {
-    color: 'dimgrey',
+    color: colorTokens.textMuted,
     fontSize: 16,
     textAlign: 'center',
     fontWeight: '600',

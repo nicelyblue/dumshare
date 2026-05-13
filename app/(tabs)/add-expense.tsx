@@ -4,6 +4,8 @@ import { loadExpenseFormModel, submitExpenseForm } from '../../src/mobile/contro
 import { ExpenseSplitEditor } from '../../src/mobile/components/ExpenseSplitEditor';
 import { consumePendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
 import { getActiveShareState } from '../../src/mobile/state/activeShareStore';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 export default function AddExpenseScreen(): JSX.Element {
   const [description, setDescription] = useState('');
@@ -67,7 +69,7 @@ export default function AddExpenseScreen(): JSX.Element {
             })
           }
         >
-          <Text style={styles.primaryButtonText}>Save expense</Text>
+          <Text style={styles.primaryButtonText}>Save Expense</Text>
         </Pressable>
       </View>
     </View>
@@ -77,53 +79,54 @@ export default function AddExpenseScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 20,
-    gap: 8,
+    backgroundColor: colorTokens.appBackground,
+    padding: spacingTokens.lg,
+    gap: spacingTokens.sm,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0f172a',
+    ...typographyTokens.heading,
   },
   body: {
-    fontSize: 16,
-    color: '#334155',
+    ...typographyTokens.body,
+    color: colorTokens.textMuted,
   },
   card: {
     marginTop: 6,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colorTokens.card,
+    borderRadius: radiusTokens.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 12,
+    borderColor: colorTokens.border,
+    padding: spacingTokens.md,
     gap: 8,
   },
   label: {
-    color: '#475569',
+    color: colorTokens.textMuted,
     fontSize: 12,
     fontWeight: '600',
   },
   inputLike: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    backgroundColor: '#f8fafc',
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.md,
+    paddingHorizontal: spacingTokens.md,
+    paddingVertical: spacingTokens.md,
+    minHeight: touchTarget.minimum,
+    backgroundColor: colorTokens.inputBackground,
   },
   inputLikeText: {
-    color: '#1e293b',
+    color: colorTokens.textPrimary,
   },
   primaryButton: {
     marginTop: 8,
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    paddingVertical: 12,
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#f8fafc',
+    color: colorTokens.card,
     fontWeight: '600',
   },
 });
