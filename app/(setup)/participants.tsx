@@ -4,6 +4,8 @@ import { ParticipantList } from '../../src/mobile/components/ParticipantList';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 const controller = createSetupController(createLedgerAppService());
 
@@ -42,6 +44,7 @@ export default function ParticipantsScreen(): JSX.Element {
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Add Participants</Text>
+      <Text style={styles.ownerHint}>Owner is highlighted automatically in participant rows.</Text>
       <TextInput
         accessibilityLabel="Participant name"
         placeholder="Alex"
@@ -50,7 +53,7 @@ export default function ParticipantsScreen(): JSX.Element {
         style={styles.input}
       />
       <Pressable onPress={onAddPress} style={styles.secondaryButton} accessibilityRole="button">
-        <Text style={styles.secondaryButtonText}>Add participant</Text>
+        <Text style={styles.secondaryButtonText}>+ Add participant</Text>
       </Pressable>
       <ParticipantList participants={participants} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -64,47 +67,54 @@ export default function ParticipantsScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 20,
-    gap: 10,
+    backgroundColor: colorTokens.appBackground,
+    padding: spacingTokens.lg,
+    gap: spacingTokens.md,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
+    ...typographyTokens.heading,
+  },
+  ownerHint: {
+    ...typographyTokens.label,
+    color: colorTokens.accent,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.md,
+    paddingHorizontal: spacingTokens.md,
+    paddingVertical: spacingTokens.md,
+    backgroundColor: colorTokens.inputBackground,
+    minHeight: touchTarget.minimum,
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    paddingVertical: 10,
+    borderColor: colorTokens.border,
+    backgroundColor: colorTokens.card,
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: '#0f172a',
+    color: colorTokens.textPrimary,
     fontWeight: '600',
   },
   button: {
     marginTop: 8,
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    paddingVertical: 12,
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: '#f8fafc',
+    color: colorTokens.card,
     fontWeight: '600',
   },
   error: {
-    color: '#b91c1c',
+    color: colorTokens.destructive,
   },
 });

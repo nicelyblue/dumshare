@@ -3,6 +3,8 @@ import { createSetupController } from '../../src/mobile/controllers/setupControl
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 const controller = createSetupController(createLedgerAppService());
 
@@ -34,6 +36,7 @@ export default function CreateShareScreen(): JSX.Element {
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Create Share</Text>
+      <Text style={styles.sectionLabel}>Share Name</Text>
       <TextInput
         accessibilityLabel="Share title"
         placeholder="Weekend trip"
@@ -41,6 +44,7 @@ export default function CreateShareScreen(): JSX.Element {
         onChangeText={setTitle}
         style={styles.input}
       />
+      <Text style={styles.sectionLabel}>Owner Name</Text>
       <TextInput
         accessibilityLabel="Organizer name"
         placeholder="You"
@@ -58,7 +62,7 @@ export default function CreateShareScreen(): JSX.Element {
       </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Pressable onPress={onCreatePress} style={styles.button} accessibilityRole="button">
-        <Text style={styles.buttonText}>Create share</Text>
+        <Text style={styles.buttonText}>Create Share</Text>
       </Pressable>
     </View>
   );
@@ -67,22 +71,24 @@ export default function CreateShareScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 20,
-    gap: 12,
+    backgroundColor: colorTokens.appBackground,
+    padding: spacingTokens.lg,
+    gap: spacingTokens.md,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
+    ...typographyTokens.heading,
+  },
+  sectionLabel: {
+    ...typographyTokens.sectionLabel,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.md,
+    paddingHorizontal: spacingTokens.md,
+    paddingVertical: spacingTokens.md,
+    backgroundColor: colorTokens.inputBackground,
+    minHeight: touchTarget.minimum,
   },
   choiceRow: {
     gap: 6,
@@ -91,20 +97,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   choiceLabel: {
-    color: '#1e293b',
+    color: colorTokens.textPrimary,
   },
   error: {
-    color: '#b91c1c',
+    color: colorTokens.destructive,
   },
   button: {
     marginTop: 6,
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    paddingVertical: 12,
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: '#f8fafc',
+    color: colorTokens.card,
     fontWeight: '600',
   },
 });

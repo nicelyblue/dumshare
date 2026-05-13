@@ -1,14 +1,16 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../src/mobile/theme/tokens';
+import { typographyTokens } from '../src/mobile/theme/typography';
 
 export default function HomeScreen(): JSX.Element {
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Dumshare</Text>
-      <Text style={styles.subtitle}>Local-first shared expenses with event-backed history.</Text>
+      <Text style={styles.title}>Welcome to Dumshare!</Text>
+      <Text style={styles.subtitle}>You haven't created your first Share yet. Get started by creating a Share to track expenses with friends.</Text>
       <Link href="/(setup)/create-share" asChild>
         <Pressable accessibilityRole="button" style={styles.button}>
-          <Text style={styles.buttonText}>Start setup flow</Text>
+          <Text style={styles.buttonText}>Create Share</Text>
         </Pressable>
       </Link>
       <Link href="/(tabs)" asChild>
@@ -24,40 +26,42 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
-    gap: 12,
-    backgroundColor: '#f8fafc',
+    padding: spacingTokens.xl,
+    gap: spacingTokens.md,
+    backgroundColor: colorTokens.appBackground,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#0f172a',
+    ...typographyTokens.display,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#334155',
-    marginBottom: 8,
+    ...typographyTokens.body,
+    color: colorTokens.textMuted,
+    marginBottom: spacingTokens.sm,
   },
   button: {
-    borderRadius: 10,
-    backgroundColor: '#0f172a',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderRadius: radiusTokens.md,
+    backgroundColor: colorTokens.inverse,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
+    paddingHorizontal: spacingTokens.lg,
+    justifyContent: 'center',
   },
   buttonText: {
-    color: '#f8fafc',
+    color: colorTokens.card,
     fontWeight: '600',
   },
   secondaryButton: {
-    borderRadius: 10,
+    borderRadius: radiusTokens.md,
     borderWidth: 1,
-    borderColor: '#94a3b8',
-    backgroundColor: '#ffffff',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderColor: colorTokens.border,
+    backgroundColor: colorTokens.card,
+    minHeight: touchTarget.minimum,
+    paddingVertical: spacingTokens.md,
+    paddingHorizontal: spacingTokens.lg,
+    justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: '#0f172a',
+    color: colorTokens.textPrimary,
     fontWeight: '600',
   },
 });
