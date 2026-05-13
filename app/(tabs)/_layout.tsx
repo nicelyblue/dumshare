@@ -2,6 +2,8 @@ import { Tabs } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import ShareDrawerContent from '../../src/mobile/components/ShareDrawerContent';
+import { colorTokens, radiusTokens, shellLayoutTokens, spacingTokens } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 export default function TabsLayout(): JSX.Element {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -10,6 +12,15 @@ export default function TabsLayout(): JSX.Element {
     <>
       <Tabs
         screenOptions={{
+          headerStyle: { backgroundColor: colorTokens.card },
+          headerTitleStyle: { ...typographyTokens.label, color: colorTokens.textPrimary },
+          tabBarStyle: {
+            backgroundColor: colorTokens.card,
+            borderTopColor: colorTokens.border,
+            height: shellLayoutTokens.tabBarHeight,
+          },
+          tabBarActiveTintColor: colorTokens.inverse,
+          tabBarInactiveTintColor: colorTokens.textMuted,
           headerLeft: () => (
             <Pressable
               accessibilityRole="button"
@@ -65,16 +76,19 @@ export default function TabsLayout(): JSX.Element {
 
 const styles = StyleSheet.create({
   menuButton: {
-    marginLeft: 12,
-    borderRadius: 8,
+    marginLeft: spacingTokens.md,
+    borderRadius: radiusTokens.sm,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderColor: colorTokens.border,
+    backgroundColor: colorTokens.groupedSurface,
+    paddingHorizontal: spacingTokens.md,
+    paddingVertical: spacingTokens.sm,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   menuButtonText: {
-    color: '#0f172a',
+    ...typographyTokens.label,
+    color: colorTokens.textPrimary,
     fontWeight: '600',
   },
   overlay: {
@@ -84,14 +98,14 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    backgroundColor: 'rgba(61, 60, 79, 0.3)',
   },
   drawer: {
     width: 280,
-    backgroundColor: '#ffffff',
+    backgroundColor: colorTokens.card,
     borderLeftWidth: 1,
-    borderLeftColor: '#e2e8f0',
+    borderLeftColor: colorTokens.border,
     paddingTop: 40,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacingTokens.lg,
   },
 });
