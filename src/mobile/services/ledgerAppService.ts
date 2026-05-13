@@ -58,6 +58,16 @@ export type LedgerListItem = {
   organizerName: string;
 };
 
+export type SettlementSnapshot = {
+  hasLedger: boolean;
+  recommendations: Array<{
+    fromParticipantName: string;
+    toParticipantName: string;
+    amountMinor: number;
+    currency: string;
+  }>;
+};
+
 type CreateShareInput = {
   title: string;
   organizerName: string;
@@ -130,6 +140,7 @@ export type LedgerAppService = {
       splitLabel: string;
     }>;
   }>;
+  loadSettlementSnapshot: (input: { selectedLedgerId?: string | null; selectedCurrencyCode: string }) => Promise<SettlementSnapshot>;
 };
 
 type InMemoryLedger = LedgerListItem & {
@@ -244,6 +255,84 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
     };
   }
 
+  function buildSettlementSnapshot(input: {
+    selectedLedgerId?: string | null;
+    selectedCurrencyCode: string;
+  }): SettlementSnapshot {
+    const target = input.selectedLedgerId
+      ? store.ledgers.find((ledger) => ledger.id === input.selectedLedgerId)
+      : store.ledgers[store.ledgers.length - 1];
+
+    if (!target) {
+      return { hasLedger: false, recommendations: [] };
+    }
+
+    const selectedCurrencyCode = validateRequiredField(input.selectedCurrencyCode, 'Settlement currency').toUpperCase();
+    const participantCount = target.participants.length;
+    if (participantCount < 2) {
+      return { hasLedger: true, recommendations: [] };
+    }
+
+    const netByParticipant = new Map<string, number>();
+    for (const participant of target.participants) {
+      netByParticipant.set(participant.id, 0);
+    }
+
+    for (const expense of target.expenses) {
+      if (expense.currency !== selectedCurrencyCode) {
+        continue;
+      }
+
+      const shareMinor = Math.round(expense.totalAmountMinor / participantCount);
+      for (const participant of target.participants) {
+        netByParticipant.set(participant.id, (netByParticipant.get(participant.id) ?? 0) - shareMinor);
+      }
+      for (const payer of expense.payers) {
+        netByParticipant.set(payer.participantId, (netByParticipant.get(payer.participantId) ?? 0) + payer.paidAmountMinor);
+      }
+    }
+
+    const debtors = target.participants
+      .map((participant) => ({ participant, amountMinor: Math.abs(Math.min(0, netByParticipant.get(participant.id) ?? 0)) }))
+      .filter((entry) => entry.amountMinor > 0)
+      .sort((a, b) => b.amountMinor - a.amountMinor);
+    const creditors = target.participants
+      .map((participant) => ({ participant, amountMinor: Math.max(0, netByParticipant.get(participant.id) ?? 0) }))
+      .filter((entry) => entry.amountMinor > 0)
+      .sort((a, b) => b.amountMinor - a.amountMinor);
+
+    const recommendations: SettlementSnapshot['recommendations'] = [];
+    let debtorIndex = 0;
+    let creditorIndex = 0;
+    while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+      const debtor = debtors[debtorIndex];
+      const creditor = creditors[creditorIndex];
+      const transferMinor = Math.min(debtor.amountMinor, creditor.amountMinor);
+
+      recommendations.push({
+        fromParticipantName: debtor.participant.displayName,
+        toParticipantName: creditor.participant.displayName,
+        amountMinor: transferMinor,
+        currency: selectedCurrencyCode,
+      });
+
+      debtor.amountMinor -= transferMinor;
+      creditor.amountMinor -= transferMinor;
+
+      if (debtor.amountMinor === 0) {
+        debtorIndex += 1;
+      }
+      if (creditor.amountMinor === 0) {
+        creditorIndex += 1;
+      }
+    }
+
+    return {
+      hasLedger: true,
+      recommendations,
+    };
+  }
+
   async function submitExpenseDraft(
     input: {
       description: string;
@@ -353,6 +442,9 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       return {
         entries: [...ledger.expenses].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
       };
+    },
+    loadSettlementSnapshot: async (input) => {
+      return buildSettlementSnapshot(input);
     },
   };
 }
