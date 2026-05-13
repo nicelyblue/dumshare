@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LedgerHistoryModel } from '../controllers/ledgerHistoryController';
+import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
 
 export function LedgerHistoryList(props: {
   model: LedgerHistoryModel;
@@ -21,9 +22,16 @@ export function LedgerHistoryList(props: {
 }
 
 const styles = StyleSheet.create({
-  root: { gap: 8 },
-  card: { borderWidth: 1, borderColor: 'lightgray', borderRadius: 10, padding: 10, backgroundColor: 'white' },
-  title: { fontWeight: '700', color: 'black' },
-  meta: { color: 'dimgray' },
-  time: { color: 'slategray', fontSize: 12 },
+  root: { gap: spacingTokens.sm },
+  card: {
+    borderWidth: 1,
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.md,
+    padding: spacingTokens.md,
+    backgroundColor: colorTokens.card,
+    gap: spacingTokens.xs,
+  },
+  title: { fontWeight: '700', color: colorTokens.textPrimary },
+  meta: { color: colorTokens.textMuted },
+  time: { color: colorTokens.textMuted, fontSize: 12 },
 });

@@ -6,6 +6,8 @@ import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/stat
 import { LongPressActionSheet } from '../../src/mobile/components/LongPressActionSheet';
 import { setPendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
 import { router } from 'expo-router';
+import { colorTokens, spacingTokens } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 export default function LedgerScreen(): JSX.Element {
   const [activeShareId, setActiveShareId] = useState<string | null>(getActiveShareState().activeShareId);
@@ -58,9 +60,13 @@ export default function LedgerScreen(): JSX.Element {
         />
       }
     >
-      <Text style={styles.title}>Ledger</Text>
+      <Text style={styles.title}>Ledger Entries</Text>
       <Text style={styles.body}>Active share: {activeShareId ?? 'None selected'}</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryLabel}>CURRENT STATUS</Text>
+        <Text style={styles.summaryValue}>{model.entries.length} entries</Text>
+      </View>
       {model.entries.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyHeading}>No expenses yet</Text>
@@ -113,36 +119,49 @@ export default function LedgerScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: 'floralwhite',
+    backgroundColor: colorTokens.appBackground,
   },
   content: {
-    padding: 20,
-    gap: 12,
+    padding: spacingTokens.lg,
+    gap: spacingTokens.md,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: 'black',
+    ...typographyTokens.heading,
   },
   body: {
-    fontSize: 16,
-    color: 'dimgray',
+    ...typographyTokens.body,
+    color: colorTokens.textMuted,
   },
   error: {
-    color: 'firebrick',
+    color: colorTokens.destructive,
+  },
+  summaryCard: {
+    borderWidth: 1,
+    borderColor: colorTokens.border,
+    borderRadius: 12,
+    padding: spacingTokens.md,
+    backgroundColor: colorTokens.card,
+    gap: spacingTokens.xs,
+  },
+  summaryLabel: {
+    ...typographyTokens.sectionLabel,
+  },
+  summaryValue: {
+    ...typographyTokens.heading,
+    fontSize: 20,
   },
   emptyState: {
     borderRadius: 12,
     padding: 16,
-    backgroundColor: 'antiquewhite',
+    backgroundColor: colorTokens.groupedSurface,
     gap: 8,
   },
   emptyHeading: {
     fontSize: 18,
     fontWeight: '700',
-    color: 'black',
+    color: colorTokens.textPrimary,
   },
   emptyBody: {
-    color: 'slategray',
+    color: colorTokens.textMuted,
   },
 });
