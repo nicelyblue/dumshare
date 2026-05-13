@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ExpenseReviewModel } from '../controllers/expenseReviewController';
+import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
 
 type Props = {
   model: ExpenseReviewModel;
@@ -33,26 +34,26 @@ export function ExpenseReviewList({ model }: Props): JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: spacingTokens.md,
   },
   card: {
     borderWidth: 1,
-    borderColor: 'tan',
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: 'oldlace',
+    borderColor: colorTokens.border,
+    borderRadius: radiusTokens.md,
+    padding: spacingTokens.md,
+    backgroundColor: colorTokens.card,
   },
   title: {
     fontWeight: '700',
-    color: 'black',
+    color: colorTokens.textPrimary,
   },
   status: {
     marginTop: 4,
-    color: 'dimgrey',
+    color: colorTokens.textMuted,
     fontSize: 13,
   },
   line: {
     marginTop: 8,
-    color: 'saddlebrown',
+    color: colorTokens.textPrimary,
   },
 });

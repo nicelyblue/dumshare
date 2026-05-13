@@ -3,6 +3,8 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import { loadHomeSnapshotModel, type HomeSnapshotModel } from '../../src/mobile/controllers/homeSnapshotController';
 import { HomeSnapshotCard } from '../../src/mobile/components/HomeSnapshotCard';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
+import { colorTokens, spacingTokens } from '../../src/mobile/theme/tokens';
+import { typographyTokens } from '../../src/mobile/theme/typography';
 
 export default function HomeScreen(): JSX.Element {
   const [activeShareId, setActiveShareId] = useState<string | null>(getActiveShareState().activeShareId);
@@ -53,7 +55,7 @@ export default function HomeScreen(): JSX.Element {
         />
       }
     >
-      <Text style={styles.title}>Share Overview</Text>
+      <Text style={styles.title}>Home Dashboard</Text>
       <Text style={styles.body}>Active share: {activeShareId ?? 'None selected'}</Text>
       {error ? <Text style={styles.helper}>{error}</Text> : null}
       {model.participantRows.length === 0 ? (
@@ -71,34 +73,32 @@ export default function HomeScreen(): JSX.Element {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: 'floralwhite',
+    backgroundColor: colorTokens.appBackground,
   },
   content: {
-    padding: 20,
-    gap: 12,
+    padding: spacingTokens.lg,
+    gap: spacingTokens.md,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: 'black',
+    ...typographyTokens.heading,
   },
   body: {
-    fontSize: 16,
-    color: 'dimgrey',
+    ...typographyTokens.body,
+    color: colorTokens.textMuted,
   },
   helper: {
-    color: 'slategray',
+    color: colorTokens.textMuted,
   },
   emptyState: {
-    marginTop: 18,
-    padding: 16,
+    marginTop: spacingTokens.lg,
+    padding: spacingTokens.lg,
     borderRadius: 12,
-    backgroundColor: 'antiquewhite',
+    backgroundColor: colorTokens.groupedSurface,
     gap: 8,
   },
   emptyHeading: {
     fontSize: 18,
     fontWeight: '700',
-    color: 'black',
+    color: colorTokens.textPrimary,
   },
 });

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { HomeSnapshotModel } from '../controllers/homeSnapshotController';
+import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
 
 type Props = {
   model: HomeSnapshotModel;
@@ -35,58 +36,58 @@ export function HomeSnapshotCard({ model }: Props): JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'antiquewhite',
-    borderRadius: 14,
-    padding: 16,
-    gap: 12,
+    backgroundColor: colorTokens.card,
+    borderRadius: radiusTokens.lg,
+    padding: spacingTokens.lg,
+    gap: spacingTokens.md,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: 'tan',
-    paddingBottom: 8,
+    borderBottomColor: colorTokens.border,
+    paddingBottom: spacingTokens.sm,
   },
   name: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'black',
+    color: colorTokens.textPrimary,
   },
   status: {
     fontSize: 13,
-    color: 'dimgrey',
+    color: colorTokens.textMuted,
   },
   amount: {
     fontSize: 16,
     fontWeight: '700',
   },
   positive: {
-    color: 'seagreen',
+    color: colorTokens.success,
   },
   negative: {
-    color: 'firebrick',
+    color: colorTokens.destructive,
   },
   settled: {
-    color: 'teal',
+    color: colorTokens.accent,
   },
   latestExpense: {
-    backgroundColor: 'linen',
-    borderRadius: 10,
-    padding: 12,
+    backgroundColor: colorTokens.groupedSurface,
+    borderRadius: radiusTokens.md,
+    padding: spacingTokens.md,
     gap: 4,
   },
   latestTitle: {
-    color: 'teal',
+    color: colorTokens.accent,
     fontWeight: '700',
   },
   latestMeta: {
-    color: 'saddlebrown',
+    color: colorTokens.textMuted,
     fontSize: 13,
   },
   latestAmount: {
     fontSize: 20,
     fontWeight: '700',
-    color: 'black',
+    color: colorTokens.textPrimary,
   },
 });
