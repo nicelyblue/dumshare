@@ -9,6 +9,13 @@ export const colorTokens = {
   accent: '#8A79AB',
   accentAlt: '#E6A5B8',
   inverse: '#000000',
+  inverseSoft: '#101114',
+  inverseBorder: '#333845',
+  inverseMuted: '#9B9EA7',
+  inverseSecondary: '#B3B5BE',
+  subtleSurface: '#F1F0F4',
+  subtleBorder: '#ECEAF2',
+  mutedSubtleText: '#A09DAE',
   destructive: '#D95C5C',
   success: '#4F9C77',
 } as const;

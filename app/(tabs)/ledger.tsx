@@ -1,17 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { deleteExpenseById, loadLedgerHistoryModel, type LedgerHistoryModel } from '../../src/mobile/controllers/ledgerHistoryController';
 import { LedgerHistoryList } from '../../src/mobile/components/LedgerHistoryList';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
 import { LongPressActionSheet } from '../../src/mobile/components/LongPressActionSheet';
 import { setPendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
-import { router } from 'expo-router';
-import { colorTokens, spacingTokens } from '../../src/mobile/theme/tokens';
-import { typographyTokens } from '../../src/mobile/theme/typography';
+import { router, useLocalSearchParams } from 'expo-router';
+import { colorTokens, radiusTokens, spacingTokens } from '../../src/mobile/theme/tokens';
 
 export default function LedgerScreen(): JSX.Element {
+  const params = useLocalSearchParams<{ expenseId?: string }>();
   const [activeShareId, setActiveShareId] = useState<string | null>(getActiveShareState().activeShareId);
-  const [model, setModel] = useState<LedgerHistoryModel>({ entries: [] });
+  const [model, setModel] = useState<LedgerHistoryModel>({
+    summary: {
+      currencyTotals: [],
+    },
+    entries: [],
+  });
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
@@ -43,6 +49,13 @@ export default function LedgerScreen(): JSX.Element {
     void reload(activeShareId);
   }, [activeShareId]);
 
+  useFocusEffect(
+    useCallback(() => {
+      void reload(getActiveShareState().activeShareId);
+      return undefined;
+    }, []),
+  );
+
   return (
     <ScrollView
       style={styles.screen}
@@ -60,12 +73,21 @@ export default function LedgerScreen(): JSX.Element {
         />
       }
     >
-      <Text style={styles.title}>Ledger Entries</Text>
-      <Text style={styles.body}>Active share: {activeShareId ?? 'None selected'}</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>CURRENT STATUS</Text>
-        <Text style={styles.summaryValue}>{model.entries.length} entries</Text>
+        <Text style={styles.summaryLabel}>Total Expenses</Text>
+        {model.summary.currencyTotals.length === 0 ? (
+          <Text style={styles.summaryValue}>0.00</Text>
+        ) : (
+          <View style={styles.summaryTotalsList}>
+            {model.summary.currencyTotals.map((total) => (
+              <View key={total.currency || 'base'} style={styles.summaryTotalRow}>
+                <Text style={styles.summaryCurrencyLabel}>{total.currency || 'BASE'}</Text>
+                <Text style={styles.summaryValue}>{total.totalLabel}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
       {model.entries.length === 0 ? (
         <View style={styles.emptyState}>
@@ -75,6 +97,7 @@ export default function LedgerScreen(): JSX.Element {
       ) : (
         <LedgerHistoryList
           model={model}
+          highlightedExpenseId={params.expenseId ?? null}
           onLongPressEntry={(expenseId) => {
             setSelectedExpenseId(expenseId);
             setActionSheetVisible(true);
@@ -125,30 +148,37 @@ const styles = StyleSheet.create({
     padding: spacingTokens.lg,
     gap: spacingTokens.md,
   },
-  title: {
-    ...typographyTokens.heading,
-  },
-  body: {
-    ...typographyTokens.body,
-    color: colorTokens.textMuted,
-  },
   error: {
     color: colorTokens.destructive,
   },
   summaryCard: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: 12,
-    padding: spacingTokens.md,
-    backgroundColor: colorTokens.card,
-    gap: spacingTokens.xs,
+    borderRadius: radiusTokens.md,
+    paddingVertical: spacingTokens.lg,
+    paddingHorizontal: spacingTokens.lg,
+    backgroundColor: colorTokens.inverseSoft,
+    gap: spacingTokens.md,
   },
   summaryLabel: {
-    ...typographyTokens.sectionLabel,
+    color: colorTokens.inverseSecondary,
+    fontSize: 29 / 2,
+  },
+  summaryTotalsList: {
+    gap: spacingTokens.xs,
+  },
+  summaryTotalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  summaryCurrencyLabel: {
+    color: colorTokens.inverseMuted,
+    fontSize: 13,
+    fontWeight: '600',
   },
   summaryValue: {
-    ...typographyTokens.heading,
-    fontSize: 20,
+    color: colorTokens.card,
+    fontSize: 54 / 2,
+    fontWeight: '700',
   },
   emptyState: {
     borderRadius: 12,

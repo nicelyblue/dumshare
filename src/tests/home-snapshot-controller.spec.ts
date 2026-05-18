@@ -40,7 +40,9 @@ describe('home snapshot controller', () => {
 
     expect(model.participantRows.map((row) => row.participantName)).toEqual(['Noah', 'Mila', 'Participant 3']);
     expect(model.participantRows.map((row) => row.netAmountLabel)).toEqual(['+42.00 EUR', '-21.00 EUR', '+0.00 EUR']);
+    expect(model.participantRows.map((row) => row.balanceLabels)).toEqual([['+42.00 EUR'], ['-21.00 EUR'], ['+0.00 EUR']]);
     expect(model.participantRows.map((row) => row.statusLabel)).toEqual(['is owed', 'owes', 'settled']);
+    expect(model.currencyTotals).toEqual([{ currency: 'EUR', totalAmountLabel: 'EUR 42.00' }]);
   });
 
   test('includes latest expense summary card details when latest expense exists', async () => {
@@ -66,10 +68,59 @@ describe('home snapshot controller', () => {
     });
 
     expect(model.latestExpenseCard).toEqual({
-      payerLabel: 'Noah paid',
+      expenseId: 'latest-expense',
+      title: 'Latest expense',
+      payerLabel: 'Paid by Noah',
       amountLabel: '€42.00',
       participantCountLabel: 'Split across 3 participants',
       timestampLabel: '2h ago',
     });
+  });
+
+  test('returns per-currency participant balances and totals', async () => {
+    const model = await loadHomeSnapshotModel({
+      selectedLedgerId: null,
+      snapshot: {
+        ledgerId: 'ledger-1',
+        hasLedger: true,
+        title: 'Weekend Trip',
+        organizerName: 'Mila',
+        organizerParticipantId: 'participant-1',
+        participantCount: 2,
+        latestActivityLabel: 'Expense recorded',
+        latestActivityAt: '2026-05-12T10:00:00.000Z',
+        balanceSummary: {
+          participants: [
+            {
+              participantId: 'participant-1',
+              displayName: 'Mila',
+              balancesByCurrency: [
+                { currency: 'USD', paidTotalMinor: 10000, owedTotalMinor: 5000, netMinor: 5000 },
+                { currency: 'EUR', paidTotalMinor: 0, owedTotalMinor: 4000, netMinor: -4000 },
+              ],
+            },
+            {
+              participantId: 'participant-2',
+              displayName: 'Noah',
+              balancesByCurrency: [
+                { currency: 'USD', paidTotalMinor: 0, owedTotalMinor: 5000, netMinor: -5000 },
+                { currency: 'EUR', paidTotalMinor: 4000, owedTotalMinor: 0, netMinor: 4000 },
+              ],
+            },
+          ],
+          metadata: {},
+        },
+      },
+    });
+
+    expect(model.participantRows.map((row) => row.balanceLabels)).toEqual([
+      ['+50.00 USD', '-40.00 EUR'],
+      ['-50.00 USD', '+40.00 EUR'],
+    ]);
+    expect(model.participantRows.map((row) => row.statusLabel)).toEqual(['mixed', 'mixed']);
+    expect(model.currencyTotals).toEqual([
+      { currency: 'EUR', totalAmountLabel: 'EUR 40.00' },
+      { currency: 'USD', totalAmountLabel: '$100.00' },
+    ]);
   });
 });

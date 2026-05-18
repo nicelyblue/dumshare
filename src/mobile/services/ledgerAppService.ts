@@ -137,13 +137,38 @@ export type LedgerAppService = {
       expenseDate: string;
       createdAt: string;
       payers: Array<{ participantId: string; paidAmountMinor: number }>;
+      participantCount: number;
       splitLabel: string;
     }>;
+  }>;
+  loadLedgerExpenseDetails: (input: {
+    expenseId: string;
+    selectedLedgerId?: string | null;
+  }) => Promise<{
+    expenseId: string;
+    title: string;
+    currency: string;
+    totalAmountMinor: number;
+    expenseDate: string;
+    createdAt: string;
+    splitLabel: string;
+    splitMode: 'equal' | 'exact' | 'percentage';
+    participantCount: number;
+    payers: Array<{ participantId: string; paidAmountMinor: number }>;
+    participants: Array<{
+      participantId: string;
+      displayName: string;
+      owedAmountMinor: number;
+      paidAmountMinor: number;
+      netAmountMinor: number;
+    }>;
+    organizerParticipantId: string;
   }>;
   loadSettlementSnapshot: (input: { selectedLedgerId?: string | null; selectedCurrencyCode: string }) => Promise<SettlementSnapshot>;
 };
 
 type InMemoryLedger = LedgerListItem & {
+  organizerParticipantId: string;
   participants: Array<{ id: string; displayName: string }>;
   expenses: Array<{
     expenseId: string;
@@ -153,6 +178,10 @@ type InMemoryLedger = LedgerListItem & {
     expenseDate: string;
     createdAt: string;
     payers: Array<{ participantId: string; paidAmountMinor: number }>;
+    split:
+      | { mode: 'equal'; participants: Array<{ participantId: string }> }
+      | { mode: 'exact'; participants: Array<{ participantId: string; owedAmountMinor: number }> }
+      | { mode: 'percentage'; participants: Array<{ participantId: string; percentageBps: number }> };
     splitLabel: string;
   }>;
 };
@@ -172,6 +201,76 @@ function getStore(dbName: string): { ledgers: InMemoryLedger[] } {
 
 function createId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function splitEvenly(totalMinor: number, participantIds: string[]): Map<string, number> {
+  const owedByParticipant = new Map<string, number>();
+  if (participantIds.length === 0) {
+    return owedByParticipant;
+  }
+
+  const baseShare = Math.floor(totalMinor / participantIds.length);
+  let remainder = totalMinor - baseShare * participantIds.length;
+
+  for (const participantId of participantIds) {
+    const extra = remainder > 0 ? 1 : 0;
+    owedByParticipant.set(participantId, baseShare + extra);
+    remainder = Math.max(0, remainder - 1);
+  }
+
+  return owedByParticipant;
+}
+
+function splitByPercentage(
+  totalMinor: number,
+  percentages: Array<{ participantId: string; percentageBps: number }>,
+): Map<string, number> {
+  const owedByParticipant = new Map<string, number>();
+  if (percentages.length === 0) {
+    return owedByParticipant;
+  }
+
+  let assigned = 0;
+  for (const entry of percentages) {
+    const share = Math.floor((totalMinor * entry.percentageBps) / 10000);
+    owedByParticipant.set(entry.participantId, share);
+    assigned += share;
+  }
+
+  let remainder = totalMinor - assigned;
+  if (remainder > 0) {
+    const byWeight = [...percentages].sort((a, b) => b.percentageBps - a.percentageBps);
+    let index = 0;
+    while (remainder > 0 && byWeight.length > 0) {
+      const participantId = byWeight[index % byWeight.length]?.participantId;
+      if (!participantId) {
+        break;
+      }
+      owedByParticipant.set(participantId, (owedByParticipant.get(participantId) ?? 0) + 1);
+      remainder -= 1;
+      index += 1;
+    }
+  }
+
+  return owedByParticipant;
+}
+
+function buildOwedByParticipant(
+  totalMinor: number,
+  split:
+    | { mode: 'equal'; participants: Array<{ participantId: string }> }
+    | { mode: 'exact'; participants: Array<{ participantId: string; owedAmountMinor: number }> }
+    | { mode: 'percentage'; participants: Array<{ participantId: string; percentageBps: number }> },
+): Map<string, number> {
+  if (split.mode === 'equal') {
+    return splitEvenly(totalMinor, split.participants.map((participant) => participant.participantId));
+  }
+
+  if (split.mode === 'exact') {
+    return new Map(split.participants.map((participant) => [participant.participantId, participant.owedAmountMinor]));
+  }
+
+  return splitByPercentage(totalMinor, split.participants);
 }
 
 function validateRequiredField(value: string, fieldName: string): string {
@@ -222,12 +321,44 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       };
     }
 
+    const balancesByParticipantCurrency = new Map<string, Map<string, { paidTotalMinor: number; owedTotalMinor: number }>>();
+    for (const participant of target.participants) {
+      balancesByParticipantCurrency.set(participant.id, new Map());
+    }
+
+    for (const expense of target.expenses) {
+      const currency = expense.currency;
+      const owedByParticipant = buildOwedByParticipant(expense.totalAmountMinor, expense.split);
+
+      for (const payer of expense.payers) {
+        const balancesByCurrency = balancesByParticipantCurrency.get(payer.participantId);
+        if (!balancesByCurrency) {
+          continue;
+        }
+
+        const totals = balancesByCurrency.get(currency) ?? { paidTotalMinor: 0, owedTotalMinor: 0 };
+        totals.paidTotalMinor += payer.paidAmountMinor;
+        balancesByCurrency.set(currency, totals);
+      }
+
+      for (const [participantId, owedMinor] of owedByParticipant.entries()) {
+        const balancesByCurrency = balancesByParticipantCurrency.get(participantId);
+        if (!balancesByCurrency) {
+          continue;
+        }
+
+        const totals = balancesByCurrency.get(currency) ?? { paidTotalMinor: 0, owedTotalMinor: 0 };
+        totals.owedTotalMinor += owedMinor;
+        balancesByCurrency.set(currency, totals);
+      }
+    }
+
     return {
       ledgerId: target.id,
       hasLedger: true,
       title: target.title,
       organizerName: target.organizerName,
-      organizerParticipantId: null,
+      organizerParticipantId: target.organizerParticipantId,
       participantCount: target.participants.length,
       latestActivityLabel: 'No expenses yet',
       latestActivityAt: '',
@@ -235,7 +366,16 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
         participants: target.participants.map((participant) => ({
           participantId: participant.id,
           displayName: participant.displayName,
-          balancesByCurrency: [{ currency: 'EUR', paidTotalMinor: 0, owedTotalMinor: 0, netMinor: 0 }],
+          balancesByCurrency: (() => {
+            const computed = Array.from(balancesByParticipantCurrency.get(participant.id)?.entries() ?? []).map(([currency, totals]) => ({
+              currency,
+              paidTotalMinor: totals.paidTotalMinor,
+              owedTotalMinor: totals.owedTotalMinor,
+              netMinor: totals.paidTotalMinor - totals.owedTotalMinor,
+            }));
+
+            return computed.length > 0 ? computed : [{ currency: '', paidTotalMinor: 0, owedTotalMinor: 0, netMinor: 0 }];
+          })(),
         })),
         metadata: {},
       },
@@ -359,6 +499,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       expenseDate: validateRequiredField(input.expenseDate, 'Expense date'),
       createdAt: new Date().toISOString(),
       payers: input.payers,
+      split: input.split,
       splitLabel,
     });
     return expenseId;
@@ -379,11 +520,13 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       const title = validateRequiredField(input.title, 'Share title');
       const organizerName = validateRequiredField(input.organizerName, 'Organizer name');
       const id = createId('ledger');
+      const organizerParticipantId = createId('participant');
       store.ledgers.push({
         id,
         title,
         organizerName,
-        participants: [],
+        organizerParticipantId,
+        participants: [{ id: organizerParticipantId, displayName: organizerName }],
         expenses: [],
       });
       return id;
@@ -396,7 +539,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       }
       store.ledgers.splice(index, 1);
     },
-    resolveInitialActiveShareId: async () => store.ledgers[0]?.id ?? null,
+    resolveInitialActiveShareId: async () => store.ledgers[store.ledgers.length - 1]?.id ?? null,
     addParticipant: async (input) => {
       const displayName = validateRequiredField(input.displayName, 'Participant name');
       const ledger = resolveTargetLedger(input.selectedLedgerId);
@@ -440,7 +583,57 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
     loadLedgerHistory: async (input) => {
       const ledger = resolveTargetLedger(input.selectedLedgerId);
       return {
-        entries: [...ledger.expenses].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+        entries: [...ledger.expenses]
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+          .map((expense) => ({
+            expenseId: expense.expenseId,
+            description: expense.description,
+            currency: expense.currency,
+            totalAmountMinor: expense.totalAmountMinor,
+            expenseDate: expense.expenseDate,
+            createdAt: expense.createdAt,
+            payers: expense.payers,
+            participantCount: expense.split.participants.length,
+            splitLabel: expense.splitLabel,
+          })),
+      };
+    },
+    loadLedgerExpenseDetails: async (input) => {
+      const ledger = resolveTargetLedger(input.selectedLedgerId);
+      const expense = ledger.expenses.find((entry) => entry.expenseId === input.expenseId);
+      if (!expense) {
+        throw new Error('Expense not found');
+      }
+
+      const owedByParticipant = buildOwedByParticipant(expense.totalAmountMinor, expense.split);
+      const paidByParticipant = new Map<string, number>();
+      for (const payer of expense.payers) {
+        paidByParticipant.set(payer.participantId, (paidByParticipant.get(payer.participantId) ?? 0) + payer.paidAmountMinor);
+      }
+
+      return {
+        expenseId: expense.expenseId,
+        title: expense.description,
+        currency: expense.currency,
+        totalAmountMinor: expense.totalAmountMinor,
+        expenseDate: expense.expenseDate,
+        createdAt: expense.createdAt,
+        splitLabel: expense.splitLabel,
+        splitMode: expense.split.mode,
+        participantCount: expense.split.participants.length,
+        payers: expense.payers,
+        participants: ledger.participants.map((participant) => {
+          const owedAmountMinor = owedByParticipant.get(participant.id) ?? 0;
+          const paidAmountMinor = paidByParticipant.get(participant.id) ?? 0;
+          return {
+            participantId: participant.id,
+            displayName: participant.displayName,
+            owedAmountMinor,
+            paidAmountMinor,
+            netAmountMinor: paidAmountMinor - owedAmountMinor,
+          };
+        }),
+        organizerParticipantId: ledger.organizerParticipantId,
       };
     },
     loadSettlementSnapshot: async (input) => {

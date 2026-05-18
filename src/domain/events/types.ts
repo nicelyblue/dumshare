@@ -58,6 +58,7 @@ export type ExpenseCreatedPayload = {
     paidAmountMinor: number;
   }[];
   split: ExpenseSplitPayload;
+  expenseIcon?: string;
 };
 
 export type EqualSplitParticipant = {

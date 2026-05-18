@@ -1,7 +1,7 @@
-export type ThemePreference = 'light' | 'dark';
+export type ThemePreference = 'light' | 'dark' | 'system';
 
 const preferencesState: { theme: ThemePreference } = {
-  theme: 'light',
+  theme: 'system',
 };
 
 type ThemePreferenceListener = (theme: ThemePreference) => void;
@@ -17,7 +17,19 @@ export function getThemePreference(): ThemePreference {
 }
 
 export function toggleThemePreference(): ThemePreference {
-  preferencesState.theme = preferencesState.theme === 'light' ? 'dark' : 'light';
+  if (preferencesState.theme === 'light') {
+    preferencesState.theme = 'dark';
+  } else if (preferencesState.theme === 'dark') {
+    preferencesState.theme = 'system';
+  } else {
+    preferencesState.theme = 'light';
+  }
+  notifyListeners();
+  return preferencesState.theme;
+}
+
+export function setThemePreference(theme: ThemePreference): ThemePreference {
+  preferencesState.theme = theme;
   notifyListeners();
   return preferencesState.theme;
 }

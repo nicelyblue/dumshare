@@ -31,6 +31,7 @@ export function createSetupController(service: SetupService) {
       const title = requireValue(input.title, 'Share title');
       const organizerName = requireValue(input.organizerName, 'Organizer name');
       const ledgerId = await service.createShare({ title, organizerName });
+      participantDrafts.length = 0;
 
       return {
         ledgerId,
@@ -47,12 +48,23 @@ export function createSetupController(service: SetupService) {
       return [...participantDrafts];
     },
 
+    removeParticipantDraftAt(index: number): string[] {
+      if (!Number.isInteger(index) || index < 0 || index >= participantDrafts.length) {
+        return [...participantDrafts];
+      }
+
+      participantDrafts.splice(index, 1);
+      return [...participantDrafts];
+    },
+
     async commitParticipantDrafts(ledgerId: string): Promise<void> {
       const selectedLedgerId = requireValue(ledgerId, 'Ledger id');
 
       for (const displayName of participantDrafts) {
         await service.addParticipant({ displayName, selectedLedgerId });
       }
+
+      participantDrafts.length = 0;
     },
   };
 }

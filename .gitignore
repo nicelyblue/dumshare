@@ -8,6 +8,9 @@ docs/
 frontend mock/
 notes.txt
 
+# Planning artifacts
+.planning/
+
 # Expo / React Native generated files
 .expo/
 .expo-shared/
