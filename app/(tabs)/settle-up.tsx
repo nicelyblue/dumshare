@@ -50,16 +50,17 @@ export default function SettleUpScreen(): JSX.Element {
     });
   }
 
-  return (
-    <View style={styles.screen}>
-      <View style={styles.card}>
-        <Text style={styles.label}>Currency</Text>
-        <Pressable style={styles.selectLike} accessibilityRole="button" onPress={() => setCurrencyPickerOpen(true)}>
-          <Text style={styles.selectValue}>{model.selectedCurrencyCode}</Text>
-          <Ionicons name="chevron-down" size={18} color={colorTokens.textMuted} />
-        </Pressable>
-        <Text style={styles.description}>Selected: {selectedOption ? `${selectedOption.code} - ${selectedOption.label}` : model.selectedCurrencyCode}</Text>
-      </View>
+   return (
+     <View style={styles.screen}>
+       <View style={styles.card}>
+         <Text style={styles.label}>Currency Selection</Text>
+         <Pressable style={styles.selectLike} accessibilityRole="button" onPress={() => setCurrencyPickerOpen(true)}>
+           <Text style={styles.selectValue}>{model.selectedCurrencyCode}</Text>
+           <Ionicons name="chevron-down" size={18} color={colorTokens.textMuted} />
+         </Pressable>
+         <Text style={styles.description}>Selected: {selectedOption ? `${selectedOption.code} - ${selectedOption.label}` : model.selectedCurrencyCode}</Text>
+         <Text style={styles.hint}>Select the settlement currency to calculate amounts</Text>
+       </View>
 
       <Modal transparent visible={currencyPickerOpen} animationType="fade" onRequestClose={closeCurrencyPicker}>
         <View style={styles.modalOverlay}>
@@ -223,6 +224,11 @@ const styles = StyleSheet.create({
   },
   description: {
     color: colorTokens.textMuted,
+  },
+  hint: {
+    fontSize: 12,
+    color: colorTokens.textMuted,
+    fontStyle: 'italic',
   },
   confirmButton: {
     marginTop: 6,
