@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator, Image } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import { createSettleUpFlowController } from '../../src/mobile/controllers/settleUpFlowController';
 import { SettlementRecommendationList } from '../../src/mobile/components/SettlementRecommendationList';
 import { ShareableSettlementList } from '../../src/mobile/components/ShareableSettlementList';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
-import { generateAndShareSettlementImage } from '../../src/mobile/actions/generateSettlementImage';
+import { generateSettlementImage, shareSettlementImage } from '../../src/mobile/actions/generateSettlementImage';
 import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
 import { typographyTokens } from '../../src/mobile/theme/typography';
 
@@ -19,6 +19,8 @@ export default function SettleUpScreen(): JSX.Element {
   const [isCalculating, setIsCalculating] = useState(false);
   const [confirmSettlementVisible, setConfirmSettlementVisible] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [settlementImageUri, setSettlementImageUri] = useState<string | null>(null);
   const [model, setModel] = useState(flowController.getState());
   const requestVersion = useRef(0);
   const viewShotRef = useRef<ViewShot>(null);
@@ -126,49 +128,79 @@ export default function SettleUpScreen(): JSX.Element {
         </View>
       )}
 
-       <View style={styles.card}>
-         <Pressable
-           style={styles.confirmButton}
-           accessibilityRole="button"
-           onPress={() => {
-             if (model.recommendations.length === 0) {
-               return;
-             }
-             setConfirmSettlementVisible(true);
-           }}
-         >
-           <Text style={styles.confirmButtonText}>Mark as settled</Text>
-         </Pressable>
-       </View>
+        <View style={styles.card}>
+          <Pressable
+            style={styles.confirmButton}
+            accessibilityRole="button"
+            onPress={() => {
+              if (model.recommendations.length === 0) {
+                return;
+              }
+              setConfirmSettlementVisible(true);
+            }}
+          >
+            <Text style={styles.confirmButtonText}>Share settlement</Text>
+          </Pressable>
+        </View>
 
-       <Modal transparent visible={confirmSettlementVisible} animationType="fade" onRequestClose={() => setConfirmSettlementVisible(false)}>
-         <View style={styles.confirmOverlay}>
-           <Pressable style={styles.confirmBackdrop} onPress={() => setConfirmSettlementVisible(false)} />
-           <View style={styles.confirmSheet}>
-              <Text style={styles.confirmTitle}>Share settlement</Text>
-              <Text style={styles.confirmMessage}>Generate a PNG image of the settlement and share it to other apps.</Text>
-              <Pressable style={styles.confirmActionRow} accessibilityRole="button" disabled={isGeneratingImage} onPress={async () => {
-                setConfirmSettlementVisible(false);
-                setIsGeneratingImage(true);
-                try {
-                  await generateAndShareSettlementImage(viewShotRef, {
-                    currency: model.selectedCurrencyCode,
-                    recommendations: model.recommendations,
-                  });
-                } catch (error) {
-                  console.error('Error sharing settlement:', error);
-                } finally {
-                  setIsGeneratingImage(false);
-                }
-              }}>
-                {isGeneratingImage ? <ActivityIndicator color={colorTokens.destructive} /> : <Text style={styles.confirmActionLabel}>Yes, share</Text>}
+        <Modal transparent visible={confirmSettlementVisible} animationType="fade" onRequestClose={() => setConfirmSettlementVisible(false)}>
+          <View style={styles.confirmOverlay}>
+            <Pressable style={styles.confirmBackdrop} onPress={() => setConfirmSettlementVisible(false)} />
+            <View style={styles.confirmSheet}>
+               <Text style={styles.confirmTitle}>Generate settlement image</Text>
+               <Text style={styles.confirmMessage}>Create a PNG image that you can share to other apps.</Text>
+               <Pressable style={styles.confirmActionRow} accessibilityRole="button" disabled={isGeneratingImage} onPress={async () => {
+                 setConfirmSettlementVisible(false);
+                 setIsGeneratingImage(true);
+                 try {
+                   const imageUri = await generateSettlementImage(viewShotRef);
+                   setSettlementImageUri(imageUri);
+                   setPreviewModalVisible(true);
+                 } catch (error) {
+                   console.error('Error generating settlement image:', error);
+                 } finally {
+                   setIsGeneratingImage(false);
+                 }
+               }}>
+                 {isGeneratingImage ? <ActivityIndicator color={colorTokens.destructive} /> : <Text style={styles.confirmActionLabel}>Generate</Text>}
+               </Pressable>
+              <Pressable style={styles.confirmCancelRow} accessibilityRole="button" onPress={() => setConfirmSettlementVisible(false)}>
+                <Text style={styles.confirmCancelLabel}>Cancel</Text>
               </Pressable>
-             <Pressable style={styles.confirmCancelRow} accessibilityRole="button" onPress={() => setConfirmSettlementVisible(false)}>
-               <Text style={styles.confirmCancelLabel}>Cancel</Text>
-             </Pressable>
+            </View>
+          </View>
+         </Modal>
+
+         {/* Preview modal with share options */}
+         <Modal transparent visible={previewModalVisible} animationType="fade" onRequestClose={() => setPreviewModalVisible(false)}>
+           <View style={styles.previewOverlay}>
+             <Pressable style={styles.previewBackdrop} onPress={() => setPreviewModalVisible(false)} />
+             <View style={styles.previewSheet}>
+               <Text style={styles.previewTitle}>Settlement Preview</Text>
+               {settlementImageUri ? (
+                 <Image
+                   source={{ uri: settlementImageUri }}
+                   style={styles.previewImage}
+                   resizeMode="contain"
+                 />
+               ) : null}
+               <Pressable style={styles.shareButton} accessibilityRole="button" onPress={async () => {
+                 if (!settlementImageUri) return;
+                 try {
+                   await shareSettlementImage(settlementImageUri);
+                 } catch (error) {
+                   console.error('Error sharing settlement:', error);
+                 }
+               }}>
+                 <Ionicons name="share-social" size={20} color={colorTokens.card} />
+                 <Text style={styles.shareButtonText}>Share image</Text>
+               </Pressable>
+               <Pressable style={styles.previewCloseButton} accessibilityRole="button" onPress={() => setPreviewModalVisible(false)}>
+                 <Text style={styles.previewCloseText}>Done</Text>
+               </Pressable>
+             </View>
            </View>
-         </View>
-        </Modal>
+         </Modal>
 
         {/* Hidden component for capturing settlement as PNG */}
         <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
@@ -395,5 +427,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  previewOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(61, 60, 79, 0.5)',
+  },
+  previewBackdrop: {
+    flex: 1,
+  },
+  previewSheet: {
+    backgroundColor: colorTokens.card,
+    marginHorizontal: spacingTokens.lg,
+    borderRadius: radiusTokens.md,
+    paddingHorizontal: spacingTokens.lg,
+    paddingTop: spacingTokens.lg,
+    paddingBottom: spacingTokens.lg,
+    gap: spacingTokens.md,
+    maxHeight: '80%',
+  },
+  previewTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colorTokens.textPrimary,
+    textAlign: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: radiusTokens.md,
+    backgroundColor: colorTokens.appBackground,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacingTokens.sm,
+    paddingVertical: 12,
+    backgroundColor: colorTokens.inverse,
+    borderRadius: radiusTokens.md,
+  },
+  shareButtonText: {
+    color: colorTokens.card,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  previewCloseButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colorTokens.border,
+  },
+  previewCloseText: {
+    color: colorTokens.textMuted,
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

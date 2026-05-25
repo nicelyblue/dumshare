@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export type SettlementData = {
   currency: string;
@@ -14,12 +14,11 @@ export type SettlementData = {
 
 /**
  * Generate a shareable PNG image of settlement recommendations
- * and open the native share dialog
+ * Returns the URI to the generated image
  */
-export async function generateAndShareSettlementImage(
+export async function generateSettlementImage(
   viewShotRef: React.RefObject<ViewShot>,
-  data: SettlementData,
-): Promise<void> {
+): Promise<string> {
   if (!viewShotRef.current) {
     throw new Error('ViewShot ref is not available');
   }
@@ -41,14 +40,25 @@ export async function generateAndShareSettlementImage(
       to: shareableUri,
     });
 
-    // Open share dialog
-    await Sharing.shareAsync(shareableUri, {
+    return shareableUri;
+  } catch (error) {
+    console.error('Error generating settlement image:', error);
+    throw error;
+  }
+}
+
+/**
+ * Share a settlement image to other apps
+ */
+export async function shareSettlementImage(imageUri: string): Promise<void> {
+  try {
+    await Sharing.shareAsync(imageUri, {
       mimeType: 'image/png',
       dialogTitle: 'Share Settlement',
       UTI: 'public.png',
     });
   } catch (error) {
-    console.error('Error generating or sharing settlement image:', error);
+    console.error('Error sharing settlement image:', error);
     throw error;
   }
 }
