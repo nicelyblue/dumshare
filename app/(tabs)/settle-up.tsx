@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import ViewShot from 'react-native-view-shot';
 import { createSettleUpFlowController } from '../../src/mobile/controllers/settleUpFlowController';
 import { SettlementRecommendationList } from '../../src/mobile/components/SettlementRecommendationList';
+import { ShareableSettlementList } from '../../src/mobile/components/ShareableSettlementList';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
+import { generateAndShareSettlementImage } from '../../src/mobile/actions/generateSettlementImage';
 import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
 import { typographyTokens } from '../../src/mobile/theme/typography';
 
@@ -16,8 +18,10 @@ export default function SettleUpScreen(): JSX.Element {
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [confirmSettlementVisible, setConfirmSettlementVisible] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [model, setModel] = useState(flowController.getState());
   const requestVersion = useRef(0);
+  const viewShotRef = useRef<ViewShot>(null);
 
   useEffect(() => subscribeActiveShare((state) => setActiveShareId(state.activeShareId)), []);
 
@@ -141,22 +145,43 @@ export default function SettleUpScreen(): JSX.Element {
          <View style={styles.confirmOverlay}>
            <Pressable style={styles.confirmBackdrop} onPress={() => setConfirmSettlementVisible(false)} />
            <View style={styles.confirmSheet}>
-             <Text style={styles.confirmTitle}>Confirm settlement</Text>
-             <Text style={styles.confirmMessage}>This will settle accounts and close ledger. Are you sure?</Text>
-             <Pressable style={styles.confirmActionRow} accessibilityRole="button" onPress={() => {
-               setConfirmSettlementVisible(false);
-               router.navigate(flowController.buildCompletionRoute());
-             }}>
-               <Text style={styles.confirmActionLabel}>Yes, settle</Text>
-             </Pressable>
+              <Text style={styles.confirmTitle}>Share settlement</Text>
+              <Text style={styles.confirmMessage}>Generate a PNG image of the settlement and share it to other apps.</Text>
+              <Pressable style={styles.confirmActionRow} accessibilityRole="button" disabled={isGeneratingImage} onPress={async () => {
+                setConfirmSettlementVisible(false);
+                setIsGeneratingImage(true);
+                try {
+                  await generateAndShareSettlementImage(viewShotRef, {
+                    currency: model.selectedCurrencyCode,
+                    recommendations: model.recommendations,
+                  });
+                } catch (error) {
+                  console.error('Error sharing settlement:', error);
+                } finally {
+                  setIsGeneratingImage(false);
+                }
+              }}>
+                {isGeneratingImage ? <ActivityIndicator color={colorTokens.destructive} /> : <Text style={styles.confirmActionLabel}>Yes, share</Text>}
+              </Pressable>
              <Pressable style={styles.confirmCancelRow} accessibilityRole="button" onPress={() => setConfirmSettlementVisible(false)}>
                <Text style={styles.confirmCancelLabel}>Cancel</Text>
              </Pressable>
            </View>
          </View>
-       </Modal>
-     </View>
-   );
+        </Modal>
+
+        {/* Hidden component for capturing settlement as PNG */}
+        <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+          <ShareableSettlementList
+            ref={viewShotRef}
+            model={{
+              currency: model.selectedCurrencyCode,
+              recommendations: model.recommendations,
+            }}
+          />
+        </View>
+      </View>
+    );
 }
 
 const styles = StyleSheet.create({
