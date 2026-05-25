@@ -59,8 +59,8 @@ export default function SettleUpScreen(): JSX.Element {
    return (
      <View style={styles.screen}>
        <Text style={styles.currencyLabel}>CURRENCY SELECTION</Text>
-       <Text style={styles.hint}>Select the settlement currency to calculate amounts</Text>
        <View style={styles.card}>
+         <Text style={styles.hint}>Select the settlement currency to calculate amounts</Text>
          <Pressable style={styles.selectLike} accessibilityRole="button" onPress={() => setCurrencyPickerOpen(true)}>
            <Text style={styles.selectValue}>{model.selectedCurrencyCode}</Text>
            <Ionicons name="chevron-down" size={18} color={colorTokens.textMuted} />
@@ -278,7 +278,6 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 13,
     color: colorTokens.textMuted,
-    marginBottom: spacingTokens.sm,
   },
   shareSettlementButton: {
     alignItems: 'center',
