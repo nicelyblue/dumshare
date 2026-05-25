@@ -188,6 +188,14 @@ type InMemoryLedger = LedgerListItem & {
 
 const inMemoryByDb = new Map<string, { ledgers: InMemoryLedger[] }>();
 
+const FALLBACK_USD_PER_UNIT: Record<string, number> = {
+  USD: 1,
+};
+
+let cachedRates: Record<string, Record<string, number>> | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION_MS = 3600000;
+
 function getStore(dbName: string): { ledgers: InMemoryLedger[] } {
   const existing = inMemoryByDb.get(dbName);
   if (existing) {
@@ -280,6 +288,111 @@ function validateRequiredField(value: string, fieldName: string): string {
   }
 
   return normalized;
+}
+
+function parseUsdPerUnitOverrides(): Record<string, number> {
+  const raw = process.env.EXPO_PUBLIC_FX_USD_PER_UNIT_JSON;
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    const normalizedEntries = Object.entries(parsed)
+      .map(([code, value]) => [code.trim().toUpperCase(), Number(value)] as const)
+      .filter(([code, value]) => /^[A-Z]{3}$/.test(code) && Number.isFinite(value) && value > 0);
+    return Object.fromEntries(normalizedEntries);
+  } catch {
+    return {};
+  }
+}
+
+async function fetchExchangeRates(baseCurrency: string): Promise<Record<string, number>> {
+  const normalized = baseCurrency.trim().toUpperCase();
+  const now = Date.now();
+
+  if (cachedRates && cachedRates[normalized] && now - cacheTimestamp < CACHE_DURATION_MS) {
+    return cachedRates[normalized];
+  }
+
+  try {
+    // Use open.er-api.com - free, no auth required
+    const response = await fetch(`https://open.er-api.com/v6/latest/${normalized}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = (await response.json()) as { rates?: Record<string, number> };
+    
+    if (data.rates && typeof data.rates === 'object' && Object.keys(data.rates).length > 0) {
+      if (!cachedRates) {
+        cachedRates = {};
+      }
+      cachedRates[normalized] = data.rates;
+      cacheTimestamp = now;
+      return data.rates;
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch exchange rates for ${normalized}:`, error);
+    // Fall through to fallback
+  }
+
+  return {};
+}
+
+async function buildRatesCacheMap(baseCurrencies: Set<string>): Promise<Map<string, Record<string, number>>> {
+  const result = new Map<string, Record<string, number>>();
+  
+  // Fetch all unique base currencies in parallel
+  const promises = Array.from(baseCurrencies).map(async (baseCurrency) => {
+    const rates = await fetchExchangeRates(baseCurrency);
+    return { baseCurrency, rates };
+  });
+  
+  const fetched = await Promise.all(promises);
+  for (const { baseCurrency, rates } of fetched) {
+    result.set(baseCurrency, rates);
+  }
+  
+  return result;
+}
+
+function convertMinorAmount(minorAmount: number, fromCurrency: string, toCurrency: string): number {
+  const from = fromCurrency.trim().toUpperCase();
+  const to = toCurrency.trim().toUpperCase();
+  if (from === to) {
+    return minorAmount;
+  }
+
+  const overrides = parseUsdPerUnitOverrides();
+  const usdPerFrom = overrides[from] ?? FALLBACK_USD_PER_UNIT[from];
+  const usdPerTo = overrides[to] ?? FALLBACK_USD_PER_UNIT[to];
+  if (!usdPerFrom || !usdPerTo) {
+    return minorAmount;
+  }
+
+  const amountInUsd = (minorAmount / 100) * usdPerFrom;
+  const converted = amountInUsd / usdPerTo;
+  return Math.round(converted * 100);
+}
+
+async function convertMinorAmountAsync(minorAmount: number, fromCurrency: string, toCurrency: string): Promise<number> {
+  const from = fromCurrency.trim().toUpperCase();
+  const to = toCurrency.trim().toUpperCase();
+  if (from === to) {
+    return minorAmount;
+  }
+
+  const rates = await fetchExchangeRates(from);
+  const rate = rates[to];
+  
+  if (rate && Number.isFinite(rate) && rate > 0) {
+    const amountInBase = minorAmount / 100;
+    const converted = amountInBase * rate;
+    return Math.round(converted * 100);
+  }
+
+  return convertMinorAmount(minorAmount, fromCurrency, toCurrency);
 }
 
 export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService {
@@ -408,8 +521,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
     }
 
     const selectedCurrencyCode = validateRequiredField(input.selectedCurrencyCode, 'Settlement currency').toUpperCase();
-    const participantCount = target.participants.length;
-    if (participantCount < 2) {
+    if (target.participants.length < 2) {
       return { hasLedger: true, recommendations: [] };
     }
 
@@ -419,16 +531,146 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
     }
 
     for (const expense of target.expenses) {
-      if (expense.currency !== selectedCurrencyCode) {
-        continue;
+      const expenseNetByParticipant = new Map<string, number>();
+      for (const participant of target.participants) {
+        expenseNetByParticipant.set(participant.id, 0);
       }
 
-      const shareMinor = Math.round(expense.totalAmountMinor / participantCount);
-      for (const participant of target.participants) {
-        netByParticipant.set(participant.id, (netByParticipant.get(participant.id) ?? 0) - shareMinor);
+      const owedByParticipant = buildOwedByParticipant(expense.totalAmountMinor, expense.split);
+      for (const [participantId, owedMinor] of owedByParticipant.entries()) {
+        expenseNetByParticipant.set(participantId, (expenseNetByParticipant.get(participantId) ?? 0) - owedMinor);
       }
       for (const payer of expense.payers) {
-        netByParticipant.set(payer.participantId, (netByParticipant.get(payer.participantId) ?? 0) + payer.paidAmountMinor);
+        expenseNetByParticipant.set(payer.participantId, (expenseNetByParticipant.get(payer.participantId) ?? 0) + payer.paidAmountMinor);
+      }
+
+      for (const [participantId, netMinorInExpenseCurrency] of expenseNetByParticipant.entries()) {
+        const converted = convertMinorAmount(netMinorInExpenseCurrency, expense.currency, selectedCurrencyCode);
+        netByParticipant.set(participantId, (netByParticipant.get(participantId) ?? 0) + converted);
+      }
+    }
+
+    const totalNet = Array.from(netByParticipant.values()).reduce((sum, value) => sum + value, 0);
+    if (totalNet !== 0) {
+      const adjustTarget = target.participants
+        .map((participant) => ({ participantId: participant.id, amountMinor: Math.abs(netByParticipant.get(participant.id) ?? 0) }))
+        .sort((a, b) => b.amountMinor - a.amountMinor)[0];
+      if (adjustTarget) {
+        netByParticipant.set(adjustTarget.participantId, (netByParticipant.get(adjustTarget.participantId) ?? 0) - totalNet);
+      }
+    }
+
+    const debtors = target.participants
+      .map((participant) => ({ participant, amountMinor: Math.abs(Math.min(0, netByParticipant.get(participant.id) ?? 0)) }))
+      .filter((entry) => entry.amountMinor > 0)
+      .sort((a, b) => b.amountMinor - a.amountMinor);
+    const creditors = target.participants
+      .map((participant) => ({ participant, amountMinor: Math.max(0, netByParticipant.get(participant.id) ?? 0) }))
+      .filter((entry) => entry.amountMinor > 0)
+      .sort((a, b) => b.amountMinor - a.amountMinor);
+
+    const recommendations: SettlementSnapshot['recommendations'] = [];
+    let debtorIndex = 0;
+    let creditorIndex = 0;
+    while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+      const debtor = debtors[debtorIndex];
+      const creditor = creditors[creditorIndex];
+      const transferMinor = Math.min(debtor.amountMinor, creditor.amountMinor);
+
+      recommendations.push({
+        fromParticipantName: debtor.participant.displayName,
+        toParticipantName: creditor.participant.displayName,
+        amountMinor: transferMinor,
+        currency: selectedCurrencyCode,
+      });
+
+      debtor.amountMinor -= transferMinor;
+      creditor.amountMinor -= transferMinor;
+
+      if (debtor.amountMinor === 0) {
+        debtorIndex += 1;
+      }
+      if (creditor.amountMinor === 0) {
+        creditorIndex += 1;
+      }
+    }
+
+    return {
+      hasLedger: true,
+      recommendations,
+    };
+  }
+
+  async function buildSettlementSnapshotAsync(input: {
+    selectedLedgerId?: string | null;
+    selectedCurrencyCode: string;
+  }): Promise<SettlementSnapshot> {
+    const target = input.selectedLedgerId
+      ? store.ledgers.find((ledger) => ledger.id === input.selectedLedgerId)
+      : store.ledgers[store.ledgers.length - 1];
+
+    if (!target) {
+      return { hasLedger: false, recommendations: [] };
+    }
+
+    const selectedCurrencyCode = validateRequiredField(input.selectedCurrencyCode, 'Settlement currency').toUpperCase();
+    if (target.participants.length < 2) {
+      return { hasLedger: true, recommendations: [] };
+    }
+
+    // Collect all unique expense currencies upfront
+    const expenseCurrencies = new Set<string>();
+    for (const expense of target.expenses) {
+      expenseCurrencies.add(expense.currency.trim().toUpperCase());
+    }
+
+    // Fetch all exchange rates in parallel
+    const ratesCache = await buildRatesCacheMap(expenseCurrencies);
+
+    const netByParticipant = new Map<string, number>();
+    for (const participant of target.participants) {
+      netByParticipant.set(participant.id, 0);
+    }
+
+    for (const expense of target.expenses) {
+      const expenseNetByParticipant = new Map<string, number>();
+      for (const participant of target.participants) {
+        expenseNetByParticipant.set(participant.id, 0);
+      }
+
+      const owedByParticipant = buildOwedByParticipant(expense.totalAmountMinor, expense.split);
+      for (const [participantId, owedMinor] of owedByParticipant.entries()) {
+        expenseNetByParticipant.set(participantId, (expenseNetByParticipant.get(participantId) ?? 0) - owedMinor);
+      }
+      for (const payer of expense.payers) {
+        expenseNetByParticipant.set(payer.participantId, (expenseNetByParticipant.get(payer.participantId) ?? 0) + payer.paidAmountMinor);
+      }
+
+      for (const [participantId, netMinorInExpenseCurrency] of expenseNetByParticipant.entries()) {
+        const from = expense.currency.trim().toUpperCase();
+        const to = selectedCurrencyCode;
+        const rates = ratesCache.get(from) ?? {};
+        const rate = rates[to];
+        
+        let converted: number;
+        if (rate && Number.isFinite(rate) && rate > 0) {
+          const amountInBase = netMinorInExpenseCurrency / 100;
+          converted = Math.round(amountInBase * rate * 100);
+        } else {
+          converted = convertMinorAmount(netMinorInExpenseCurrency, from, to);
+        }
+        
+        netByParticipant.set(participantId, (netByParticipant.get(participantId) ?? 0) + converted);
+      }
+    }
+
+    const totalNet = Array.from(netByParticipant.values()).reduce((sum, value) => sum + value, 0);
+    if (totalNet !== 0) {
+      const adjustTarget = target.participants
+        .map((participant) => ({ participantId: participant.id, amountMinor: Math.abs(netByParticipant.get(participant.id) ?? 0) }))
+        .sort((a, b) => b.amountMinor - a.amountMinor)[0];
+      if (adjustTarget) {
+        netByParticipant.set(adjustTarget.participantId, (netByParticipant.get(adjustTarget.participantId) ?? 0) - totalNet);
       }
     }
 
@@ -637,7 +879,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       };
     },
     loadSettlementSnapshot: async (input) => {
-      return buildSettlementSnapshot(input);
+      return buildSettlementSnapshotAsync(input);
     },
   };
 }

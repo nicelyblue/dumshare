@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { createSettleUpFlowController } from '../../src/mobile/controllers/settleUpFlowController';
 import { SettlementRecommendationList } from '../../src/mobile/components/SettlementRecommendationList';
@@ -12,6 +13,8 @@ const flowController = createSettleUpFlowController();
 export default function SettleUpScreen(): JSX.Element {
   const [activeShareId, setActiveShareId] = useState<string | null>(getActiveShareState().activeShareId);
   const [currencyQuery, setCurrencyQuery] = useState('');
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const [model, setModel] = useState(flowController.getState());
   const requestVersion = useRef(0);
 
@@ -36,48 +39,88 @@ export default function SettleUpScreen(): JSX.Element {
     void reload(activeShareId);
   }, [activeShareId]);
 
+  function closeCurrencyPicker(): void {
+    setCurrencyPickerOpen(false);
+    setCurrencyQuery('');
+    void flowController.searchAndSelectCurrency({ query: '', selectedCurrencyCode: model.selectedCurrencyCode }).then((nextModel) => {
+      setModel(nextModel);
+    });
+  }
+
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Settle Up</Text>
-      <Text style={styles.body}>Choose a currency, generate settle-up recommendations, and confirm completion.</Text>
-
       <View style={styles.card}>
-        <Text style={styles.label}>Search currency</Text>
-        <TextInput
-          value={currencyQuery}
-          onChangeText={(nextQuery) => {
-            setCurrencyQuery(nextQuery);
-            void flowController.searchAndSelectCurrency({ query: nextQuery }).then((nextModel) => setModel(nextModel));
+        <Text style={styles.label}>Currency</Text>
+        <Pressable style={styles.selectLike} accessibilityRole="button" onPress={() => setCurrencyPickerOpen(true)}>
+          <Text style={styles.selectValue}>{model.selectedCurrencyCode}</Text>
+          <Ionicons name="chevron-down" size={18} color={colorTokens.textMuted} />
+        </Pressable>
+        <Text style={styles.description}>Selected: {selectedOption ? `${selectedOption.code} - ${selectedOption.label}` : model.selectedCurrencyCode}</Text>
+        <Pressable
+          style={[styles.confirmButton, styles.calculateButton, (isCalculating || !model.hasLedger) ? styles.disabledButton : null]}
+          accessibilityRole="button"
+          disabled={isCalculating || !model.hasLedger}
+          onPress={() => {
+            if (!model.hasLedger) {
+              return;
+            }
+            setIsCalculating(true);
+            void reload(activeShareId, model.selectedCurrencyCode).finally(() => {
+              setIsCalculating(false);
+            });
           }}
-          placeholder="Type code or name"
-          style={styles.input}
-        />
-        <Text style={styles.description}>Selected: {selectedOption ? `${selectedOption.code} — ${selectedOption.label}` : model.selectedCurrencyCode}</Text>
-        <View style={styles.actionsRow}>
-          <Pressable
-            style={styles.secondaryButton}
-            accessibilityRole="button"
-            onPress={() => {
-              const first = model.currencyOptions[0];
-              if (!first) {
-                return;
-              }
-              void reload(activeShareId, first.code);
-            }}
-          >
-            <Text style={styles.secondaryButtonText}>Use first match</Text>
-          </Pressable>
-          <Pressable
-            style={styles.confirmButton}
-            accessibilityRole="button"
-            onPress={() => {
-              void flowController.generateRecommendations().then((nextModel) => setModel(nextModel));
-            }}
-          >
-             <Text style={styles.confirmButtonText}>Calculate Settlement</Text>
-           </Pressable>
-        </View>
+        >
+          <Text style={styles.confirmButtonText}>{isCalculating ? 'Calculating...' : 'Calculate Settlement'}</Text>
+        </Pressable>
       </View>
+
+      <Modal transparent visible={currencyPickerOpen} animationType="fade" onRequestClose={closeCurrencyPicker}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={closeCurrencyPicker} />
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Select Currency</Text>
+            <TextInput
+              value={currencyQuery}
+              onChangeText={(nextQuery) => {
+                setCurrencyQuery(nextQuery);
+                void flowController.searchAndSelectCurrency({ query: nextQuery }).then((nextModel) => setModel(nextModel));
+              }}
+              placeholder="Search code or name"
+              placeholderTextColor={colorTokens.textMuted}
+              style={styles.searchInput}
+            />
+            <ScrollView style={styles.modalList} contentContainerStyle={styles.modalListContent} keyboardShouldPersistTaps="handled">
+              {model.currencyOptions.map((option) => (
+                <Pressable
+                  key={option.code}
+                  style={styles.modalRow}
+                  accessibilityRole="button"
+                  onPress={async () => {
+                    setCurrencyPickerOpen(false);
+                    setCurrencyQuery('');
+                    setIsCalculating(true);
+                    try {
+                      const nextModel = await flowController.load({ selectedLedgerId: activeShareId, selectedCurrencyCode: option.code });
+                      setModel(nextModel);
+                      
+                      // If there were previous recommendations, recalculate in the new currency
+                      if (nextModel.recommendations.length > 0) {
+                        const recalculated = await flowController.generateRecommendations();
+                        setModel(recalculated);
+                      }
+                    } finally {
+                      setIsCalculating(false);
+                    }
+                  }}
+                >
+                  <Text style={styles.modalRowTitle}>{option.code}</Text>
+                  <Text style={styles.modalRowSubtitle}>{option.label}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {!model.hasLedger ? (
         <View style={styles.card}>
@@ -98,7 +141,17 @@ export default function SettleUpScreen(): JSX.Element {
             if (model.recommendations.length === 0) {
               return;
             }
-            router.navigate(flowController.buildCompletionRoute());
+            Alert.alert('Confirm settlement', 'This will settle accounts and close ledger. Are you sure?', [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Yes, settle',
+                style: 'destructive',
+                onPress: () => router.navigate(flowController.buildCompletionRoute()),
+              },
+            ]);
           }}
         >
           <Text style={styles.confirmButtonText}>Mark as settled</Text>
@@ -149,6 +202,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  selectLike: {
+    borderWidth: 1,
+    borderColor: '#D6D7DA',
+    borderRadius: radiusTokens.md,
+    backgroundColor: colorTokens.card,
+    paddingHorizontal: spacingTokens.md,
+    minHeight: touchTarget.minimum,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectValue: {
+    color: colorTokens.textPrimary,
+    fontSize: 22 / 2,
+  },
   secondaryButton: {
     flex: 1,
     alignItems: 'center',
@@ -176,6 +244,12 @@ const styles = StyleSheet.create({
     borderRadius: radiusTokens.md,
     paddingVertical: 11,
   },
+  calculateButton: {
+    width: '100%',
+  },
+  disabledButton: {
+    opacity: 0.55,
+  },
   confirmButtonText: {
     color: colorTokens.card,
     fontWeight: '600',
@@ -185,5 +259,60 @@ const styles = StyleSheet.create({
   },
   requiredPaymentsLabel: {
     ...typographyTokens.sectionLabel,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(61, 60, 79, 0.3)',
+  },
+  modalBackdrop: {
+    flex: 1,
+  },
+  modalCard: {
+    backgroundColor: colorTokens.card,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    paddingHorizontal: spacingTokens.lg,
+    paddingTop: spacingTokens.md,
+    paddingBottom: spacingTokens.md,
+    gap: spacingTokens.sm,
+    maxHeight: '75%',
+  },
+  modalTitle: {
+    ...typographyTokens.body,
+    fontWeight: '700',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#D6D7DA',
+    borderRadius: radiusTokens.md,
+    minHeight: touchTarget.minimum,
+    paddingHorizontal: spacingTokens.md,
+    backgroundColor: colorTokens.card,
+  },
+  modalList: {
+    maxHeight: 320,
+  },
+  modalListContent: {
+    paddingBottom: spacingTokens.sm,
+  },
+  modalRow: {
+    minHeight: touchTarget.minimum,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECECEF',
+    paddingVertical: spacingTokens.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalRowTitle: {
+    ...typographyTokens.body,
+    fontSize: 15,
+  },
+  modalRowSubtitle: {
+    ...typographyTokens.label,
+    color: colorTokens.textMuted,
+    flexShrink: 1,
+    marginLeft: spacingTokens.sm,
   },
 });

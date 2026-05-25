@@ -12,19 +12,20 @@ export function createSettleUpFlowController(deps?: { loadSettlementModel?: Load
   let state: FlowState = {
     hasLedger: false,
     selectedLedgerId: null,
-    selectedCurrencyCode: 'EUR',
+    selectedCurrencyCode: 'USD',
     currencyQuery: '',
     currencyOptions: [],
     recommendations: [],
   };
 
   async function load(input: { selectedLedgerId: string | null; selectedCurrencyCode?: string }): Promise<FlowState> {
+    const nextCurrencyCode = input.selectedCurrencyCode ?? state.selectedCurrencyCode;
     const model = await loadModel({
       selectedLedgerId: input.selectedLedgerId,
-      selectedCurrencyCode: input.selectedCurrencyCode ?? state.selectedCurrencyCode,
-      currencyQuery: state.currencyQuery,
+      selectedCurrencyCode: nextCurrencyCode,
+      currencyQuery: '',
     });
-    state = { ...model, selectedLedgerId: input.selectedLedgerId, currencyQuery: state.currencyQuery };
+    state = { ...model, selectedLedgerId: input.selectedLedgerId, currencyQuery: '', selectedCurrencyCode: nextCurrencyCode };
     return state;
   }
 

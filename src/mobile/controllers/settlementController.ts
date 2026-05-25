@@ -24,7 +24,7 @@ function resolveCurrencyCode(selectedCurrencyCode?: string): string {
   if (normalized && isSupportedCurrencyCode(normalized)) {
     return normalized;
   }
-  return 'EUR';
+  return 'USD';
 }
 
 export async function loadSettlementModel(input: LoadSettlementModelInput): Promise<SettlementModel> {

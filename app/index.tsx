@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createLedgerAppService } from '../src/mobile/services/ledgerAppService';
+import { bootstrapDummyData } from '../src/mobile/actions/bootstrapDummyData';
 import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../src/mobile/theme/tokens';
 import { typographyTokens } from '../src/mobile/theme/typography';
 
@@ -19,6 +20,7 @@ export default function HomeScreen(): JSX.Element {
 
     async function resolveWelcomeVisibility(): Promise<void> {
       try {
+        await bootstrapDummyData();
         const shares = await appService.listShares();
         if (cancelled) {
           return;

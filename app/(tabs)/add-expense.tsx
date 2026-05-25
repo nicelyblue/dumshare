@@ -34,7 +34,7 @@ export default function AddExpenseScreen(): JSX.Element {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const [expenseDate] = useState(new Date().toISOString().slice(0, 10));
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
   const [splitMode, setSplitMode] = useState<'equal' | 'exact'>('equal');
   const [exactValues, setExactValues] = useState<Record<string, string>>({});
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
@@ -80,9 +80,15 @@ export default function AddExpenseScreen(): JSX.Element {
       setDescription(model.defaults.description);
       setAmount(model.defaults.totalAmountInput);
       setCurrency(model.defaults.currency);
+      setExpenseDate(model.defaults.expenseDate);
       setSplitMode(model.defaults.splitMode);
       setPayerParticipantId(model.defaults.payerParticipantId);
-      setExactValues({});
+      setSplitParticipantIds(model.defaults.splitParticipantIds);
+      setExactValues(
+        Object.fromEntries(
+          Object.entries(model.defaults.splitExactAmountsMinor).map(([participantId, owedAmountMinor]) => [participantId, (owedAmountMinor / 100).toFixed(2)]),
+        ),
+      );
     });
   }, []);
 
@@ -267,6 +273,7 @@ export default function AddExpenseScreen(): JSX.Element {
     setDescription('');
     setAmount('');
     setCurrency('USD');
+    setExpenseDate(new Date().toISOString().slice(0, 10));
     setSplitMode('equal');
     setExactValues({});
     setEditingExpenseId(null);

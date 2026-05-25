@@ -24,6 +24,11 @@ export default function LedgerScreen(): JSX.Element {
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const requestVersion = useRef(0);
 
+  const openEntryActions = useCallback((expenseId: string) => {
+    setSelectedExpenseId(expenseId);
+    setActionSheetVisible(true);
+  }, []);
+
   useEffect(() => subscribeActiveShare((state) => setActiveShareId(state.activeShareId)), []);
 
   async function reload(nextShareId: string | null): Promise<void> {
@@ -98,10 +103,8 @@ export default function LedgerScreen(): JSX.Element {
         <LedgerHistoryList
           model={model}
           highlightedExpenseId={params.expenseId ?? null}
-          onLongPressEntry={(expenseId) => {
-            setSelectedExpenseId(expenseId);
-            setActionSheetVisible(true);
-          }}
+          onPressEntry={openEntryActions}
+          onLongPressEntry={openEntryActions}
         />
       )}
       <LongPressActionSheet

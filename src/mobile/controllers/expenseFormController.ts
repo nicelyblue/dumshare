@@ -10,6 +10,8 @@ export type ExpenseFormModel = {
     expenseDate: string;
     payerParticipantId: string;
     splitMode: 'equal' | 'exact';
+    splitParticipantIds: string[];
+    splitExactAmountsMinor: Record<string, number>;
   };
 };
 
@@ -27,26 +29,35 @@ export async function loadExpenseFormModel(input: {
         expenseDate: new Date().toISOString().slice(0, 10),
         payerParticipantId: '',
         splitMode: 'equal',
+        splitParticipantIds: [],
+        splitExactAmountsMinor: {},
       },
     };
   }
 
-  const history = await createLedgerAppService().loadLedgerHistory({ selectedLedgerId: input.selectedLedgerId });
-  const entry = history.entries.find((candidate) => candidate.expenseId === input.editExpenseId);
-  if (!entry) {
-    throw new Error('Expense not found for edit');
+  const entry = await createLedgerAppService().loadLedgerExpenseDetails({
+    expenseId: input.editExpenseId,
+    selectedLedgerId: input.selectedLedgerId,
+  });
+
+  const splitParticipantIds = entry.participants.map((participant) => participant.participantId);
+  const splitExactAmountsMinor: Record<string, number> = {};
+  for (const participant of entry.participants) {
+    splitExactAmountsMinor[participant.participantId] = participant.owedAmountMinor;
   }
 
   return {
     ledgerId: input.selectedLedgerId ?? null,
     defaults: {
       expenseId: entry.expenseId,
-      description: entry.description,
+      description: entry.title,
       totalAmountInput: (entry.totalAmountMinor / 100).toFixed(2),
       currency: entry.currency,
       expenseDate: entry.expenseDate,
       payerParticipantId: entry.payers[0]?.participantId ?? '',
-      splitMode: entry.splitLabel.includes('Custom') ? 'exact' : 'equal',
+      splitMode: entry.splitMode === 'equal' ? 'equal' : 'exact',
+      splitParticipantIds,
+      splitExactAmountsMinor,
     },
   };
 }
