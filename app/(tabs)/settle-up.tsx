@@ -17,7 +17,6 @@ export default function SettleUpScreen(): JSX.Element {
   const [currencyQuery, setCurrencyQuery] = useState('');
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [confirmSettlementVisible, setConfirmSettlementVisible] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [settlementImageUri, setSettlementImageUri] = useState<string | null>(null);
@@ -132,52 +131,38 @@ export default function SettleUpScreen(): JSX.Element {
           <Pressable
             style={styles.confirmButton}
             accessibilityRole="button"
-            onPress={() => {
+            disabled={isGeneratingImage}
+            onPress={async () => {
               if (model.recommendations.length === 0) {
                 return;
               }
-              setConfirmSettlementVisible(true);
+              setIsGeneratingImage(true);
+              try {
+                const imageUri = await generateSettlementImage(viewShotRef);
+                setSettlementImageUri(imageUri);
+                setPreviewModalVisible(true);
+              } catch (error) {
+                console.error('Error generating settlement image:', error);
+              } finally {
+                setIsGeneratingImage(false);
+              }
             }}
           >
-            <Text style={styles.confirmButtonText}>Share settlement</Text>
+            {isGeneratingImage ? (
+              <ActivityIndicator color={colorTokens.card} />
+            ) : (
+              <Text style={styles.confirmButtonText}>Share settlement</Text>
+            )}
           </Pressable>
         </View>
 
-        <Modal transparent visible={confirmSettlementVisible} animationType="fade" onRequestClose={() => setConfirmSettlementVisible(false)}>
-          <View style={styles.confirmOverlay}>
-            <Pressable style={styles.confirmBackdrop} onPress={() => setConfirmSettlementVisible(false)} />
-            <View style={styles.confirmSheet}>
-               <Text style={styles.confirmTitle}>Generate settlement image</Text>
-               <Text style={styles.confirmMessage}>Create a PNG image that you can share to other apps.</Text>
-               <Pressable style={styles.confirmActionRow} accessibilityRole="button" disabled={isGeneratingImage} onPress={async () => {
-                 setConfirmSettlementVisible(false);
-                 setIsGeneratingImage(true);
-                 try {
-                   const imageUri = await generateSettlementImage(viewShotRef);
-                   setSettlementImageUri(imageUri);
-                   setPreviewModalVisible(true);
-                 } catch (error) {
-                   console.error('Error generating settlement image:', error);
-                 } finally {
-                   setIsGeneratingImage(false);
-                 }
-               }}>
-                 {isGeneratingImage ? <ActivityIndicator color={colorTokens.destructive} /> : <Text style={styles.confirmActionLabel}>Generate</Text>}
-               </Pressable>
-              <Pressable style={styles.confirmCancelRow} accessibilityRole="button" onPress={() => setConfirmSettlementVisible(false)}>
-                <Text style={styles.confirmCancelLabel}>Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-         </Modal>
-
-         {/* Preview modal with share options */}
-         <Modal transparent visible={previewModalVisible} animationType="fade" onRequestClose={() => setPreviewModalVisible(false)}>
-           <View style={styles.previewOverlay}>
-             <Pressable style={styles.previewBackdrop} onPress={() => setPreviewModalVisible(false)} />
-             <View style={styles.previewSheet}>
-               <Text style={styles.previewTitle}>Settlement Preview</Text>
-               {settlementImageUri ? (
+        {/* Preview modal with share options */}
+        <Modal transparent visible={previewModalVisible} animationType="fade" onRequestClose={() => setPreviewModalVisible(false)}>
+          <View style={styles.previewOverlay}>
+            <Pressable style={styles.previewBackdrop} onPress={() => setPreviewModalVisible(false)} />
+            <View style={styles.previewSheet}>
+              <Text style={styles.previewTitle}>Settlement Preview</Text>
+              {settlementImageUri ? (
                  <Image
                    source={{ uri: settlementImageUri }}
                    style={styles.previewImage}
@@ -377,56 +362,6 @@ const styles = StyleSheet.create({
     color: colorTokens.textMuted,
     flexShrink: 1,
     marginLeft: spacingTokens.sm,
-  },
-  confirmOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(61, 60, 79, 0.3)',
-  },
-  confirmBackdrop: {
-    flex: 1,
-  },
-  confirmSheet: {
-    backgroundColor: colorTokens.card,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    paddingHorizontal: spacingTokens.lg,
-    paddingTop: spacingTokens.md,
-    paddingBottom: 24,
-    gap: spacingTokens.md,
-  },
-  confirmTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colorTokens.textPrimary,
-    marginBottom: spacingTokens.xs,
-  },
-  confirmMessage: {
-    fontSize: 14,
-    color: colorTokens.textMuted,
-    marginBottom: spacingTokens.sm,
-  },
-  confirmActionRow: {
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  confirmActionLabel: {
-    color: colorTokens.destructive,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmCancelRow: {
-    marginTop: spacingTokens.xs,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: colorTokens.border,
-    alignItems: 'center',
-  },
-  confirmCancelLabel: {
-    color: colorTokens.textMuted,
-    fontSize: 16,
-    textAlign: 'center',
-    fontWeight: '600',
   },
   previewOverlay: {
     flex: 1,
