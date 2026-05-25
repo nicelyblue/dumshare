@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -116,15 +116,23 @@ export default function AddExpenseScreen(): JSX.Element {
     return `${value.toFixed(2)} ${currency}`;
   }
 
+  const handleSearchQueryChange = useCallback((text: string): void => {
+    setSearchQuery(text);
+  }, []);
+
   function closePicker(): void {
     setPickerMode('none');
     setSearchQuery('');
   }
 
   function openPicker(mode: Exclude<PickerMode, 'none'>): void {
+    // Dismiss keyboard without waiting - reduces jitter by avoiding simultaneous layout updates
     Keyboard.dismiss();
-    setPickerMode(mode);
-    setSearchQuery('');
+    // Use setTimeout to defer state update until after keyboard animation completes
+    setTimeout(() => {
+      setPickerMode(mode);
+      setSearchQuery('');
+    }, 100);
   }
 
   function toggleSplitParticipant(participantId: string): void {
@@ -437,7 +445,7 @@ export default function AddExpenseScreen(): JSX.Element {
             {(pickerMode === 'currency' || pickerMode === 'paidBy' || pickerMode === 'splitBetween') ? (
               <TextInput
                 value={searchQuery}
-                onChangeText={setSearchQuery}
+                onChangeText={handleSearchQueryChange}
                 placeholder={pickerMode === 'currency' ? 'Search code or name' : 'Search participants'}
                 placeholderTextColor={colorTokens.textMuted}
                 style={styles.searchInput}
@@ -837,7 +845,8 @@ const styles = StyleSheet.create({
     backgroundColor: colorTokens.card,
   },
   modalList: {
-    maxHeight: 320,
+    height: 320,
+    flexShrink: 1,
   },
   modalListContent: {
     paddingBottom: spacingTokens.sm,
