@@ -36,7 +36,10 @@ export default function SettleUpScreen(): JSX.Element {
   }
 
   useEffect(() => {
-    void reload(activeShareId);
+    void reload(activeShareId).then(() => {
+      // Auto-calculate settlement when screen loads
+      void flowController.generateRecommendations().then(setModel);
+    });
   }, [activeShareId]);
 
   function closeCurrencyPicker(): void {
@@ -56,22 +59,6 @@ export default function SettleUpScreen(): JSX.Element {
           <Ionicons name="chevron-down" size={18} color={colorTokens.textMuted} />
         </Pressable>
         <Text style={styles.description}>Selected: {selectedOption ? `${selectedOption.code} - ${selectedOption.label}` : model.selectedCurrencyCode}</Text>
-        <Pressable
-          style={[styles.confirmButton, styles.calculateButton, (isCalculating || !model.hasLedger) ? styles.disabledButton : null]}
-          accessibilityRole="button"
-          disabled={isCalculating || !model.hasLedger}
-          onPress={() => {
-            if (!model.hasLedger) {
-              return;
-            }
-            setIsCalculating(true);
-            void reload(activeShareId, model.selectedCurrencyCode).finally(() => {
-              setIsCalculating(false);
-            });
-          }}
-        >
-          <Text style={styles.confirmButtonText}>{isCalculating ? 'Calculating...' : 'Calculate Settlement'}</Text>
-        </Pressable>
       </View>
 
       <Modal transparent visible={currencyPickerOpen} animationType="fade" onRequestClose={closeCurrencyPicker}>

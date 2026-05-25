@@ -22,7 +22,7 @@ describe('phase 05 UI screen parity signals', () => {
     const settleUp = readProjectFile('app/(tabs)/settle-up.tsx');
     const completion = readProjectFile('app/settlement-complete.tsx');
 
-    expect(settleUp).toContain('Calculate Settlement');
+    expect(settleUp).toContain('Currency'); // Auto-calculates when currency selected
     expect(settleUp).toContain('REQUIRED PAYMENTS');
     expect(completion).toContain('Settlement Calculated!');
   });
