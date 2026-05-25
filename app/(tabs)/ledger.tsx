@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { deleteExpenseById, loadLedgerHistoryModel, type LedgerHistoryModel } from '../../src/mobile/controllers/ledgerHistoryController';
+import { deleteExpenseById, loadLedgerHistoryModel, loadLedgerExpenseDetailsModel, type LedgerHistoryModel, type LedgerExpenseDetailsModel } from '../../src/mobile/controllers/ledgerHistoryController';
 import { LedgerHistoryList } from '../../src/mobile/components/LedgerHistoryList';
+import { LedgerEntryDetailModal } from '../../src/mobile/components/LedgerEntryDetailModal';
 import { getActiveShareState, subscribeActiveShare } from '../../src/mobile/state/activeShareStore';
 import { LongPressActionSheet } from '../../src/mobile/components/LongPressActionSheet';
 import { setPendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
@@ -22,7 +23,19 @@ export default function LedgerScreen(): JSX.Element {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [detailModel, setDetailModel] = useState<LedgerExpenseDetailsModel | null>(null);
   const requestVersion = useRef(0);
+
+  const openEntryDetail = useCallback((expenseId: string) => {
+    void loadLedgerExpenseDetailsModel({
+      expenseId,
+      selectedLedgerId: activeShareId,
+    }).then((model) => {
+      setDetailModel(model);
+      setDetailModalVisible(true);
+    });
+  }, [activeShareId]);
 
   const openEntryActions = useCallback((expenseId: string) => {
     setSelectedExpenseId(expenseId);
@@ -99,11 +112,11 @@ export default function LedgerScreen(): JSX.Element {
           <Text style={styles.emptyHeading}>No expenses yet</Text>
           <Text style={styles.emptyBody}>Add the first expense to see who owes what and how the split works.</Text>
         </View>
-      ) : (
+       ) : (
         <LedgerHistoryList
           model={model}
           highlightedExpenseId={params.expenseId ?? null}
-          onPressEntry={openEntryActions}
+          onPressEntry={openEntryDetail}
           onLongPressEntry={openEntryActions}
         />
       )}
@@ -138,6 +151,7 @@ export default function LedgerScreen(): JSX.Element {
           ]);
         }}
       />
+      <LedgerEntryDetailModal visible={detailModalVisible} model={detailModel} onClose={() => setDetailModalVisible(false)} />
     </ScrollView>
   );
 }

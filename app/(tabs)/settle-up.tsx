@@ -125,36 +125,34 @@ export default function SettleUpScreen(): JSX.Element {
           <Text style={styles.requiredPaymentsLabel}>REQUIRED PAYMENTS</Text>
           <SettlementRecommendationList model={{ recommendations: model.recommendations }} />
         </View>
-      )}
+       )}
 
-        <View style={styles.card}>
-          <Pressable
-            style={styles.confirmButton}
-            accessibilityRole="button"
-            disabled={isGeneratingImage}
-            onPress={async () => {
-              if (model.recommendations.length === 0) {
-                return;
-              }
-              setIsGeneratingImage(true);
-              try {
-                const imageUri = await generateSettlementImage(viewShotRef);
-                setSettlementImageUri(imageUri);
-                setPreviewModalVisible(true);
-              } catch (error) {
-                console.error('Error generating settlement image:', error);
-              } finally {
-                setIsGeneratingImage(false);
-              }
-            }}
-          >
-            {isGeneratingImage ? (
-              <ActivityIndicator color={colorTokens.card} />
-            ) : (
-              <Text style={styles.confirmButtonText}>Share settlement</Text>
-            )}
-          </Pressable>
-        </View>
+       <Pressable
+         style={styles.shareSettlementButton}
+         accessibilityRole="button"
+         disabled={isGeneratingImage}
+         onPress={async () => {
+           if (model.recommendations.length === 0) {
+             return;
+           }
+           setIsGeneratingImage(true);
+           try {
+             const imageUri = await generateSettlementImage(viewShotRef);
+             setSettlementImageUri(imageUri);
+             setPreviewModalVisible(true);
+           } catch (error) {
+             console.error('Error generating settlement image:', error);
+           } finally {
+             setIsGeneratingImage(false);
+           }
+         }}
+       >
+         {isGeneratingImage ? (
+           <ActivityIndicator color={colorTokens.card} />
+         ) : (
+           <Text style={styles.shareSettlementButtonText}>Share settlement</Text>
+         )}
+       </Pressable>
 
         {/* Preview modal with share options */}
         <Modal transparent visible={previewModalVisible} animationType="fade" onRequestClose={() => setPreviewModalVisible(false)}>
@@ -282,22 +280,24 @@ const styles = StyleSheet.create({
     color: colorTokens.textMuted,
     marginBottom: spacingTokens.sm,
   },
-  confirmButton: {
-    marginTop: 6,
+  shareSettlementButton: {
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colorTokens.inverse,
     borderRadius: radiusTokens.md,
-    paddingVertical: 11,
+    paddingVertical: 12,
+    marginTop: spacingTokens.md,
+  },
+  shareSettlementButtonText: {
+    color: colorTokens.card,
+    fontWeight: '600',
+    fontSize: 16,
   },
   calculateButton: {
     width: '100%',
   },
   disabledButton: {
     opacity: 0.55,
-  },
-  confirmButtonText: {
-    color: colorTokens.card,
-    fontWeight: '600',
   },
   requiredPaymentsWrap: {
     gap: spacingTokens.sm,
