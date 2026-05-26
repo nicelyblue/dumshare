@@ -19,6 +19,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.1.0",
     "currency-codes": "^2.2.0",
     "expo": "^55.0.23",
     "expo-constants": "~55.0.16",
