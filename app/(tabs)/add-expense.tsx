@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -10,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
   type GestureResponderEvent,
 } from 'react-native';
@@ -20,39 +23,422 @@ import { loadExpenseFormModel, submitExpenseForm } from '../../src/mobile/contro
 import { consumePendingExpenseDraft } from '../../src/mobile/state/expenseDraftStore';
 import { getActiveShareState } from '../../src/mobile/state/activeShareStore';
 import { createLedgerAppService } from '../../src/mobile/services/ledgerAppService';
-import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
+import { radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
 import { typographyTokens } from '../../src/mobile/theme/typography';
+import { useTheme } from '../../src/mobile/theme/useTheme';
 import { CURRENCY_OPTIONS, fuzzyCurrencySearch } from '../../src/domain/currency/catalog';
-import { getDefaultParticipantIcon } from '../../src/mobile/utils/participantIcons';
+import { FormNumberInput, FormTextInput } from '../../src/mobile/components/FormFields';
+import { Button } from '../../src/mobile/components/Button';
+import { ScreenScroll } from '../../src/mobile/components/AppScaffold';
+import { getResponsiveMaxWidth } from '../../src/mobile/theme/layout';
+import { ScreenHeader } from '../../src/mobile/components/ScreenHeader';
+import { SelectionRow } from '../../src/mobile/components/SelectionRow';
+import { ChoiceChip } from '../../src/mobile/components/ChoiceChip';
+import { modalSheetStyles } from '../../src/mobile/theme/styles';
+import { ParticipantAvatar } from '../../src/mobile/components/ParticipantAvatar';
 
 type PickerMode = 'none' | 'currency' | 'paidBy' | 'splitBetween' | 'splitType';
 type SplitMethod = 'exact' | 'percent';
 
 export default function AddExpenseScreen(): JSX.Element {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
-  const [splitMode, setSplitMode] = useState<'equal' | 'exact'>('equal');
-  const [exactValues, setExactValues] = useState<Record<string, string>>({});
-  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
-  const [shareTitle, setShareTitle] = useState('');
-  const [participants, setParticipants] = useState<Array<{ participantId: string; displayName: string }>>([]);
-  const [payerParticipantId, setPayerParticipantId] = useState<string>('');
-  const [splitParticipantIds, setSplitParticipantIds] = useState<string[]>([]);
-  const [pickerMode, setPickerMode] = useState<PickerMode>('none');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [splitConfigVisible, setSplitConfigVisible] = useState(false);
-  const [configMethod, setConfigMethod] = useState<SplitMethod>('exact');
-  const [configParticipantIds, setConfigParticipantIds] = useState<string[]>([]);
-  const [configExactValues, setConfigExactValues] = useState<Record<string, string>>({});
-  const [configPercentValues, setConfigPercentValues] = useState<Record<string, string>>({});
-  const sliderWidthByParticipantIdRef = useRef<Record<string, number>>({});
-  const pendingSliderUpdateRef = useRef<{ participantId: string; requestedPercent: number } | null>(null);
-  const sliderFrameRef = useRef<number | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+   const router = useRouter();
+   const insets = useSafeAreaInsets();
+   const { width } = useWindowDimensions();
+   const { colors } = useTheme();
+   const maxWidth = getResponsiveMaxWidth(width);
+   const [description, setDescription] = useState('');
+   const [amount, setAmount] = useState('');
+   const [currency, setCurrency] = useState('USD');
+   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
+   const [splitMode, setSplitMode] = useState<'equal' | 'exact'>('equal');
+   const [exactValues, setExactValues] = useState<Record<string, string>>({});
+   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+   const [shareTitle, setShareTitle] = useState('');
+   const [participants, setParticipants] = useState<Array<{ participantId: string; displayName: string }>>([]);
+   const [payerParticipantId, setPayerParticipantId] = useState<string>('');
+   const [splitParticipantIds, setSplitParticipantIds] = useState<string[]>([]);
+   const [pickerMode, setPickerMode] = useState<PickerMode>('none');
+   const [searchQuery, setSearchQuery] = useState('');
+   const [splitConfigVisible, setSplitConfigVisible] = useState(false);
+   const [configMethod, setConfigMethod] = useState<SplitMethod>('exact');
+   const [configParticipantIds, setConfigParticipantIds] = useState<string[]>([]);
+   const [configExactValues, setConfigExactValues] = useState<Record<string, string>>({});
+   const [configPercentValues, setConfigPercentValues] = useState<Record<string, string>>({});
+   const sliderWidthByParticipantIdRef = useRef<Record<string, number>>({});
+   const pendingSliderUpdateRef = useRef<{ participantId: string; requestedPercent: number } | null>(null);
+   const sliderFrameRef = useRef<number | null>(null);
+   const [isSaving, setIsSaving] = useState(false);
+
+   // Animation refs for modal
+   const modalScaleAnim = useRef(new Animated.Value(0.95)).current;
+   const modalOpacityAnim = useRef(new Animated.Value(0)).current;
+   const participantCardAnimsRef = useRef<Record<string, Animated.Value>>({});
+
+   // Generate dynamic styles based on current theme colors
+   const dynamicStyles = useMemo(
+     () =>
+       StyleSheet.create({
+         screen: {
+           flex: 1,
+           backgroundColor: colors.card,
+         },
+          content: {
+            paddingHorizontal: spacingTokens.lg,
+            gap: spacingTokens.md,
+            maxWidth: '100%',
+          },
+         sectionLabel: {
+           color: colors.textPrimary,
+           fontSize: 24 / 2,
+           fontWeight: '500',
+         },
+         inputLike: {
+           borderWidth: 1,
+           borderColor: colors.border,
+           borderRadius: radiusTokens.md,
+           paddingHorizontal: spacingTokens.md,
+           paddingVertical: spacingTokens.md,
+           minHeight: touchTarget.minimum,
+           backgroundColor: colors.card,
+         },
+          row: {
+            flexDirection: 'row',
+            gap: spacingTokens.md,
+            flexWrap: 'wrap',
+          },
+          halfField: {
+            flex: 1,
+            gap: spacingTokens.sm,
+            minWidth: 160,
+          },
+         selectLike: {
+           borderWidth: 1,
+           borderColor: colors.border,
+           borderRadius: radiusTokens.md,
+           minHeight: touchTarget.minimum,
+           backgroundColor: colors.card,
+           paddingHorizontal: spacingTokens.md,
+           flexDirection: 'row',
+           alignItems: 'center',
+           justifyContent: 'space-between',
+         },
+         selectValue: {
+           color: colors.textPrimary,
+           fontSize: 22 / 2,
+         },
+         avatarShift: {
+           marginLeft: -8,
+         },
+         avatarStack: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           marginRight: spacingTokens.sm,
+         },
+         plusBadge: {
+           marginLeft: 6,
+           borderWidth: 1,
+           borderColor: colors.border,
+           borderRadius: radiusTokens.pill,
+           paddingHorizontal: 6,
+           paddingVertical: 2,
+           backgroundColor: colors.card,
+         },
+         plusBadgeText: {
+           fontSize: 10,
+           color: colors.textMuted,
+         },
+         modalBackdrop: {
+           flex: 1,
+         },
+         modalCard: {
+           gap: spacingTokens.sm,
+           maxHeight: '75%',
+         },
+         modalTitle: {
+           ...typographyTokens.body,
+           fontWeight: '700',
+         },
+         searchInput: {
+           borderWidth: 1,
+           borderColor: colors.border,
+           borderRadius: radiusTokens.md,
+           minHeight: touchTarget.minimum,
+           paddingHorizontal: spacingTokens.md,
+           backgroundColor: colors.card,
+         },
+         modalList: {
+           height: 320,
+           flexShrink: 1,
+         },
+         modalListContent: {
+           paddingBottom: spacingTokens.sm,
+         },
+          modalRow: {
+            minHeight: touchTarget.minimum,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.subtleBorder,
+            paddingVertical: spacingTokens.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          },
+         modalParticipantLabel: {
+           flexDirection: 'row',
+           alignItems: 'center',
+           gap: spacingTokens.sm,
+         },
+         modalRowTitle: {
+           ...typographyTokens.body,
+           fontSize: 15,
+         },
+         modalRowSubtitle: {
+           ...typographyTokens.label,
+           flexShrink: 1,
+           marginLeft: spacingTokens.sm,
+         },
+         splitOverlay: {
+           flex: 1,
+           backgroundColor: colors.appBackground,
+         },
+          splitPanel: {
+            flex: 1,
+            gap: 0,
+            backgroundColor: colors.card,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          },
+          splitTitle: {
+            ...typographyTokens.heading,
+            fontSize: 28,
+            marginTop: spacingTokens.lg,
+            marginBottom: spacingTokens.md,
+            marginHorizontal: 0,
+          },
+          splitSubtitle: {
+            ...typographyTokens.body,
+            color: colors.textMuted,
+            marginBottom: spacingTokens.md,
+            marginHorizontal: 0,
+          },
+          totalCard: {
+            borderWidth: 0,
+            borderRadius: radiusTokens.md,
+            backgroundColor: colors.appBackground,
+            paddingHorizontal: spacingTokens.md,
+            paddingVertical: spacingTokens.md,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            overflow: 'hidden',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 8,
+            elevation: 3,
+            marginBottom: spacingTokens.md,
+          },
+         totalCardContent: {
+           flex: 1,
+         },
+         totalCardAccent: {
+           width: 4,
+           height: 60,
+           backgroundColor: colors.inverse,
+           borderRadius: 2,
+           marginLeft: spacingTokens.md,
+         },
+         totalLabel: {
+           ...typographyTokens.label,
+           color: colors.textMuted,
+           fontSize: 12,
+         },
+         totalValue: {
+           ...typographyTokens.heading,
+           fontSize: 28,
+           fontWeight: '700',
+           marginTop: spacingTokens.xs,
+         },
+         splitSectionTitle: {
+           ...typographyTokens.label,
+           color: colors.textPrimary,
+           marginTop: spacingTokens.xs,
+         },
+         methodRow: {
+           gap: spacingTokens.xs,
+           paddingVertical: 2,
+           alignItems: 'center',
+         },
+         methodScroll: {
+           maxHeight: 44,
+         },
+         participantHeader: {
+           flexDirection: 'row',
+           justifyContent: 'space-between',
+           alignItems: 'center',
+         },
+         selectAllText: {
+           ...typographyTokens.label,
+           textDecorationLine: 'underline',
+           color: colors.inverse,
+           opacity: 0.8,
+         },
+         selectAllPressed: {
+           opacity: 0.6,
+         },
+         participantList: {
+           flex: 1,
+         },
+         participantListContent: {
+           gap: spacingTokens.sm,
+         },
+          participantCard: {
+            borderWidth: 2,
+            borderColor: colors.border,
+            borderRadius: radiusTokens.md,
+            backgroundColor: colors.card,
+            minHeight: 88,
+            paddingHorizontal: spacingTokens.md,
+            paddingVertical: spacingTokens.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacingTokens.md,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.03,
+            shadowRadius: 3,
+            elevation: 1,
+          },
+         participantCardActive: {
+           borderColor: colors.inverse,
+           backgroundColor: colors.appBackground,
+           shadowOpacity: 0.08,
+           elevation: 2,
+         },
+          checkbox: {
+            width: touchTarget.minimum,
+            height: touchTarget.minimum,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 6,
+          },
+         checkboxPressed: {
+           opacity: 0.6,
+         },
+          participantBody: {
+            flex: 1,
+            gap: spacingTokens.sm,
+          },
+          participantName: {
+            ...typographyTokens.body,
+            fontSize: 16,
+          },
+         participantInput: {
+           borderWidth: 1,
+           borderColor: colors.border,
+           borderRadius: radiusTokens.sm,
+           backgroundColor: colors.card,
+           paddingHorizontal: spacingTokens.sm,
+           minHeight: 34,
+           maxWidth: 84,
+         },
+         participantInputDisabled: {
+           opacity: 0.7,
+         },
+         shareBlock: {
+           alignItems: 'flex-end',
+         },
+         shareLabel: {
+           ...typographyTokens.label,
+           fontSize: 10,
+         },
+         shareValue: {
+           ...typographyTokens.body,
+           fontWeight: '600',
+         },
+         sliderTrack: {
+           marginTop: 6,
+           height: 16,
+           borderRadius: 999,
+           backgroundColor: colors.subtleSurface,
+           overflow: 'hidden',
+           shadowColor: '#000',
+           shadowOffset: { width: 0, height: 1 },
+           shadowOpacity: 0.05,
+           shadowRadius: 2,
+           elevation: 1,
+         },
+         sliderTrackDisabled: {
+           opacity: 0.5,
+         },
+         sliderFill: {
+           height: '100%',
+           backgroundColor: colors.inverse,
+           borderRadius: 999,
+         },
+         balanceTitle: {
+           ...typographyTokens.body,
+           fontWeight: '600',
+         },
+         balanceMeta: {
+           ...typographyTokens.label,
+         },
+         splitHeader: {
+           flexDirection: 'row',
+           justifyContent: 'flex-end',
+           marginBottom: 0,
+         },
+         splitCloseButton: {
+           width: 40,
+           height: 40,
+           borderRadius: radiusTokens.md,
+           alignItems: 'center',
+           justifyContent: 'center',
+           backgroundColor: colors.appBackground,
+         },
+         splitCloseButtonPressed: {
+           opacity: 0.6,
+         },
+          balanceCard: {
+            borderRadius: radiusTokens.md,
+            backgroundColor: colors.appBackground,
+            paddingHorizontal: spacingTokens.md,
+            paddingVertical: spacingTokens.md,
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: spacingTokens.md,
+            marginTop: spacingTokens.md,
+            marginBottom: spacingTokens.md,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 2,
+          },
+         balanceCardSuccess: {
+           borderWidth: 1,
+           borderColor: '#BDE8CC',
+         },
+         balanceCardWarning: {
+           borderWidth: 1,
+           borderColor: '#F4C2C2',
+         },
+         balanceCheck: {
+           width: 28,
+           height: 28,
+           borderRadius: 14,
+           alignItems: 'center',
+           justifyContent: 'center',
+           marginTop: 2,
+         },
+         balanceCheckSuccess: {
+           backgroundColor: colors.success,
+         },
+         balanceCheckWarning: {
+           backgroundColor: colors.destructive,
+         },
+       }),
+     [colors],
+   );
 
   useEffect(() => {
     const pending = consumePendingExpenseDraft();
@@ -87,10 +473,61 @@ export default function AddExpenseScreen(): JSX.Element {
       setExactValues(
         Object.fromEntries(
           Object.entries(model.defaults.splitExactAmountsMinor).map(([participantId, owedAmountMinor]) => [participantId, (owedAmountMinor / 100).toFixed(2)]),
-        ),
-      );
+       ),
+       );
     });
   }, []);
+
+  // Animate modal on open/close
+  useEffect(() => {
+    if (splitConfigVisible) {
+      Animated.parallel([
+        Animated.timing(modalScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(modalOpacityAnim, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Animate participant cards staggered
+      participants.forEach((participant, index) => {
+        if (!participantCardAnimsRef.current[participant.participantId]) {
+          participantCardAnimsRef.current[participant.participantId] = new Animated.Value(0);
+        }
+        const anim = participantCardAnimsRef.current[participant.participantId];
+        setTimeout(() => {
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 250,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }).start();
+        }, 100 + index * 30);
+      });
+    } else {
+      Animated.parallel([
+        Animated.timing(modalScaleAnim, {
+          toValue: 0.95,
+          duration: 200,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(modalOpacityAnim, {
+          toValue: 0,
+          duration: 150,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [splitConfigVisible, participants, modalScaleAnim, modalOpacityAnim]);
 
   const filteredCurrencies = useMemo(() => fuzzyCurrencySearch(CURRENCY_OPTIONS, searchQuery), [searchQuery]);
   const filteredParticipants = useMemo(() => {
@@ -339,723 +776,393 @@ export default function AddExpenseScreen(): JSX.Element {
     [],
   );
 
-  return (
-    <View style={styles.screen}>
-      <View style={[styles.content, { paddingTop: insets.top + spacingTokens.lg }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
-        </Pressable>
-        <Text style={styles.title}>Add Expense</Text>
-        <Text style={styles.subtitle}>Track a new expense for this share</Text>
-        <Text style={styles.tripLabel}>{shareTitle || 'Untitled Share'}</Text>
+   return (
+     <View style={dynamicStyles.screen}>
+       <ScreenScroll topInsetOffset={spacingTokens.lg} bottomInsetOffset={spacingTokens.xl}>
+         <View style={[dynamicStyles.content, { maxWidth, alignSelf: 'center', width: '100%' }]}>
+         <ScreenHeader
+           title="Add Expense"
+           subtitle="Track a new expense for this share"
+           badge={shareTitle || 'Untitled Share'}
+           onBack={() => router.back()}
+         />
 
-        <Text style={styles.sectionLabel}>Expense Name</Text>
-        <TextInput
-          style={styles.inputLike}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="e.g., Dinner, Gas, Hotel"
-          placeholderTextColor={colorTokens.textMuted}
-        />
+         <FormTextInput
+           label="Expense Name"
+           value={description}
+           onChangeText={setDescription}
+           placeholder="e.g., Dinner, Gas, Hotel"
+           autoCorrect={false}
+         />
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Text style={styles.sectionLabel}>Amount</Text>
-            <TextInput
-              style={styles.inputLike}
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              placeholder="0.00"
-              placeholderTextColor={colorTokens.textMuted}
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Text style={styles.sectionLabel}>Currency</Text>
-            <Pressable style={styles.selectLike} accessibilityRole="button" onPress={() => openPicker('currency')}>
-              <Text style={styles.selectValue}>{currency}</Text>
-              <Ionicons name="chevron-down" size={18} color={colorTokens.textMuted} />
-            </Pressable>
-          </View>
-        </View>
+         <View style={dynamicStyles.row}>
+           <View style={dynamicStyles.halfField}>
+             <FormNumberInput
+               label="Amount"
+               value={amount}
+               onChangeText={setAmount}
+               placeholder="0.00"
+             />
+           </View>
+           <View style={dynamicStyles.halfField}>
+             <Text style={dynamicStyles.sectionLabel}>Currency</Text>
+             <Pressable style={dynamicStyles.selectLike} accessibilityRole="button" onPress={() => openPicker('currency')}>
+               <Text style={dynamicStyles.selectValue}>{currency}</Text>
+               <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+             </Pressable>
+           </View>
+         </View>
 
-        <Text style={styles.sectionLabel}>Paid By</Text>
-        <Pressable style={styles.selectorRow} accessibilityRole="button" onPress={() => openPicker('paidBy')}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getDefaultParticipantIcon(payerName)}</Text>
-          </View>
-          <Text style={styles.selectorPrimary}>{payerName}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colorTokens.textMuted} style={styles.trailingIcon} />
-        </Pressable>
+         <SelectionRow
+           label="Paid By"
+           title={payerName}
+           onPress={() => openPicker('paidBy')}
+           leading={
+             <ParticipantAvatar name={payerName} />
+           }
+         />
 
-        <Text style={styles.sectionLabel}>Split Between</Text>
-        <Pressable style={styles.selectorRow} accessibilityRole="button" onPress={() => openPicker('splitBetween')}>
-          <View style={styles.avatarStack}>
-            {splitPreviewParticipants.map((participant, index) => (
-              <View key={participant.participantId} style={[styles.avatar, styles.avatarTiny, index > 0 ? styles.avatarShift : null]}>
-                <Text style={styles.avatarText}>{getDefaultParticipantIcon(participant.displayName)}</Text>
-              </View>
-            ))}
-            {splitOverflowCount > 0 ? (
-              <View style={styles.plusBadge}>
-                <Text style={styles.plusBadgeText}>{`+${splitOverflowCount}`}</Text>
-              </View>
-            ) : null}
-          </View>
-          <Text style={styles.selectorPrimary}>{splitLabel}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colorTokens.textMuted} style={styles.trailingIcon} />
-        </Pressable>
+         <SelectionRow
+           label="Split Between"
+           title={splitLabel}
+           onPress={() => openPicker('splitBetween')}
+           leading={
+             <View style={dynamicStyles.avatarStack}>
+               {splitPreviewParticipants.map((participant, index) => (
+                 <View key={participant.participantId} style={index > 0 ? dynamicStyles.avatarShift : null}>
+                   <ParticipantAvatar name={participant.displayName} size="sm" />
+                 </View>
+               ))}
+               {splitOverflowCount > 0 ? (
+                 <View style={dynamicStyles.plusBadge}>
+                   <Text style={dynamicStyles.plusBadgeText}>{`+${splitOverflowCount}`}</Text>
+                 </View>
+               ) : null}
+             </View>
+           }
+         />
 
-        <Text style={styles.sectionLabel}>Split Type</Text>
-        <Pressable style={styles.selectorRow} accessibilityRole="button" onPress={openSplitConfig}>
-          <View>
-            <Text style={styles.selectorPrimary}>{splitMode === 'equal' ? 'Split Equally' : 'Split by Exact Amounts'}</Text>
-            <Text style={styles.selectorSecondary}>{perPersonLabel}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colorTokens.textMuted} style={styles.trailingIcon} />
-        </Pressable>
+         <SelectionRow
+           label="Split Type"
+           title={splitMode === 'equal' ? 'Split Equally' : 'Split by Exact Amounts'}
+           subtitle={perPersonLabel}
+           onPress={openSplitConfig}
+         />
 
-        <Pressable
-          style={styles.primaryButton}
-          accessibilityRole="button"
-          onPress={() => void onSaveExpensePress()}
-          disabled={isSaving}
-        >
-          <Text style={styles.primaryButtonText}>{isSaving ? 'Saving...' : 'Save Expense'}</Text>
-        </Pressable>
-      </View>
+         <Button fullWidth loading={isSaving} onPress={() => void onSaveExpensePress()}>
+           Save Expense
+         </Button>
+         </View>
+       </ScreenScroll>
 
-      <Modal transparent visible={pickerMode !== 'none'} animationType="fade" onRequestClose={closePicker}>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={insets.bottom}
-        >
-          <Pressable style={styles.modalBackdrop} onPress={closePicker} />
-          <View style={[styles.modalCard, { paddingBottom: insets.bottom + spacingTokens.md }]}>
-            <Text style={styles.modalTitle}>
-              {pickerMode === 'currency'
-                ? 'Select Currency'
-                : pickerMode === 'paidBy'
-                  ? 'Select Payer'
-                  : pickerMode === 'splitBetween'
-                    ? 'Split Between'
-                    : 'Split Type'}
-            </Text>
-            {(pickerMode === 'currency' || pickerMode === 'paidBy' || pickerMode === 'splitBetween') ? (
-              <TextInput
-                value={searchQuery}
-                onChangeText={handleSearchQueryChange}
-                placeholder={pickerMode === 'currency' ? 'Search code or name' : 'Search participants'}
-                placeholderTextColor={colorTokens.textMuted}
-                style={styles.searchInput}
-              />
-            ) : null}
-            <ScrollView
-              style={styles.modalList}
-              contentContainerStyle={styles.modalListContent}
-              keyboardShouldPersistTaps="handled"
+       <Modal transparent visible={pickerMode !== 'none'} animationType="fade" onRequestClose={closePicker}>
+         <KeyboardAvoidingView
+           style={modalSheetStyles.overlay}
+           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+           keyboardVerticalOffset={insets.bottom}
+         >
+           <Pressable style={dynamicStyles.modalBackdrop} onPress={closePicker} />
+            <View
+              style={[
+                modalSheetStyles.sheetCard,
+                dynamicStyles.modalCard,
+                { paddingBottom: insets.bottom + spacingTokens.md, width: '100%', maxWidth, alignSelf: 'center', paddingHorizontal: spacingTokens.lg },
+              ]}
             >
-              {pickerMode === 'currency'
-                ? filteredCurrencies.map((option) => (
-                    <Pressable
-                      key={option.code}
-                      style={styles.modalRow}
-                      accessibilityRole="button"
-                      onPress={() => {
-                        setCurrency(option.code);
-                        closePicker();
-                      }}
-                    >
-                      <Text style={styles.modalRowTitle}>{option.code}</Text>
-                      <Text style={styles.modalRowSubtitle}>{option.label}</Text>
-                    </Pressable>
-                  ))
-                : null}
-              {pickerMode === 'paidBy'
-                ? filteredParticipants.map((participant) => (
-                    <Pressable
-                      key={participant.participantId}
-                      style={styles.modalRow}
-                      accessibilityRole="button"
-                      onPress={() => {
-                        setPayerParticipantId(participant.participantId);
-                        closePicker();
-                      }}
-                    >
-                      <Text style={styles.modalRowTitle}>{participant.displayName}</Text>
-                    </Pressable>
-                  ))
-                : null}
-              {pickerMode === 'splitBetween'
-                ? filteredParticipants.map((participant) => {
-                    const selected = splitParticipantIds.includes(participant.participantId);
-                    return (
-                      <Pressable
-                        key={participant.participantId}
-                        style={styles.modalRow}
-                        accessibilityRole="button"
-                        onPress={() => toggleSplitParticipant(participant.participantId)}
-                      >
-                        <Text style={styles.modalRowTitle}>{participant.displayName}</Text>
-                        <Ionicons
-                          name={selected ? 'checkbox' : 'square-outline'}
-                          size={20}
-                          color={selected ? colorTokens.inverse : colorTokens.textMuted}
-                        />
-                      </Pressable>
-                    );
-                  })
-                : null}
-              {pickerMode === 'splitType' ? (
-                <>
-                  <Pressable style={styles.modalRow} accessibilityRole="button" onPress={() => { setSplitMode('exact'); closePicker(); }}>
-                    <Text style={styles.modalRowTitle}>Split by Exact Amounts</Text>
-                  </Pressable>
-                  <Pressable style={styles.modalRow} accessibilityRole="button" onPress={closePicker}>
-                    <Text style={styles.modalRowTitle}>Split by Percentage</Text>
-                  </Pressable>
-                </>
-              ) : null}
-            </ScrollView>
-            {pickerMode === 'splitBetween' ? (
-              <Pressable style={styles.doneButton} accessibilityRole="button" onPress={closePicker}>
-                <Text style={styles.doneButtonText}>Done</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+             <Text style={dynamicStyles.modalTitle}>
+               {pickerMode === 'currency'
+                 ? 'Select Currency'
+                 : pickerMode === 'paidBy'
+                   ? 'Select Payer'
+                   : pickerMode === 'splitBetween'
+                     ? 'Split Between'
+                     : 'Split Type'}
+             </Text>
+             {(pickerMode === 'currency' || pickerMode === 'paidBy' || pickerMode === 'splitBetween') ? (
+               <FormTextInput
+                 value={searchQuery}
+                 onChangeText={handleSearchQueryChange}
+                 placeholder={pickerMode === 'currency' ? 'Search code or name' : 'Search participants'}
+                 style={dynamicStyles.searchInput}
+               />
+             ) : null}
+             <ScrollView
+               style={dynamicStyles.modalList}
+               contentContainerStyle={dynamicStyles.modalListContent}
+               keyboardShouldPersistTaps="handled"
+             >
+               {pickerMode === 'currency'
+                 ? filteredCurrencies.map((option) => (
+                     <Pressable
+                       key={option.code}
+                       style={dynamicStyles.modalRow}
+                       accessibilityRole="button"
+                       onPress={() => {
+                         setCurrency(option.code);
+                         closePicker();
+                       }}
+                     >
+                       <Text style={dynamicStyles.modalRowTitle}>{option.code}</Text>
+                       <Text style={dynamicStyles.modalRowSubtitle}>{option.label}</Text>
+                     </Pressable>
+                   ))
+                 : null}
+               {pickerMode === 'paidBy'
+                 ? filteredParticipants.map((participant) => (
+                     <Pressable
+                       key={participant.participantId}
+                       style={dynamicStyles.modalRow}
+                       accessibilityRole="button"
+                       onPress={() => {
+                         setPayerParticipantId(participant.participantId);
+                         closePicker();
+                       }}
+                     >
+                       <View style={dynamicStyles.modalParticipantLabel}>
+                         <ParticipantAvatar name={participant.displayName} size="sm" />
+                         <Text style={dynamicStyles.modalRowTitle}>{participant.displayName}</Text>
+                       </View>
+                     </Pressable>
+                   ))
+                 : null}
+               {pickerMode === 'splitBetween'
+                 ? filteredParticipants.map((participant) => {
+                     const selected = splitParticipantIds.includes(participant.participantId);
+                     return (
+                       <Pressable
+                         key={participant.participantId}
+                         style={dynamicStyles.modalRow}
+                         accessibilityRole="button"
+                         onPress={() => toggleSplitParticipant(participant.participantId)}
+                       >
+                         <View style={dynamicStyles.modalParticipantLabel}>
+                           <ParticipantAvatar name={participant.displayName} size="sm" />
+                           <Text style={dynamicStyles.modalRowTitle}>{participant.displayName}</Text>
+                         </View>
+                         <Ionicons
+                           name={selected ? 'checkbox' : 'square-outline'}
+                           size={20}
+                           color={selected ? colors.inverse : colors.textMuted}
+                         />
+                       </Pressable>
+                     );
+                   })
+                 : null}
+               {pickerMode === 'splitType' ? (
+                 <>
+                   <Pressable style={dynamicStyles.modalRow} accessibilityRole="button" onPress={() => { setSplitMode('exact'); closePicker(); }}>
+                     <Text style={dynamicStyles.modalRowTitle}>Split by Exact Amounts</Text>
+                   </Pressable>
+                   <Pressable style={dynamicStyles.modalRow} accessibilityRole="button" onPress={closePicker}>
+                     <Text style={dynamicStyles.modalRowTitle}>Split by Percentage</Text>
+                   </Pressable>
+                 </>
+               ) : null}
+             </ScrollView>
+             {pickerMode === 'splitBetween' ? (
+               <Button fullWidth onPress={closePicker}>
+                 Done
+               </Button>
+             ) : null}
+           </View>
+         </KeyboardAvoidingView>
+       </Modal>
 
-      <Modal transparent visible={splitConfigVisible} animationType="slide" onRequestClose={() => setSplitConfigVisible(false)}>
-        <View style={styles.splitOverlay}>
-          <View style={[styles.splitPanel, { paddingTop: insets.top + spacingTokens.md, paddingBottom: insets.bottom + spacingTokens.md }]}>
-            <Text style={styles.splitTitle}>Configure Split</Text>
-            <Text style={styles.splitSubtitle}>Adjust how the expense is divided</Text>
+       <Modal transparent visible={splitConfigVisible} animationType="none" onRequestClose={() => setSplitConfigVisible(false)}>
+         <Animated.View style={[dynamicStyles.splitOverlay, { opacity: modalOpacityAnim }]}>
+            <Animated.View
+              style={[
+                dynamicStyles.splitPanel,
+                {
+                  paddingTop: insets.top + spacingTokens.lg,
+                  paddingBottom: insets.bottom + spacingTokens.md,
+                  paddingHorizontal: spacingTokens.lg,
+                  maxWidth,
+                  alignSelf: 'center',
+                  width: '100%',
+                  transform: [{ scale: modalScaleAnim }],
+                },
+              ]}
+            >
+             <View style={dynamicStyles.splitHeader}>
+               <Pressable
+                 onPress={() => setSplitConfigVisible(false)}
+                 style={({ pressed }) => [
+                   dynamicStyles.splitCloseButton,
+                   pressed && dynamicStyles.splitCloseButtonPressed,
+                 ]}
+               >
+                 <Ionicons name="close" size={24} color={colors.textPrimary} />
+               </Pressable>
+             </View>
 
-            <View style={styles.totalCard}>
-              <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>{formatAmountWithCurrency((Number.parseFloat(amount || '0') || 0))}</Text>
-            </View>
+             <Text style={dynamicStyles.splitTitle}>Configure Split</Text>
+             <Text style={dynamicStyles.splitSubtitle}>Adjust how the expense is divided</Text>
 
-            <Text style={styles.splitSectionTitle}>Split Method</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.methodScroll} contentContainerStyle={styles.methodRow}>
-              {(['exact', 'percent'] as const).map((method) => (
-                <Pressable
-                  key={method}
-                  style={[styles.methodChip, configMethod === method ? styles.methodChipActive : null]}
-                  onPress={() => setConfigMethod(method)}
-                >
-                  <Text style={[styles.methodChipText, configMethod === method ? styles.methodChipTextActive : null]}>
-                    {method === 'exact' ? 'Exact' : 'Percent'}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+             <View style={dynamicStyles.totalCard}>
+               <View style={dynamicStyles.totalCardContent}>
+                 <Text style={dynamicStyles.totalLabel}>Total Amount</Text>
+                 <Text style={dynamicStyles.totalValue}>{formatAmountWithCurrency((Number.parseFloat(amount || '0') || 0))}</Text>
+               </View>
+               <View style={dynamicStyles.totalCardAccent} />
+             </View>
 
-            <View style={styles.participantHeader}>
-              <Text style={styles.splitSectionTitle}>Participants ({participants.length})</Text>
-              <Pressable
-                onPress={() =>
-                  setConfigParticipantIds(
-                    configParticipantIds.length === participants.length ? [] : participants.map((participant) => participant.participantId),
-                  )
-                }
-              >
-                <Text style={styles.selectAllText}>Select All</Text>
-              </Pressable>
-            </View>
+             <Text style={dynamicStyles.splitSectionTitle}>Split Method</Text>
+             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={dynamicStyles.methodScroll} contentContainerStyle={dynamicStyles.methodRow}>
+               {(['exact', 'percent'] as const).map((method) => (
+                 <ChoiceChip
+                   key={method}
+                   active={configMethod === method}
+                   onPress={() => setConfigMethod(method)}
+                   label={method === 'exact' ? 'Exact Amount' : 'Percentage'}
+                 />
+               ))}
+             </ScrollView>
 
-            <ScrollView style={styles.participantList} contentContainerStyle={styles.participantListContent}>
-              {participants.map((participant) => {
-                const selected = configParticipantIds.includes(participant.participantId);
-                const sharePercent =
-                  configMethod === 'exact'
-                      ? Number.parseFloat(amount || '0') > 0
-                        ? (Number.parseFloat(configExactValues[participant.participantId] || '0') / Number.parseFloat(amount || '1')) * 100
-                        : 0
-                      : Number.parseFloat(configPercentValues[participant.participantId] || '0');
-                const equalAmount = configParticipantIds.length > 0 ? (Number.parseFloat(amount || '0') / configParticipantIds.length).toFixed(2) : '0.00';
-                return (
-                  <View key={participant.participantId} style={[styles.participantCard, selected ? styles.participantCardActive : null]}>
-                    <Pressable
-                      style={styles.checkbox}
-                      accessibilityRole="button"
-                      onPress={() =>
-                        setConfigParticipantIds((prev) =>
-                          prev.includes(participant.participantId)
-                            ? prev.filter((id) => id !== participant.participantId)
-                            : [...prev, participant.participantId],
-                        )
-                      }
-                    >
-                      <Ionicons name={selected ? 'checkbox' : 'square-outline'} size={20} color={selected ? colorTokens.inverse : colorTokens.textMuted} />
-                    </Pressable>
-                    <View style={[styles.avatar, styles.avatarTiny]}>
-                      <Text style={styles.avatarText}>{getDefaultParticipantIcon(participant.displayName)}</Text>
-                    </View>
-                    <View style={styles.participantBody}>
-                      <Text style={styles.participantName}>{participant.displayName}</Text>
-                      {configMethod === 'exact' ? (
-                        <TextInput
-                          editable={selected}
-                          style={[styles.participantInput, selected ? null : styles.participantInputDisabled]}
-                          value={configExactValues[participant.participantId] ?? equalAmount}
-                          onChangeText={(value) => {
-                            setConfigExactValues((prev) => ({ ...prev, [participant.participantId]: value }));
-                          }}
-                          keyboardType="decimal-pad"
-                        />
-                      ) : (
-                        <View
-                          style={[styles.sliderTrack, selected ? null : styles.sliderTrackDisabled]}
-                          onLayout={(event) => {
-                            const width = event.nativeEvent.layout.width;
-                            sliderWidthByParticipantIdRef.current[participant.participantId] = width;
-                          }}
-                          onStartShouldSetResponder={() => selected}
-                          onMoveShouldSetResponder={() => selected}
-                          onResponderGrant={(event) => updatePercentFromGesture(participant.participantId, event)}
-                          onResponderMove={(event) => updatePercentFromGesture(participant.participantId, event)}
-                        >
-                          <View
-                            style={[
-                              styles.sliderFill,
-                              {
-                                width: `${Math.max(0, Math.min(100, Number.parseFloat(configPercentValues[participant.participantId] || '0')))}%`,
-                              },
-                            ]}
-                          />
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.shareBlock}>
-                      <Text style={styles.shareLabel}>Share</Text>
-                      <Text style={styles.shareValue}>{Number.isFinite(sharePercent) ? `${sharePercent.toFixed(0)}%` : '0%'}</Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
+             <View style={dynamicStyles.participantHeader}>
+               <Text style={dynamicStyles.splitSectionTitle}>Participants ({participants.length})</Text>
+               <Pressable
+                 onPress={() =>
+                   setConfigParticipantIds(
+                     configParticipantIds.length === participants.length ? [] : participants.map((participant) => participant.participantId),
+                   )
+                 }
+                 style={({ pressed }) => pressed && dynamicStyles.selectAllPressed}
+               >
+                 <Text style={dynamicStyles.selectAllText}>Select All</Text>
+               </Pressable>
+             </View>
 
-            <View style={styles.balanceCard}>
-              <View style={styles.balanceCheck}><Ionicons name="checkmark" size={14} color={colorTokens.card} /></View>
-              <View>
-                <Text style={styles.balanceTitle}>Split is {Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? 'balanced' : 'not balanced'}</Text>
-                <Text style={styles.balanceMeta}>
-                  Total assigned: {formatAmountWithCurrency(calculateAssignedAmount())} / {formatAmountWithCurrency((Number.parseFloat(amount || '0') || 0))}
-                </Text>
-              </View>
-            </View>
+             <ScrollView style={dynamicStyles.participantList} contentContainerStyle={dynamicStyles.participantListContent}>
+               {participants.map((participant, index) => {
+                 const selected = configParticipantIds.includes(participant.participantId);
+                 const sharePercent =
+                   configMethod === 'exact'
+                       ? Number.parseFloat(amount || '0') > 0
+                         ? (Number.parseFloat(configExactValues[participant.participantId] || '0') / Number.parseFloat(amount || '1')) * 100
+                         : 0
+                       : Number.parseFloat(configPercentValues[participant.participantId] || '0');
+                 const equalAmount = configParticipantIds.length > 0 ? (Number.parseFloat(amount || '0') / configParticipantIds.length).toFixed(2) : '0.00';
 
-            <Pressable style={styles.primaryButton} onPress={confirmSplitConfig}>
-              <Text style={styles.primaryButtonText}>Confirm Split</Text>
-            </Pressable>
-            <Pressable style={styles.cancelButton} onPress={() => setSplitConfigVisible(false)}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-}
+                 if (!participantCardAnimsRef.current[participant.participantId]) {
+                   participantCardAnimsRef.current[participant.participantId] = new Animated.Value(0);
+                 }
+                 const cardAnim = participantCardAnimsRef.current[participant.participantId];
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colorTokens.card,
-  },
-  backButton: {
-    width: 40,
-    minHeight: 40,
-    borderWidth: 1,
-    borderColor: '#D9D9D9',
-    borderRadius: radiusTokens.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colorTokens.card,
-  },
-  backButtonText: {
-    color: colorTokens.textPrimary,
-    fontSize: 20,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
-  title: {
-    ...typographyTokens.heading,
-  },
-  subtitle: {
-    ...typographyTokens.label,
-    color: colorTokens.textPrimary,
-  },
-  content: {
-    paddingHorizontal: spacingTokens.lg,
-    gap: spacingTokens.md,
-  },
-  tripLabel: {
-    ...typographyTokens.label,
-    color: colorTokens.textMuted,
-    fontSize: 22 / 2,
-    marginBottom: spacingTokens.xs,
-  },
-  sectionLabel: {
-    color: '#1F1F20',
-    fontSize: 24 / 2,
-    fontWeight: '500',
-  },
-  inputLike: {
-    borderWidth: 1,
-    borderColor: '#D6D7DA',
-    borderRadius: radiusTokens.md,
-    paddingHorizontal: spacingTokens.md,
-    paddingVertical: spacingTokens.md,
-    minHeight: touchTarget.minimum,
-    backgroundColor: colorTokens.card,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacingTokens.sm,
-  },
-  halfField: {
-    flex: 1,
-    gap: spacingTokens.sm,
-  },
-  selectLike: {
-    borderWidth: 1,
-    borderColor: '#D6D7DA',
-    borderRadius: radiusTokens.md,
-    minHeight: touchTarget.minimum,
-    backgroundColor: colorTokens.card,
-    paddingHorizontal: spacingTokens.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectValue: {
-    color: colorTokens.textPrimary,
-    fontSize: 22 / 2,
-  },
-  selectorRow: {
-    borderWidth: 1,
-    borderColor: '#D6D7DA',
-    borderRadius: radiusTokens.md,
-    backgroundColor: colorTokens.card,
-    minHeight: 58,
-    paddingHorizontal: spacingTokens.md,
-    paddingVertical: spacingTokens.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectorPrimary: {
-    ...typographyTokens.body,
-    fontSize: 27 / 2,
-  },
-  selectorSecondary: {
-    ...typographyTokens.label,
-    color: colorTokens.textMuted,
-    fontSize: 20 / 2,
-  },
-  trailingIcon: {
-    marginLeft: 'auto',
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#E5E5E7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacingTokens.sm,
-    borderWidth: 1,
-    borderColor: '#D0D1D4',
-  },
-  avatarTiny: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    marginRight: 0,
-  },
-  avatarShift: {
-    marginLeft: -8,
-  },
-  avatarText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colorTokens.textPrimary,
-  },
-  avatarStack: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: spacingTokens.sm,
-  },
-  plusBadge: {
-    marginLeft: 6,
-    borderWidth: 1,
-    borderColor: '#D6D7DA',
-    borderRadius: radiusTokens.pill,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: colorTokens.card,
-  },
-  plusBadgeText: {
-    fontSize: 10,
-    color: colorTokens.textMuted,
-  },
-  primaryButton: {
-    marginTop: spacingTokens.md,
-    backgroundColor: colorTokens.inverse,
-    borderRadius: radiusTokens.md,
-    minHeight: touchTarget.minimum,
-    paddingVertical: spacingTokens.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: {
-    color: colorTokens.card,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(61, 60, 79, 0.3)',
-  },
-  modalBackdrop: {
-    flex: 1,
-  },
-  modalCard: {
-    backgroundColor: colorTokens.card,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    paddingHorizontal: spacingTokens.lg,
-    paddingTop: spacingTokens.md,
-    gap: spacingTokens.sm,
-    maxHeight: '75%',
-  },
-  modalTitle: {
-    ...typographyTokens.body,
-    fontWeight: '700',
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#D6D7DA',
-    borderRadius: radiusTokens.md,
-    minHeight: touchTarget.minimum,
-    paddingHorizontal: spacingTokens.md,
-    backgroundColor: colorTokens.card,
-  },
-  modalList: {
-    height: 320,
-    flexShrink: 1,
-  },
-  modalListContent: {
-    paddingBottom: spacingTokens.sm,
-  },
-  modalRow: {
-    minHeight: touchTarget.minimum,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ECECEF',
-    paddingVertical: spacingTokens.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalRowTitle: {
-    ...typographyTokens.body,
-    fontSize: 15,
-  },
-  modalRowSubtitle: {
-    ...typographyTokens.label,
-    flexShrink: 1,
-    marginLeft: spacingTokens.sm,
-  },
-  doneButton: {
-    backgroundColor: colorTokens.inverse,
-    borderRadius: radiusTokens.md,
-    minHeight: touchTarget.minimum,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneButtonText: {
-    color: colorTokens.card,
-    fontWeight: '600',
-  },
-  splitOverlay: {
-    flex: 1,
-    backgroundColor: colorTokens.appBackground,
-  },
-  splitPanel: {
-    flex: 1,
-    paddingHorizontal: spacingTokens.lg,
-    gap: spacingTokens.xs,
-  },
-  splitTitle: {
-    ...typographyTokens.heading,
-    fontSize: 32 / 2,
-  },
-  splitSubtitle: {
-    ...typographyTokens.body,
-    color: colorTokens.textMuted,
-    marginBottom: spacingTokens.xs,
-  },
-  totalCard: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.md,
-    backgroundColor: colorTokens.card,
-    paddingHorizontal: spacingTokens.md,
-    paddingVertical: spacingTokens.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  totalLabel: {
-    ...typographyTokens.body,
-    color: colorTokens.textMuted,
-  },
-  totalValue: {
-    ...typographyTokens.heading,
-  },
-  splitSectionTitle: {
-    ...typographyTokens.label,
-    color: colorTokens.textPrimary,
-    marginTop: spacingTokens.xs,
-  },
-  methodRow: {
-    gap: spacingTokens.xs,
-    paddingVertical: 2,
-    alignItems: 'center',
-  },
-  methodScroll: {
-    maxHeight: 44,
-  },
-  methodChip: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.sm,
-    backgroundColor: colorTokens.card,
-    paddingHorizontal: spacingTokens.md,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-  },
-  methodChipActive: {
-    backgroundColor: colorTokens.inverse,
-    borderColor: colorTokens.inverse,
-  },
-  methodChipText: {
-    color: colorTokens.textPrimary,
-    fontWeight: '500',
-  },
-  methodChipTextActive: {
-    color: colorTokens.card,
-  },
-  participantHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectAllText: {
-    ...typographyTokens.label,
-    textDecorationLine: 'underline',
-  },
-  participantList: {
-    flex: 1,
-  },
-  participantListContent: {
-    gap: spacingTokens.sm,
-  },
-  participantCard: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.md,
-    backgroundColor: colorTokens.card,
-    minHeight: 78,
-    paddingHorizontal: spacingTokens.sm,
-    paddingVertical: spacingTokens.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacingTokens.sm,
-  },
-  participantCardActive: {
-    borderColor: colorTokens.inverse,
-  },
-  checkbox: {
-    width: 24,
-    alignItems: 'center',
-  },
-  participantBody: {
-    flex: 1,
-    gap: 4,
-  },
-  participantName: {
-    ...typographyTokens.body,
-    fontSize: 15,
-  },
-  participantInput: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.sm,
-    backgroundColor: colorTokens.card,
-    paddingHorizontal: spacingTokens.sm,
-    minHeight: 34,
-    maxWidth: 84,
-  },
-  participantInputDisabled: {
-    opacity: 0.7,
-  },
-  shareBlock: {
-    alignItems: 'flex-end',
-  },
-  shareLabel: {
-    ...typographyTokens.label,
-    fontSize: 10,
-  },
-  shareValue: {
-    ...typographyTokens.body,
-    fontWeight: '600',
-  },
-  sliderTrack: {
-    marginTop: 4,
-    height: 14,
-    borderRadius: 999,
-    backgroundColor: '#E6E6E7',
-    overflow: 'hidden',
-  },
-  sliderTrackDisabled: {
-    opacity: 0.5,
-  },
-  sliderFill: {
-    height: '100%',
-    backgroundColor: colorTokens.inverse,
-  },
-  balanceCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colorTokens.inverse,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  balanceTitle: {
-    ...typographyTokens.body,
-    fontWeight: '600',
-  },
-  balanceMeta: {
-    ...typographyTokens.label,
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.md,
-    minHeight: touchTarget.minimum,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colorTokens.card,
-  },
-  cancelButtonText: {
-    color: colorTokens.textPrimary,
-    fontWeight: '500',
-  },
-});
+                 return (
+                   <Animated.View
+                     key={participant.participantId}
+                     style={[
+                       dynamicStyles.participantCard,
+                       selected ? dynamicStyles.participantCardActive : null,
+                       {
+                         opacity: cardAnim,
+                         transform: [
+                           {
+                             translateX: cardAnim.interpolate({
+                               inputRange: [0, 1],
+                               outputRange: [40, 0],
+                             }),
+                           },
+                         ],
+                       },
+                     ]}
+                   >
+                     <Pressable
+                       style={({ pressed }) => [
+                         dynamicStyles.checkbox,
+                         pressed && dynamicStyles.checkboxPressed,
+                       ]}
+                       accessibilityRole="button"
+                       onPress={() =>
+                         setConfigParticipantIds((prev) =>
+                           prev.includes(participant.participantId)
+                             ? prev.filter((id) => id !== participant.participantId)
+                             : [...prev, participant.participantId],
+                         )
+                       }
+                     >
+                       <Ionicons
+                         name={selected ? 'checkbox' : 'square-outline'}
+                         size={20}
+                         color={selected ? colors.inverse : colors.textMuted}
+                       />
+                     </Pressable>
+                     <ParticipantAvatar name={participant.displayName} size="sm" />
+                     <View style={dynamicStyles.participantBody}>
+                       <Text style={dynamicStyles.participantName}>{participant.displayName}</Text>
+                       {configMethod === 'exact' ? (
+                         <TextInput
+                           editable={selected}
+                           style={[dynamicStyles.participantInput, selected ? null : dynamicStyles.participantInputDisabled]}
+                           value={configExactValues[participant.participantId] ?? equalAmount}
+                           onChangeText={(value) => {
+                             setConfigExactValues((prev) => ({ ...prev, [participant.participantId]: value }));
+                           }}
+                           keyboardType="decimal-pad"
+                           placeholderTextColor={colors.textMuted}
+                         />
+                       ) : (
+                         <View
+                           style={[dynamicStyles.sliderTrack, selected ? null : dynamicStyles.sliderTrackDisabled]}
+                           onLayout={(event) => {
+                             const width = event.nativeEvent.layout.width;
+                             sliderWidthByParticipantIdRef.current[participant.participantId] = width;
+                           }}
+                           onStartShouldSetResponder={() => selected}
+                           onMoveShouldSetResponder={() => selected}
+                           onResponderGrant={(event) => updatePercentFromGesture(participant.participantId, event)}
+                           onResponderMove={(event) => updatePercentFromGesture(participant.participantId, event)}
+                         >
+                           <Animated.View
+                             style={[
+                               dynamicStyles.sliderFill,
+                               {
+                                 width: `${Math.max(0, Math.min(100, Number.parseFloat(configPercentValues[participant.participantId] || '0')))}%`,
+                               },
+                             ]}
+                           />
+                         </View>
+                       )}
+                     </View>
+                     <View style={dynamicStyles.shareBlock}>
+                       <Text style={dynamicStyles.shareLabel}>Share</Text>
+                       <Text style={dynamicStyles.shareValue}>{Number.isFinite(sharePercent) ? `${sharePercent.toFixed(0)}%` : '0%'}</Text>
+                     </View>
+                   </Animated.View>
+                 );
+               })}
+             </ScrollView>
+
+             <View style={[dynamicStyles.balanceCard, Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? dynamicStyles.balanceCardSuccess : dynamicStyles.balanceCardWarning]}>
+               <View style={[dynamicStyles.balanceCheck, Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? dynamicStyles.balanceCheckSuccess : dynamicStyles.balanceCheckWarning]}>
+                 <Ionicons
+                   name={Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? 'checkmark' : 'alert-circle'}
+                   size={14}
+                   color={colors.card}
+                 />
+               </View>
+               <View>
+                 <Text style={dynamicStyles.balanceTitle}>
+                   Split is {Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? 'balanced' : 'not balanced'}
+                 </Text>
+                 <Text style={dynamicStyles.balanceMeta}>
+                   Total assigned: {formatAmountWithCurrency(calculateAssignedAmount())} / {formatAmountWithCurrency((Number.parseFloat(amount || '0') || 0))}
+                 </Text>
+               </View>
+             </View>
+
+             <Button fullWidth onPress={confirmSplitConfig}>
+               Confirm Split
+             </Button>
+             <Button variant="secondary" fullWidth onPress={() => setSplitConfigVisible(false)}>
+               Cancel
+             </Button>
+           </Animated.View>
+         </Animated.View>
+       </Modal>
+     </View>
+   );
+ }
+
+const styles = StyleSheet.create({});

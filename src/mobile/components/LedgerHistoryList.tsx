@@ -1,16 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { LedgerHistoryModel } from '../controllers/ledgerHistoryController';
-import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
-
-const PARTICIPANT_ICON_POOL = ['😎', '🦊', '🐼', '🐯', '🦉', '🐙', '🐸', '🐧', '🐨', '🦁', '🐬', '🦄'] as const;
-
-function hashValue(value: string): number {
-  let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
-  }
-  return hash;
-}
+import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
+import { textStyles } from '../theme/styles';
+import { useTheme } from '../theme/useTheme';
+import { ParticipantAvatar } from './ParticipantAvatar';
 
 function iconForTitle(title: string): string {
   const normalized = title.toLowerCase();
@@ -26,49 +20,110 @@ function iconForTitle(title: string): string {
   return '🧾';
 }
 
-function participantsPreview(seed: string, count: number): string[] {
-  const safeCount = Math.max(0, count);
-  const visible = Math.min(3, safeCount);
-  const base = hashValue(seed.trim().toLowerCase());
-  return Array.from({ length: visible }, (_, index) => PARTICIPANT_ICON_POOL[(base + index) % PARTICIPANT_ICON_POOL.length] ?? '😎');
-}
-
 export function LedgerHistoryList(props: {
-  model: LedgerHistoryModel;
-  highlightedExpenseId?: string | null;
-  onPressEntry: (expenseId: string) => void;
-  onLongPressEntry: (expenseId: string) => void;
-}): JSX.Element {
+   model: LedgerHistoryModel;
+   highlightedExpenseId?: string | null;
+   onPressEntry: (expenseId: string) => void;
+   onLongPressEntry: (expenseId: string) => void;
+ }): JSX.Element {
+   const { colors } = useTheme();
+   const { width } = useWindowDimensions();
+   const isTablet = width >= 840;
+
+   const dynamicStyles = useMemo(() => ({
+     root: { gap: spacingTokens.md },
+     card: {
+       borderWidth: 1,
+       borderColor: colors.border,
+       borderRadius: radiusTokens.md,
+       padding: spacingTokens.md,
+       backgroundColor: colors.card,
+       gap: spacingTokens.md,
+       minHeight: isTablet ? 100 : 'auto',
+       justifyContent: isTablet ? 'space-between' : 'flex-start',
+     },
+     highlightedCard: {
+       borderColor: colors.textPrimary,
+       borderWidth: 2,
+     },
+     topRow: {
+       flexDirection: 'row',
+       gap: spacingTokens.md,
+     },
+     iconTile: {
+       width: 56,
+       height: 56,
+       borderRadius: radiusTokens.sm,
+       backgroundColor: colors.subtleSurface,
+       alignItems: 'center',
+       justifyContent: 'center',
+     },
+     iconText: { fontSize: 28 },
+     mainColumn: { flex: 1, gap: spacingTokens.sm },
+     title: { fontWeight: '600', color: colors.textPrimary, fontSize: 16 },
+     amount: { color: colors.inverse, fontWeight: '700', fontSize: 18 },
+     meta: { color: colors.textMuted },
+     payerRow: {
+       flexDirection: 'row',
+       alignItems: 'center',
+       gap: spacingTokens.xs,
+     },
+     payerName: {
+       color: colors.textPrimary,
+       fontWeight: '600',
+     },
+     divider: { height: 1, backgroundColor: colors.subtleBorder, marginVertical: spacingTokens.sm },
+     bottomRow: {
+       flexDirection: 'row',
+       justifyContent: 'space-between',
+       alignItems: 'center',
+       gap: spacingTokens.md,
+       minHeight: touchTarget.minimum,
+     },
+     participantsRow: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+     avatarShift: { marginLeft: -8 },
+     participantText: { marginLeft: 10, color: colors.textMuted, fontSize: 14 },
+     time: { color: colors.mutedSubtleText, fontSize: 13, minWidth: 60, textAlign: 'right' },
+   }), [colors, isTablet]);
+
   return (
-    <View style={styles.root}>
+    <View style={dynamicStyles.root}>
       {props.model.entries.map((entry) => (
         <Pressable
           key={entry.expenseId}
           onPress={() => props.onPressEntry(entry.expenseId)}
           onLongPress={() => props.onLongPressEntry(entry.expenseId)}
-          style={[styles.card, props.highlightedExpenseId === entry.expenseId ? styles.highlightedCard : null]}
+          style={[dynamicStyles.card, props.highlightedExpenseId === entry.expenseId ? dynamicStyles.highlightedCard : null]}
         >
-          <View style={styles.topRow}>
-            <View style={styles.iconTile}>
-              <Text style={styles.iconText}>{iconForTitle(entry.title)}</Text>
+          <View style={dynamicStyles.topRow}>
+            <View style={dynamicStyles.iconTile}>
+              <Text style={dynamicStyles.iconText}>{iconForTitle(entry.title)}</Text>
             </View>
-            <View style={styles.mainColumn}>
-              <Text style={styles.title}>{entry.title}</Text>
-              <Text style={styles.amount}>{entry.amountLabel}</Text>
-              <Text style={styles.meta}>{entry.payerLabel}</Text>
+            <View style={dynamicStyles.mainColumn}>
+              <Text style={[textStyles.body, dynamicStyles.title]}>{entry.title}</Text>
+              <Text style={[textStyles.subheading, dynamicStyles.amount]}>{entry.amountLabel}</Text>
+              {entry.payerName ? (
+                <View style={dynamicStyles.payerRow}>
+                  <Text style={dynamicStyles.meta}>Paid by</Text>
+                  <ParticipantAvatar name={entry.payerName} size="sm" />
+                  <Text style={dynamicStyles.payerName}>{entry.payerName}</Text>
+                </View>
+              ) : (
+                <Text style={dynamicStyles.meta}>{entry.payerLabel}</Text>
+              )}
             </View>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.bottomRow}>
-            <View style={styles.participantsRow}>
-              {participantsPreview(entry.expenseId, entry.participantCount).map((icon, index) => (
-                <Text key={`${entry.expenseId}-icon-${index}`} style={styles.avatarEmoji}>
-                  {icon}
-                </Text>
+          <View style={dynamicStyles.divider} />
+          <View style={dynamicStyles.bottomRow}>
+            <View style={dynamicStyles.participantsRow}>
+              {entry.participantPreviewNames.map((name, index) => (
+                <View key={`${entry.expenseId}-icon-${index}`} style={index > 0 ? dynamicStyles.avatarShift : null}>
+                  <ParticipantAvatar name={name} size="sm" />
+                </View>
               ))}
-              <Text style={styles.participantText}>{entry.participantCountLabel}</Text>
+              <Text style={dynamicStyles.participantText}>{entry.participantCountLabel}</Text>
             </View>
-            <Text style={styles.time}>{entry.createdAtLabel}</Text>
+            <Text style={dynamicStyles.time}>{entry.createdAtLabel}</Text>
           </View>
         </Pressable>
       ))}
@@ -77,45 +132,6 @@ export function LedgerHistoryList(props: {
 }
 
 const styles = StyleSheet.create({
-  root: { gap: spacingTokens.sm },
-  card: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.md,
-    padding: spacingTokens.md,
-    backgroundColor: colorTokens.card,
-    gap: spacingTokens.sm,
-  },
-  highlightedCard: {
-    borderColor: colorTokens.textPrimary,
-    borderWidth: 2,
-  },
-  topRow: {
-    flexDirection: 'row',
-    gap: spacingTokens.md,
-  },
-  iconTile: {
-    width: 48,
-    height: 48,
-    borderRadius: radiusTokens.sm,
-    backgroundColor: colorTokens.subtleSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: { fontSize: 22 },
-  mainColumn: { flex: 1, gap: spacingTokens.xs },
-  title: { fontWeight: '500', color: colorTokens.textPrimary, fontSize: 28 / 2 },
-  amount: { color: colorTokens.inverse, fontSize: 36 / 2, fontWeight: '600' },
-  meta: { color: colorTokens.textMuted, fontSize: 15 },
-  divider: { height: 1, backgroundColor: colorTokens.subtleBorder },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacingTokens.sm,
-  },
-  participantsRow: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  avatarEmoji: { marginRight: -4, fontSize: 16 },
-  participantText: { marginLeft: 10, color: colorTokens.textMuted, fontSize: 14 },
-  time: { color: colorTokens.mutedSubtleText, fontSize: 13 },
+  // Spacing and layout
 });
+
