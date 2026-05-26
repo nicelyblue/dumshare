@@ -37,5 +37,21 @@ yarn-error.log*
 # OS / editor cruft
 .DS_Store
 Thumbs.db
-.github
 openspec
+
+# Keep internal assistant automation private
+.github/prompts/
+.github/skills/
+
+# Mobile release artifacts and signing material
+*.apk
+*.aab
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# Native local build files
+android/local.properties
+android/.cxx/
+ios/Pods/
