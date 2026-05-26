@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions, useMemo } from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colorTokens, spacingTokens } from '../theme/tokens';
 import { getResponsiveMaxWidth, layoutTokens } from '../theme/layout';
