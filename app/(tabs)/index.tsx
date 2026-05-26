@@ -12,6 +12,7 @@ import { getDefaultParticipantIcon } from '../../src/mobile/utils/participantIco
 import { getResponsiveMaxWidth } from '../../src/mobile/theme/layout';
 import { useTheme } from '../../src/mobile/theme/useTheme';
 import { EmptyStateBlock } from '../../src/mobile/components/AppScaffold';
+import { AppIcon } from '../../src/mobile/components/AppIcon';
 
 export default function HomeScreen(): JSX.Element {
    const router = useRouter();
@@ -294,96 +295,110 @@ export default function HomeScreen(): JSX.Element {
         }
       >
        <View style={dynamicStyles.shareTitleBlock}>
-         <View style={dynamicStyles.shareTitleRow}>
-           <Text style={dynamicStyles.shareTitle}>{model.shareTitle ?? 'No active share'}</Text>
-         </View>
-       </View>
+          <View style={dynamicStyles.shareTitleRow}>
+            <Text style={dynamicStyles.shareTitle}>{model.shareTitle ?? 'No active share'}</Text>
+          </View>
+        </View>
 
-       {error ? <Text style={dynamicStyles.helper}>{error}</Text> : null}
+        {error ? <Text style={dynamicStyles.helper}>{error}</Text> : null}
 
-       {model.participantRows.length === 0 ? (
-         <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
-       ) : (
-         <View style={dynamicStyles.section}>
-           <Text style={dynamicStyles.sectionLabel}>Current Status</Text>
-           <View style={dynamicStyles.stack}>
-             {model.participantRows.map((row) => (
-               <View key={`${row.participantName}-${row.netAmountLabel}`} style={dynamicStyles.balanceCard}>
-                 <View style={dynamicStyles.balanceNameColumn}>
-                   <View style={dynamicStyles.avatarDot}>
-                     <Text style={dynamicStyles.avatarIcon}>{getDefaultParticipantIcon(row.participantName)}</Text>
-                   </View>
-                   <View>
-                     <Text style={dynamicStyles.balanceName}>{row.participantName}</Text>
-                     <Text style={dynamicStyles.balanceStatus}>{rowStatus(row.statusLabel)}</Text>
-                   </View>
-                 </View>
-                 <View style={dynamicStyles.balanceAmountStack}>
-                   {row.balanceLabels.map((label) => (
-                     <Text key={`${row.participantName}-${label}`} style={dynamicStyles.balanceAmount}>
-                       {label}
-                     </Text>
-                   ))}
-                 </View>
-               </View>
-             ))}
-           </View>
-         </View>
-       )}
+        {!model.shareTitle ? (
+          <View style={{ alignItems: 'center', gap: spacingTokens.lg, marginVertical: spacingTokens.xl }}>
+            <AppIcon size={80} />
+            <View style={{ alignItems: 'center', gap: spacingTokens.sm }}>
+              <Text style={dynamicStyles.shareTitle}>Welcome to DumShare</Text>
+              <Text style={dynamicStyles.helper}>Open the menu to create your first share</Text>
+            </View>
+          </View>
+        ) : null}
 
-       <Pressable style={dynamicStyles.primaryButton} accessibilityRole="button" onPress={() => router.push('/(tabs)/add-expense')}>
-         <Text style={dynamicStyles.primaryButtonText}>+  Add New Expense</Text>
-       </Pressable>
+        {model.participantRows.length === 0 && model.shareTitle ? (
+          <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
+        ) : model.participantRows.length > 0 ? (
+          <View style={dynamicStyles.section}>
+            <Text style={dynamicStyles.sectionLabel}>Current Status</Text>
+            <View style={dynamicStyles.stack}>
+              {model.participantRows.map((row) => (
+                <View key={`${row.participantName}-${row.netAmountLabel}`} style={dynamicStyles.balanceCard}>
+                  <View style={dynamicStyles.balanceNameColumn}>
+                    <View style={dynamicStyles.avatarDot}>
+                      <Text style={dynamicStyles.avatarIcon}>{getDefaultParticipantIcon(row.participantName)}</Text>
+                    </View>
+                    <View>
+                      <Text style={dynamicStyles.balanceName}>{row.participantName}</Text>
+                      <Text style={dynamicStyles.balanceStatus}>{rowStatus(row.statusLabel)}</Text>
+                    </View>
+                  </View>
+                  <View style={dynamicStyles.balanceAmountStack}>
+                    {row.balanceLabels.map((label) => (
+                      <Text key={`${row.participantName}-${label}`} style={dynamicStyles.balanceAmount}>
+                        {label}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
-       {model.latestExpenseCard ? (
-         <View style={dynamicStyles.section}>
-           <Text style={dynamicStyles.sectionLabel}>Last Entered Expense</Text>
-           <View style={dynamicStyles.latestExpenseCard}>
-             <View style={dynamicStyles.latestTopRow}>
-               <View style={dynamicStyles.latestMainBlock}>
-                 <Text style={dynamicStyles.latestTitle}>{model.latestExpenseCard.title}</Text>
-                 <Text style={dynamicStyles.latestMetaLead}>{model.latestExpenseCard.payerLabel}</Text>
-               </View>
-               <Text style={dynamicStyles.latestAmount}>{model.latestExpenseCard.amountLabel}</Text>
-             </View>
-             <View style={dynamicStyles.latestBottomRow}>
-               <Text style={dynamicStyles.latestMeta}>◷ {model.latestExpenseCard.timestampLabel}</Text>
-               <Pressable
-                 accessibilityRole="button"
-                 style={dynamicStyles.viewDetailsButton}
-                 onPress={() =>
-                   router.push({
-                     pathname: '/(tabs)/ledger',
-                     params: { expenseId: model.latestExpenseCard?.expenseId },
-                   })
-                 }
-               >
-                 <Text style={dynamicStyles.viewDetailsText}>View Details</Text>
-               </Pressable>
-             </View>
-           </View>
-         </View>
-       ) : null}
+        {model.shareTitle ? (
+          <>
+            <Pressable style={dynamicStyles.primaryButton} accessibilityRole="button" onPress={() => router.push('/(tabs)/add-expense')}>
+              <Text style={dynamicStyles.primaryButtonText}>+  Add New Expense</Text>
+            </Pressable>
 
-       <View style={dynamicStyles.statsRow}>
-         <View style={dynamicStyles.statCardHalf}>
-           <Text style={dynamicStyles.statValue}>{model.expenseCount}</Text>
-           <Text style={dynamicStyles.statLabel}>Total Expenses</Text>
-         </View>
-         {model.currencyTotals.length > 0
-           ? model.currencyTotals.map((currencyTotal) => (
-               <View key={currencyTotal.currency || 'base'} style={[dynamicStyles.statCardHalf, { width: statCardWidth }]}>
-                 <Text style={dynamicStyles.statValue}>{currencyTotal.totalAmountLabel}</Text>
-                 <Text style={dynamicStyles.statLabel}>{currencyTotal.currency ? `Total ${currencyTotal.currency}` : 'Total Amount'}</Text>
-               </View>
-             ))
-           : (
-               <View style={[dynamicStyles.statCardHalf, { width: statCardWidth }]}>
-                 <Text style={dynamicStyles.statValue}>{model.totalAmountLabel}</Text>
-                 <Text style={dynamicStyles.statLabel}>Total Amount</Text>
-               </View>
-             )}
-       </View>
+            {model.latestExpenseCard ? (
+              <View style={dynamicStyles.section}>
+                <Text style={dynamicStyles.sectionLabel}>Last Entered Expense</Text>
+                <View style={dynamicStyles.latestExpenseCard}>
+                  <View style={dynamicStyles.latestTopRow}>
+                    <View style={dynamicStyles.latestMainBlock}>
+                      <Text style={dynamicStyles.latestTitle}>{model.latestExpenseCard.title}</Text>
+                      <Text style={dynamicStyles.latestMetaLead}>{model.latestExpenseCard.payerLabel}</Text>
+                    </View>
+                    <Text style={dynamicStyles.latestAmount}>{model.latestExpenseCard.amountLabel}</Text>
+                  </View>
+                  <View style={dynamicStyles.latestBottomRow}>
+                    <Text style={dynamicStyles.latestMeta}>◷ {model.latestExpenseCard.timestampLabel}</Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      style={dynamicStyles.viewDetailsButton}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/(tabs)/ledger',
+                          params: { expenseId: model.latestExpenseCard?.expenseId },
+                        })
+                      }
+                    >
+                      <Text style={dynamicStyles.viewDetailsText}>View Details</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
+            <View style={dynamicStyles.statsRow}>
+              <View style={dynamicStyles.statCardHalf}>
+                <Text style={dynamicStyles.statValue}>{model.expenseCount}</Text>
+                <Text style={dynamicStyles.statLabel}>Total Expenses</Text>
+              </View>
+              {model.currencyTotals.length > 0
+                ? model.currencyTotals.map((currencyTotal) => (
+                    <View key={currencyTotal.currency || 'base'} style={[dynamicStyles.statCardHalf, { width: statCardWidth }]}>
+                      <Text style={dynamicStyles.statValue}>{currencyTotal.totalAmountLabel}</Text>
+                      <Text style={dynamicStyles.statLabel}>{currencyTotal.currency ? `Total ${currencyTotal.currency}` : 'Total Amount'}</Text>
+                    </View>
+                  ))
+                : (
+                    <View style={[dynamicStyles.statCardHalf, { width: statCardWidth }]}>
+                      <Text style={dynamicStyles.statValue}>{model.totalAmountLabel}</Text>
+                      <Text style={dynamicStyles.statLabel}>Total Amount</Text>
+                    </View>
+                  )}
+            </View>
+          </>
+        ) : null}
      </ScrollView>
    );
  }

@@ -14,6 +14,7 @@ import {
 import { getActiveShareState, subscribeActiveShare } from '../state/activeShareStore';
 import { useTheme } from '../theme/useTheme';
 import { LongPressActionSheet, type ActionSheetOption } from './LongPressActionSheet';
+import { AppIcon } from './AppIcon';
 import { getDefaultParticipantIcon, getParticipantIconOptions } from '../utils/participantIcons';
 
 const appService = createLedgerAppService();
@@ -639,6 +640,10 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <View style={{ alignItems: 'center', marginBottom: 8 }}>
+          <AppIcon size={56} />
+        </View>
+
         <Text style={dynamicStyles.menuHeader}>Menu</Text>
 
         <View style={dynamicStyles.sectionHeaderRow}>
