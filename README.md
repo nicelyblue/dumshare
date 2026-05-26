@@ -1,6 +1,6 @@
-# Dumshare
+# dumshare
 
-Dumshare is a local-first expense sharing app for small groups. It helps you track shared costs, review balances, and generate settlement recommendations with a mobile-first flow.
+dumshare is a local-first expense sharing app for small groups. It helps you track shared costs, review balances, and generate settlement recommendations with a mobile-first flow.
 
 ## Features
 
