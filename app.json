@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "scheme": "dumshare",
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c295da90-7e04-4783-8b59-776759cbe237"
+      }
+    },
+    "owner": "somewhatjesus",
+    "android": {
+      "package": "com.dumshare.app"
+    }
+  }
+}
