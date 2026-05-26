@@ -139,6 +139,7 @@ export type LedgerAppService = {
       payers: Array<{ participantId: string; paidAmountMinor: number }>;
       participantCount: number;
       splitLabel: string;
+      splitParticipantIds: string[];
     }>;
   }>;
   loadLedgerExpenseDetails: (input: {
@@ -837,6 +838,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
             payers: expense.payers,
             participantCount: expense.split.participants.length,
             splitLabel: expense.splitLabel,
+            splitParticipantIds: expense.split.participants.map((participant) => participant.participantId),
           })),
       };
     },

@@ -12,6 +12,7 @@ import {
   type ThemePreference,
 } from '../state/preferencesStore';
 import { getActiveShareState, subscribeActiveShare } from '../state/activeShareStore';
+import { useTheme } from '../theme/useTheme';
 import { LongPressActionSheet, type ActionSheetOption } from './LongPressActionSheet';
 import { getDefaultParticipantIcon, getParticipantIconOptions } from '../utils/participantIcons';
 
@@ -135,6 +136,7 @@ function buildParticipantIconOptions(displayName: string): ActionSheetOption[] {
 export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [activeShareId, setActiveShareId] = useState<string | null>(getActiveShareState().activeShareId);
   const [theme, setTheme] = useState<ThemePreference>(getThemePreference());
   const [shares, setShares] = useState<
@@ -155,6 +157,261 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
   const [iconPickerParticipantId, setIconPickerParticipantId] = useState<string | null>(null);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [participantIconById, setParticipantIconById] = useState<Record<string, string>>({});
+
+  // Generate dynamic styles based on current theme colors
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          gap: 14,
+          paddingHorizontal: 16,
+          paddingBottom: 16,
+        },
+        drawerRoot: {
+          flex: 1,
+          position: 'relative',
+        },
+        closeIconButton: {
+          position: 'absolute',
+          right: 16,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+        },
+        closeIconText: {
+          color: colors.textPrimary,
+          fontSize: 16,
+          fontWeight: '700',
+          lineHeight: 18,
+        },
+        sectionTitle: {
+          fontSize: 20,
+          lineHeight: 26,
+          fontWeight: '700',
+          color: colors.textPrimary,
+          marginTop: 4,
+        },
+        sectionHeaderRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        },
+        sectionAddButton: {
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 4,
+        },
+        sectionAddButtonText: {
+          color: colors.textPrimary,
+          fontSize: 20,
+          lineHeight: 20,
+          fontWeight: '600',
+        },
+        menuHeader: {
+          fontSize: 30,
+          lineHeight: 34,
+          fontWeight: '700',
+          color: colors.textPrimary,
+          marginTop: 2,
+          marginBottom: 2,
+        },
+        sectionDivider: {
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          marginTop: 2,
+        },
+        actionButton: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          backgroundColor: colors.card,
+          minHeight: 54,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 16,
+        },
+        quickActionButton: {
+          height: 54,
+        },
+        list: {
+          gap: 8,
+        },
+        emptyStateBlock: {
+          gap: 8,
+        },
+        actionButtonPrimary: {
+          backgroundColor: colors.textPrimary,
+          borderColor: colors.textPrimary,
+        },
+        actionButtonDestructive: {
+          backgroundColor: colors.subtleSurface,
+          borderColor: colors.subtleSurface,
+        },
+        actionButtonText: {
+          color: colors.textPrimary,
+          fontSize: 15,
+          fontWeight: '600',
+          textAlign: 'center',
+        },
+        actionButtonTextPrimary: {
+          color: colors.inverse,
+          fontWeight: '700',
+        },
+        actionButtonTextDestructive: {
+          color: colors.destructive,
+          fontWeight: '700',
+        },
+        shareRow: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          backgroundColor: colors.card,
+        },
+        shareRowActive: {
+          borderColor: colors.textPrimary,
+          backgroundColor: colors.textPrimary,
+        },
+        shareTitle: {
+          color: colors.textPrimary,
+          fontWeight: '600',
+          fontSize: 15,
+        },
+        shareTitleOnDark: {
+          color: colors.inverse,
+        },
+        shareActiveLabel: {
+          color: colors.inverse,
+          fontWeight: '700',
+          fontSize: 11,
+          marginBottom: 4,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        },
+        shareMeta: {
+          color: colors.textMuted,
+          fontSize: 12,
+          marginTop: 2,
+        },
+        shareMetaOnDark: {
+          color: colors.border,
+          fontSize: 12,
+          marginTop: 2,
+        },
+        shareCountsRow: {
+          marginTop: 4,
+          flexDirection: 'row',
+          gap: 12,
+        },
+        participantRow: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 14,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          backgroundColor: colors.card,
+        },
+        participantRowOwner: {
+          backgroundColor: colors.subtleSurface,
+        },
+        participantHeaderRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 8,
+        },
+        participantIdentityRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+        },
+        participantAvatarBubble: {
+          width: 34,
+          height: 34,
+          borderRadius: 17,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.subtleSurface,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        participantAvatarText: {
+          fontSize: 18,
+        },
+        participantPressable: {
+          minHeight: 40,
+          justifyContent: 'center',
+        },
+        participantEditBlock: {
+          gap: 8,
+        },
+        participantInput: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          paddingHorizontal: 10,
+          paddingVertical: 8,
+          color: colors.textPrimary,
+          backgroundColor: colors.card,
+        },
+        participantActionRow: {
+          flexDirection: 'row',
+          gap: 8,
+        },
+        participantActionButton: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          backgroundColor: colors.card,
+        },
+        participantActionText: {
+          color: colors.textPrimary,
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        participantActionPrimary: {
+          backgroundColor: colors.textPrimary,
+          borderColor: colors.textPrimary,
+        },
+        participantActionPrimaryText: {
+          color: colors.inverse,
+          fontSize: 12,
+          fontWeight: '700',
+        },
+        quickActionTextBlock: {
+          flex: 1,
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          paddingVertical: 2,
+        },
+        quickActionTitle: {
+          color: colors.textPrimary,
+          fontSize: 15,
+          fontWeight: '600',
+        },
+        helper: {
+          marginTop: 4,
+          color: colors.textMuted,
+          fontSize: 12,
+        },
+      }),
+    [colors],
+  );
 
   const longPressOptions = useMemo(
     () => (selectedShareId ? getShareLongPressOptions(selectedShareId, activeShareId) : []),
@@ -358,11 +615,11 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
 
   return (
     <>
-      <View style={styles.drawerRoot}>
+      <View style={dynamicStyles.drawerRoot}>
         <Pressable
           onPress={onClose}
           style={[
-            styles.closeIconButton,
+            dynamicStyles.closeIconButton,
             {
               top: insets.top + 8,
             },
@@ -370,11 +627,11 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
           accessibilityRole="button"
           accessibilityLabel="Close menu"
         >
-          <Text style={styles.closeIconText}>X</Text>
+          <Text style={dynamicStyles.closeIconText}>X</Text>
         </Pressable>
       <ScrollView
         contentContainerStyle={[
-          styles.container,
+          dynamicStyles.container,
           {
             paddingTop: insets.top + 56,
             paddingBottom: insets.bottom + 16,
@@ -382,14 +639,14 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.menuHeader}>Menu</Text>
+        <Text style={dynamicStyles.menuHeader}>Menu</Text>
 
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle} numberOfLines={1}>
+        <View style={dynamicStyles.sectionHeaderRow}>
+          <Text style={dynamicStyles.sectionTitle} numberOfLines={1}>
             Your Shares
           </Text>
           <Pressable
-            style={styles.sectionAddButton}
+            style={dynamicStyles.sectionAddButton}
             accessibilityRole="button"
             accessibilityLabel="Add share"
             onPress={() => {
@@ -397,10 +654,10 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
               onClose?.();
             }}
           >
-            <Text style={styles.sectionAddButtonText}>+</Text>
+            <Text style={dynamicStyles.sectionAddButtonText}>+</Text>
           </Pressable>
         </View>
-        <View style={styles.list}>
+        <View style={dynamicStyles.list}>
         {activeShare ? (
           <Pressable
             key={activeShare.ledgerId}
@@ -408,14 +665,14 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
               void shareMenuController.switchActiveShare(activeShare.ledgerId);
             }}
             onLongPress={() => setSelectedShareId(activeShare.ledgerId)}
-            style={[styles.shareRow, styles.shareRowActive]}
+            style={[dynamicStyles.shareRow, dynamicStyles.shareRowActive]}
             accessibilityRole="button"
           >
-            <Text style={styles.shareActiveLabel}>Active</Text>
-            <Text style={[styles.shareTitle, styles.shareTitleOnDark]}>{activeShare.title}</Text>
-            <View style={styles.shareCountsRow}>
-              <Text style={styles.shareMetaOnDark}>👥 {activeShare.participantCount} people</Text>
-              <Text style={styles.shareMetaOnDark}>🧾 {activeShare.expenseCount} expenses</Text>
+            <Text style={dynamicStyles.shareActiveLabel}>Active</Text>
+            <Text style={[dynamicStyles.shareTitle, dynamicStyles.shareTitleOnDark]}>{activeShare.title}</Text>
+            <View style={dynamicStyles.shareCountsRow}>
+              <Text style={dynamicStyles.shareMetaOnDark}>👥 {activeShare.participantCount} people</Text>
+              <Text style={dynamicStyles.shareMetaOnDark}>🧾 {activeShare.expenseCount} expenses</Text>
             </View>
           </Pressable>
         ) : null}
@@ -428,41 +685,41 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
                 onClose?.();
               }}
               onLongPress={() => setSelectedShareId(share.ledgerId)}
-              style={[styles.shareRow, share.active ? styles.shareRowActive : null]}
+              style={[dynamicStyles.shareRow, share.active ? dynamicStyles.shareRowActive : null]}
               accessibilityRole="button"
             >
-              <Text style={styles.shareTitle}>{share.title}</Text>
-              <View style={styles.shareCountsRow}>
-                <Text style={styles.shareMeta}>👥 {share.participantCount} people</Text>
-                <Text style={styles.shareMeta}>🧾 {share.expenseCount} expenses</Text>
+              <Text style={dynamicStyles.shareTitle}>{share.title}</Text>
+              <View style={dynamicStyles.shareCountsRow}>
+                <Text style={dynamicStyles.shareMeta}>👥 {share.participantCount} people</Text>
+                <Text style={dynamicStyles.shareMeta}>🧾 {share.expenseCount} expenses</Text>
               </View>
             </Pressable>
           ))
         ) : !activeShare ? (
-          <View style={styles.emptyStateBlock}>
-            <Text style={styles.helper}>No shares yet.</Text>
+          <View style={dynamicStyles.emptyStateBlock}>
+            <Text style={dynamicStyles.helper}>No shares yet.</Text>
             <Pressable
-              style={styles.actionButton}
+              style={dynamicStyles.actionButton}
               accessibilityRole="button"
               onPress={() => {
                 router.push('/(setup)/create-share');
                 onClose?.();
               }}
             >
-              <Text style={styles.actionButtonText}>Create your first share</Text>
+              <Text style={dynamicStyles.actionButtonText}>Create your first share</Text>
             </Pressable>
           </View>
         ) : null}
         </View>
 
-        <View style={styles.sectionDivider} />
+        <View style={dynamicStyles.sectionDivider} />
 
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle} numberOfLines={1}>
+        <View style={dynamicStyles.sectionHeaderRow}>
+          <Text style={dynamicStyles.sectionTitle} numberOfLines={1}>
             Participants
           </Text>
           <Pressable
-            style={styles.sectionAddButton}
+            style={dynamicStyles.sectionAddButton}
             accessibilityRole="button"
             accessibilityLabel="Add participant"
             onPress={() => {
@@ -480,93 +737,93 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
               onClose?.();
             }}
           >
-            <Text style={styles.sectionAddButtonText}>+</Text>
+            <Text style={dynamicStyles.sectionAddButtonText}>+</Text>
           </Pressable>
         </View>
-        <View style={styles.list}>
+        <View style={dynamicStyles.list}>
         {participants.length > 0 ? (
           participants.map((participant) => (
             <View
               key={participant.participantId}
-              style={[styles.participantRow, participant.isOwner ? styles.participantRowOwner : null]}
+              style={[dynamicStyles.participantRow, participant.isOwner ? dynamicStyles.participantRowOwner : null]}
             >
               {editingParticipantId === participant.participantId ? (
-                <View style={styles.participantEditBlock}>
+                <View style={dynamicStyles.participantEditBlock}>
                   <TextInput
                     value={editingParticipantName}
                     onChangeText={setEditingParticipantName}
-                    style={styles.participantInput}
+                    style={dynamicStyles.participantInput}
                     autoFocus
                     accessibilityLabel="Participant name"
                   />
-                  <View style={styles.participantActionRow}>
+                  <View style={dynamicStyles.participantActionRow}>
                     <Pressable
                       onPress={() => {
                         void saveParticipantEdit(participant.participantId);
                       }}
-                      style={[styles.participantActionButton, styles.participantActionPrimary]}
+                      style={[dynamicStyles.participantActionButton, dynamicStyles.participantActionPrimary]}
                       accessibilityRole="button"
                     >
-                      <Text style={styles.participantActionPrimaryText}>Save</Text>
+                      <Text style={dynamicStyles.participantActionPrimaryText}>Save</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
                         setEditingParticipantId(null);
                         setEditingParticipantName('');
                       }}
-                      style={styles.participantActionButton}
+                      style={dynamicStyles.participantActionButton}
                       accessibilityRole="button"
                     >
-                      <Text style={styles.participantActionText}>Cancel</Text>
+                      <Text style={dynamicStyles.participantActionText}>Cancel</Text>
                     </Pressable>
                   </View>
                 </View>
               ) : (
                 <Pressable
                   onLongPress={() => onParticipantLongPress(participant.participantId)}
-                  style={styles.participantPressable}
+                  style={dynamicStyles.participantPressable}
                   accessibilityRole="button"
                 >
-                  <View style={styles.participantHeaderRow}>
-                    <View style={styles.participantIdentityRow}>
-                      <View style={styles.participantAvatarBubble}>
-                        <Text style={styles.participantAvatarText}>
+                  <View style={dynamicStyles.participantHeaderRow}>
+                    <View style={dynamicStyles.participantIdentityRow}>
+                      <View style={dynamicStyles.participantAvatarBubble}>
+                        <Text style={dynamicStyles.participantAvatarText}>
                           {participantIconById[participant.participantId] ?? getDefaultParticipantIcon(participant.displayName)}
                         </Text>
                       </View>
-                      <Text style={styles.shareTitle}>{participant.displayName}</Text>
+                      <Text style={dynamicStyles.shareTitle}>{participant.displayName}</Text>
                     </View>
-                    {participant.isOwner ? <Text style={styles.shareMeta}>Owner</Text> : null}
+                    {participant.isOwner ? <Text style={dynamicStyles.shareMeta}>Owner</Text> : null}
                   </View>
                 </Pressable>
               )}
             </View>
           ))
         ) : (
-          <Text style={styles.helper}>No participants yet.</Text>
+          <Text style={dynamicStyles.helper}>No participants yet.</Text>
         )}
         </View>
 
-        <View style={styles.sectionDivider} />
+        <View style={dynamicStyles.sectionDivider} />
 
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.list}>
+        <Text style={dynamicStyles.sectionTitle}>Quick Actions</Text>
+        <View style={dynamicStyles.list}>
           <Pressable
-            style={[styles.actionButton, styles.quickActionButton]}
+            style={[dynamicStyles.actionButton, dynamicStyles.quickActionButton]}
             accessibilityRole="button"
             onPress={() => setThemePickerOpen(true)}
           >
-            <View style={styles.quickActionTextBlock}>
-              <Text style={styles.quickActionTitle}>Pick Theme ({getThemeLabel(theme)})</Text>
+            <View style={dynamicStyles.quickActionTextBlock}>
+              <Text style={dynamicStyles.quickActionTitle}>Pick Theme ({getThemeLabel(theme)})</Text>
             </View>
           </Pressable>
 
           <Pressable
             onPress={onResetPress}
-            style={[styles.actionButton, styles.quickActionButton, styles.actionButtonDestructive]}
+            style={[dynamicStyles.actionButton, dynamicStyles.quickActionButton, dynamicStyles.actionButtonDestructive]}
             accessibilityRole="button"
           >
-            <Text style={[styles.actionButtonText, styles.actionButtonTextDestructive]}>Delete All Local Data</Text>
+            <Text style={[dynamicStyles.actionButtonText, dynamicStyles.actionButtonTextDestructive]}>Delete All Local Data</Text>
           </Pressable>
         </View>
 
@@ -616,252 +873,3 @@ export default function ShareDrawerContent({ onClose }: ShareDrawerContentProps)
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  drawerRoot: {
-    flex: 1,
-    position: 'relative',
-  },
-  closeIconButton: {
-    position: 'absolute',
-    right: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  closeIconText: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
-    color: 'black',
-    marginTop: 4,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  sectionAddButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  sectionAddButtonText: {
-    color: 'black',
-    fontSize: 20,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
-  menuHeader: {
-    fontSize: 30,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: 'black',
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  sectionDivider: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'lightgray',
-    marginTop: 2,
-  },
-  actionButton: {
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    borderRadius: 12,
-    backgroundColor: 'white',
-    minHeight: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  quickActionButton: {
-    height: 54,
-  },
-  list: {
-    gap: 8,
-  },
-  emptyStateBlock: {
-    gap: 8,
-  },
-  actionButtonPrimary: {
-    backgroundColor: 'black',
-    borderColor: 'black',
-  },
-  actionButtonDestructive: {
-    backgroundColor: 'snow',
-    borderColor: 'mistyrose',
-  },
-  actionButtonText: {
-    color: 'black',
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  actionButtonTextPrimary: {
-    color: 'white',
-    fontWeight: '700',
-  },
-  actionButtonTextDestructive: {
-    color: 'firebrick',
-    fontWeight: '700',
-  },
-  shareRow: {
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-  },
-  shareRowActive: {
-    borderColor: 'black',
-    backgroundColor: 'black',
-  },
-  shareTitle: {
-    color: 'black',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  shareTitleOnDark: {
-    color: 'white',
-  },
-  shareActiveLabel: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 11,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  shareMeta: {
-    color: 'slategray',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  shareMetaOnDark: {
-    color: 'lightgray',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  shareCountsRow: {
-    marginTop: 4,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  participantRow: {
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-  },
-  participantRowOwner: {
-    backgroundColor: 'whitesmoke',
-  },
-  participantHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-  },
-  participantIdentityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  participantAvatarBubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'whitesmoke',
-    borderWidth: 1,
-    borderColor: 'lightgray',
-  },
-  participantAvatarText: {
-    fontSize: 18,
-  },
-  participantPressable: {
-    minHeight: 40,
-    justifyContent: 'center',
-  },
-  participantEditBlock: {
-    gap: 8,
-  },
-  participantInput: {
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    color: 'black',
-    backgroundColor: 'white',
-  },
-  participantActionRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  participantActionButton: {
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: 'white',
-  },
-  participantActionText: {
-    color: 'black',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  participantActionPrimary: {
-    backgroundColor: 'black',
-    borderColor: 'black',
-  },
-  participantActionPrimaryText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  quickActionTextBlock: {
-    flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    paddingVertical: 2,
-  },
-  quickActionTitle: {
-    color: 'black',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  helper: {
-    marginTop: 4,
-    color: 'dimgrey',
-    fontSize: 12,
-  },
-});

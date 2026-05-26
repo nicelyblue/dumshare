@@ -3,10 +3,13 @@ import { createSetupController } from '../../src/mobile/controllers/setupControl
 import { getDefaultParticipantIcon } from '../../src/mobile/utils/participantIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../../src/mobile/theme/tokens';
-import { typographyTokens } from '../../src/mobile/theme/typography';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colorTokens, radiusTokens, spacingTokens } from '../../src/mobile/theme/tokens';
+import { FormTextInput } from '../../src/mobile/components/FormFields';
+import { Button } from '../../src/mobile/components/Button';
+import { BottomActionBar, ScreenScroll } from '../../src/mobile/components/AppScaffold';
+import { layoutTokens } from '../../src/mobile/theme/layout';
+import { ScreenHeader } from '../../src/mobile/components/ScreenHeader';
 
 const controller = createSetupController(createLedgerAppService());
 const appService = createLedgerAppService();
@@ -22,7 +25,6 @@ function removeParticipantDraftAt(index: number): string[] {
 
 export default function ParticipantsScreen(): JSX.Element {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ ledgerId?: string; ownerName?: string }>();
   const ownerName = (params.ownerName ?? '').trim();
   const selectedLedgerId = (params.ledgerId ?? '').trim();
@@ -104,30 +106,11 @@ export default function ParticipantsScreen(): JSX.Element {
 
   return (
     <View style={styles.root}>
-      <ScrollView
-        style={[
-          styles.screen,
-          {
-            paddingTop: insets.top + spacingTokens.lg,
-          },
-        ]}
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingBottom: insets.bottom + 112,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Pressable onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
-          <Text style={styles.backButtonText}>←</Text>
-        </Pressable>
-
-        <Text style={styles.title}>Add Participants</Text>
-        <Text style={styles.subtitle}>Add people to your share</Text>
+      <ScreenScroll topInsetOffset={spacingTokens.lg} bottomInsetOffset={layoutTokens.formBottomBarReserve}>
+        <ScreenHeader title="Add Participants" subtitle="Add people to your share" onBack={() => router.back()} />
         <View style={styles.addRow}>
           <View style={styles.inputWrap}>
-            <TextInput
+            <FormTextInput
               accessibilityLabel="Participant name"
               placeholder="Enter participant name"
               value={draftName}
@@ -135,9 +118,9 @@ export default function ParticipantsScreen(): JSX.Element {
               style={styles.input}
             />
           </View>
-          <Pressable onPress={onAddPress} style={styles.addButton} accessibilityRole="button">
-            <Text style={styles.addButtonText}>＋</Text>
-          </Pressable>
+          <Button onPress={onAddPress} style={styles.addButton}>
+            Add
+          </Button>
         </View>
 
       {existingParticipants.length > 0
@@ -194,20 +177,11 @@ export default function ParticipantsScreen(): JSX.Element {
 
         <Text style={styles.totalInline}>Total: {totalParticipants}</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-      </ScrollView>
+      </ScreenScroll>
 
-      <View
-        style={[
-          styles.bottomBar,
-          {
-            paddingBottom: insets.bottom + spacingTokens.md,
-          },
-        ]}
-      >
-        <Pressable onPress={onContinuePress} style={styles.button} accessibilityRole="button">
-          <Text style={styles.buttonText}>Done</Text>
-        </Pressable>
-      </View>
+      <BottomActionBar>
+        <Button fullWidth onPress={onContinuePress}>Done</Button>
+      </BottomActionBar>
     </View>
   );
 }
@@ -220,33 +194,9 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colorTokens.card,
-    paddingHorizontal: spacingTokens.lg,
   },
   content: {
     gap: spacingTokens.md,
-  },
-  backButton: {
-    width: 40,
-    minHeight: 40,
-    borderWidth: 1,
-    borderColor: '#D9D9D9',
-    borderRadius: radiusTokens.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colorTokens.card,
-  },
-  backButtonText: {
-    color: colorTokens.textPrimary,
-    fontSize: 20,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
-  title: {
-    ...typographyTokens.heading,
-  },
-  subtitle: {
-    ...typographyTokens.label,
-    color: colorTokens.textPrimary,
   },
   totalInline: {
     color: colorTokens.textMuted,
@@ -260,37 +210,16 @@ const styles = StyleSheet.create({
   },
   inputWrap: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#D9D9D9',
-    borderRadius: radiusTokens.md,
-    backgroundColor: colorTokens.card,
-    minHeight: touchTarget.minimum,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: spacingTokens.md,
-    paddingLeft: spacingTokens.md,
   },
   input: {
-    flex: 1,
-    paddingVertical: spacingTokens.md,
-    color: colorTokens.textPrimary,
+    marginBottom: 0,
   },
   addButton: {
-    minHeight: touchTarget.minimum,
-    width: touchTarget.minimum,
-    borderRadius: radiusTokens.md,
-    backgroundColor: colorTokens.inverse,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: colorTokens.card,
-    fontSize: 24,
-    lineHeight: 24,
+    minWidth: 84,
   },
   participantCard: {
     borderWidth: 1,
-    borderColor: '#D9D9D9',
+    borderColor: colorTokens.border,
     borderRadius: radiusTokens.lg,
     backgroundColor: colorTokens.card,
     padding: spacingTokens.md,
@@ -304,7 +233,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F2F2F2',
+    backgroundColor: colorTokens.subtleSurface,
   },
   avatarText: {
     fontSize: 20,
@@ -327,27 +256,6 @@ const styles = StyleSheet.create({
   removeIcon: {
     color: colorTokens.textMuted,
     fontSize: 20,
-  },
-  button: {
-    backgroundColor: colorTokens.inverse,
-    borderRadius: radiusTokens.md,
-    minHeight: touchTarget.minimum,
-    paddingVertical: spacingTokens.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: colorTokens.card,
-    fontWeight: '600',
-  },
-  bottomBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: spacingTokens.lg,
-    paddingTop: spacingTokens.sm,
-    backgroundColor: colorTokens.card,
   },
   error: {
     color: colorTokens.destructive,

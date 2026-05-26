@@ -1,7 +1,10 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LedgerExpenseDetailsModel } from '../controllers/ledgerHistoryController';
 import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
+import { getResponsiveMaxWidth } from '../theme/layout';
+import { ParticipantAvatar } from './ParticipantAvatar';
 
 type Props = {
   visible: boolean;
@@ -10,6 +13,10 @@ type Props = {
 };
 
 export function LedgerEntryDetailModal({ visible, model, onClose }: Props): JSX.Element {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const maxWidth = getResponsiveMaxWidth(width);
+
   if (!model) {
     return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} />;
   }
@@ -17,7 +24,7 @@ export function LedgerEntryDetailModal({ visible, model, onClose }: Props): JSX.
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + spacingTokens.xs, maxWidth }]}>
           <Pressable style={styles.backButton} onPress={onClose} hitSlop={touchTarget.md}>
             <Ionicons name="chevron-back" size={28} color={colorTokens.textPrimary} />
           </Pressable>
@@ -25,7 +32,10 @@ export function LedgerEntryDetailModal({ visible, model, onClose }: Props): JSX.
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + spacingTokens.xl, maxWidth, alignSelf: 'center', width: '100%' }]}
+        >
           <View style={styles.titleSection}>
             <Text style={styles.expenseTitle}>{model.title}</Text>
             <Text style={styles.amountValue}>{model.totalAmountLabel}</Text>
@@ -41,7 +51,10 @@ export function LedgerEntryDetailModal({ visible, model, onClose }: Props): JSX.
           <View style={styles.card}>
             <View style={styles.cardRow}>
               <Text style={styles.label}>Paid By</Text>
-              <Text style={styles.value}>{model.paidByLabel}</Text>
+              <View style={styles.participantValueRow}>
+                <ParticipantAvatar name={model.paidByLabel} size="sm" />
+                <Text style={styles.participantValueText}>{model.paidByLabel}</Text>
+              </View>
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.cardRow}>
@@ -70,9 +83,9 @@ export function LedgerEntryDetailModal({ visible, model, onClose }: Props): JSX.
                   key={participant.participantId}
                   style={[styles.participantRow, index < model.participants.length - 1 ? styles.participantRowBorder : null]}
                 >
-                  <View style={styles.participantLeft}>
+                  <View style={styles.participantNameRow}>
+                    <ParticipantAvatar name={participant.displayName} size="sm" />
                     <Text style={styles.participantName}>{participant.displayName}</Text>
-                    <Text style={styles.participantStatus}>{participant.statusLabel}</Text>
                   </View>
                   <Text style={styles.participantAmount}>{participant.amountLabel}</Text>
                 </View>
@@ -89,9 +102,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colorTokens.appBackground,
-    paddingTop: 12,
+    alignItems: 'center',
   },
   header: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -113,6 +127,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    width: '100%',
   },
   scrollContent: {
     paddingHorizontal: spacingTokens.lg,
@@ -164,6 +179,19 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacingTokens.md,
   },
+  participantValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacingTokens.sm,
+    marginLeft: spacingTokens.md,
+    justifyContent: 'flex-end',
+  },
+  participantValueText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colorTokens.textPrimary,
+    textAlign: 'right',
+  },
   participantsCard: {
     backgroundColor: colorTokens.card,
     borderRadius: radiusTokens.md,
@@ -185,18 +213,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colorTokens.subtleBorder,
   },
-  participantLeft: {
-    flex: 1,
-    gap: spacingTokens.xs,
-  },
   participantName: {
     fontSize: 16,
     fontWeight: '500',
     color: colorTokens.textPrimary,
   },
-  participantStatus: {
-    fontSize: 12,
-    color: colorTokens.textMuted,
+  participantNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacingTokens.sm,
+    flex: 1,
   },
   participantAmount: {
     fontSize: 14,

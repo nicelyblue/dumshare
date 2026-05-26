@@ -12,9 +12,11 @@ export type LedgerHistoryModel = {
     expenseId: string;
     title: string;
     amountLabel: string;
+    payerName: string | null;
     payerLabel: string;
     participantCount: number;
     participantCountLabel: string;
+    participantPreviewNames: string[];
     splitLabel: string;
     createdAtLabel: string;
   }>;
@@ -94,18 +96,26 @@ export async function loadLedgerHistoryModel(input: { selectedLedgerId?: string 
     summary: {
       currencyTotals,
     },
-    entries: history.entries.map((entry) => ({
-      expenseId: entry.expenseId,
-      title: entry.description,
-      amountLabel: `${(entry.totalAmountMinor / 100).toFixed(2)} ${entry.currency}`,
-      payerLabel: entry.payers[0]
-        ? `Paid by ${participantById.get(entry.payers[0].participantId) ?? entry.payers[0].participantId}`
-        : 'No payer',
-      participantCount: entry.participantCount,
-      participantCountLabel: `${entry.participantCount} participant${entry.participantCount === 1 ? '' : 's'}`,
-      splitLabel: entry.splitLabel,
-      createdAtLabel: formatDateTimeLabel(entry.createdAt),
-    })),
+    entries: history.entries.map((entry) => {
+      const payerName = entry.payers[0]
+        ? participantById.get(entry.payers[0].participantId) ?? entry.payers[0].participantId
+        : null;
+
+      return {
+        expenseId: entry.expenseId,
+        title: entry.description,
+        amountLabel: `${(entry.totalAmountMinor / 100).toFixed(2)} ${entry.currency}`,
+        payerName,
+        payerLabel: payerName ? `Paid by ${payerName}` : 'No payer',
+        participantCount: entry.participantCount,
+        participantCountLabel: `${entry.participantCount} participant${entry.participantCount === 1 ? '' : 's'}`,
+        participantPreviewNames: entry.splitParticipantIds
+          .map((participantId) => participantById.get(participantId) ?? participantId)
+          .slice(0, 3),
+        splitLabel: entry.splitLabel,
+        createdAtLabel: formatDateTimeLabel(entry.createdAt),
+      };
+    }),
   };
 }
 

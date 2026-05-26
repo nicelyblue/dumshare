@@ -1,8 +1,9 @@
 import { forwardRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import ViewShot from 'react-native-view-shot';
-import { colorTokens, spacingTokens, radiusTokens } from '../theme/tokens';
+import { colorTokens, spacingTokens } from '../theme/tokens';
 import { typographyTokens } from '../theme/typography';
+import { SettlementEmptyState, SettlementRow } from './SettlementBlocks';
 
 export type ShareableSettlementListModel = {
   currency: string;
@@ -24,16 +25,12 @@ export const ShareableSettlementList = forwardRef<ViewShot, { model: ShareableSe
           </View>
 
           {model.recommendations.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyHeading}>No transfers needed</Text>
-              <Text style={styles.emptyBody}>Everyone is currently balanced for the selected currency.</Text>
-            </View>
+            <SettlementEmptyState />
           ) : (
             <View style={styles.list}>
               {model.recommendations.map((entry, index) => (
-                <View key={`${entry.fromLabel}-${entry.toLabel}-${index}`} style={styles.row}>
-                  <Text style={styles.route}>{entry.fromLabel} → {entry.toLabel}</Text>
-                  <Text style={styles.amount}>{entry.amountLabel}</Text>
+                <View key={`${entry.fromLabel}-${entry.toLabel}-${index}`}>
+                  <SettlementRow fromLabel={entry.fromLabel} toLabel={entry.toLabel} amount={entry.amountLabel} />
                 </View>
               ))}
             </View>
@@ -69,38 +66,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacingTokens.sm,
-  },
-  row: {
-    padding: spacingTokens.md,
-    borderRadius: radiusTokens.md,
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    backgroundColor: colorTokens.card,
-    gap: 4,
-  },
-  route: {
-    fontSize: 15,
-    color: colorTokens.textPrimary,
-    fontWeight: '600',
-  },
-  amount: {
-    color: colorTokens.textMuted,
-  },
-  emptyState: {
-    borderRadius: radiusTokens.md,
-    padding: 14,
-    backgroundColor: colorTokens.card,
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    gap: 6,
-  },
-  emptyHeading: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colorTokens.textPrimary,
-  },
-  emptyBody: {
-    color: colorTokens.textMuted,
   },
   footer: {
     marginTop: spacingTokens.md,

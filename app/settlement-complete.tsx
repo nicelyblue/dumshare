@@ -2,12 +2,13 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../src/mobile/theme/tokens';
 import { typographyTokens } from '../src/mobile/theme/typography';
+import { ScreenScroll } from '../src/mobile/components/AppScaffold';
 
 export default function SettlementCompleteScreen(): JSX.Element {
   const params = useLocalSearchParams<{ currency?: string; recommendationCount?: string; summary?: string }>();
 
   return (
-    <View style={styles.screen}>
+    <ScreenScroll topInsetOffset={spacingTokens.md}>
       <Text style={styles.title}>Settlement Calculated!</Text>
       <Text style={styles.body}>All suggested transfers were reviewed for {params.currency ?? 'your selected currency'}.</Text>
 
@@ -20,17 +21,11 @@ export default function SettlementCompleteScreen(): JSX.Element {
       <Pressable style={styles.button} onPress={() => router.replace('/(tabs)/settle-up')} accessibilityRole="button">
         <Text style={styles.buttonText}>Back to Settle Up</Text>
       </Pressable>
-    </View>
+    </ScreenScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colorTokens.appBackground,
-    padding: spacingTokens.lg,
-    gap: 12,
-  },
   title: {
     ...typographyTokens.heading,
   },

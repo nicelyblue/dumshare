@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createParticipantActionsController } from '../controllers/participantActionsController';
+import { useTheme } from '../theme/useTheme';
 import { LongPressActionSheet, type ActionSheetOption } from './LongPressActionSheet';
 
 type ParticipantListProps = {
@@ -21,73 +22,79 @@ export function getParticipantLongPressOptions(participantId: string): ActionShe
 }
 
 export function ParticipantList({ participants }: ParticipantListProps): JSX.Element {
-  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
+   const { colors } = useTheme();
+   const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
 
-  const options = selectedParticipantId ? getParticipantLongPressOptions(selectedParticipantId) : [];
+   const dynamicStyles = useMemo(
+     () => StyleSheet.create({
+       list: {
+         gap: 8,
+       },
+       item: {
+         paddingHorizontal: 12,
+         paddingVertical: 10,
+         borderRadius: 8,
+         borderWidth: 1,
+         borderColor: colors.border,
+         backgroundColor: colors.card,
+       },
+       itemText: {
+         color: colors.textPrimary,
+       },
+       empty: {
+         color: colors.textMuted,
+         paddingVertical: 8,
+       },
+     }),
+     [colors],
+   );
 
-  async function onSelectAction(action: string): Promise<void> {
-    if (!selectedParticipantId) {
-      return;
-    }
+   const options = selectedParticipantId ? getParticipantLongPressOptions(selectedParticipantId) : [];
 
-    if (action === 'edit') {
-      await controller.runAction('edit', selectedParticipantId, selectedParticipantId);
-      Alert.alert('Edit participant', 'Rename wiring is ready; text-entry UI will be added in a follow-up step.');
-      return;
-    }
+   async function onSelectAction(action: string): Promise<void> {
+     if (!selectedParticipantId) {
+       return;
+     }
 
-    await controller.runAction('delete', selectedParticipantId);
-    Alert.alert('Delete participant', 'Delete wiring is ready; list mutation UI will be added in a follow-up step.');
-  }
+     if (action === 'edit') {
+       await controller.runAction('edit', selectedParticipantId, selectedParticipantId);
+       Alert.alert('Edit participant', 'Rename wiring is ready; text-entry UI will be added in a follow-up step.');
+       return;
+     }
 
-  if (participants.length === 0) {
-    return <Text style={styles.empty}>No participants added yet.</Text>;
-  }
+     await controller.runAction('delete', selectedParticipantId);
+     Alert.alert('Delete participant', 'Delete wiring is ready; list mutation UI will be added in a follow-up step.');
+   }
 
-  return (
-    <>
-      <View style={styles.list}>
-        {participants.map((participant, index) => (
-          <Pressable
-            key={`${participant}-${index}`}
-            onLongPress={() => setSelectedParticipantId(participant)}
-            style={styles.item}
-            accessibilityRole="button"
-          >
-            <Text style={styles.itemText}>{participant}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <LongPressActionSheet
-        visible={selectedParticipantId !== null}
-        title={selectedParticipantId ? `Participant: ${selectedParticipantId}` : undefined}
-        options={options}
-        onSelect={(key) => {
-          void onSelectAction(key);
-        }}
-        onClose={() => setSelectedParticipantId(null)}
-      />
-    </>
-  );
-}
+   if (participants.length === 0) {
+     return <Text style={dynamicStyles.empty}>No participants added yet.</Text>;
+   }
 
-const styles = StyleSheet.create({
-  list: {
-    gap: 8,
-  },
-  item: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    backgroundColor: 'white',
-  },
-  itemText: {
-    color: 'black',
-  },
-  empty: {
-    color: 'dimgray',
-    paddingVertical: 8,
-  },
-});
+   return (
+     <>
+       <View style={dynamicStyles.list}>
+         {participants.map((participant, index) => (
+           <Pressable
+             key={`${participant}-${index}`}
+             onLongPress={() => setSelectedParticipantId(participant)}
+             style={dynamicStyles.item}
+             accessibilityRole="button"
+           >
+             <Text style={dynamicStyles.itemText}>{participant}</Text>
+           </Pressable>
+         ))}
+       </View>
+       <LongPressActionSheet
+         visible={selectedParticipantId !== null}
+         title={selectedParticipantId ? `Participant: ${selectedParticipantId}` : undefined}
+         options={options}
+         onSelect={(key) => {
+           void onSelectAction(key);
+         }}
+         onClose={() => setSelectedParticipantId(null)}
+       />
+     </>
+   );
+ }
+ 
+ const styles = StyleSheet.create({});

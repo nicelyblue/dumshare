@@ -1,5 +1,9 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
+import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colorTokens, spacingTokens } from '../theme/tokens';
+import { Button } from './Button';
+import { getResponsiveMaxWidth } from '../theme/layout';
+import { modalSheetStyles } from '../theme/styles';
 
 export type ActionSheetOption = {
   key: string;
@@ -16,11 +20,21 @@ type LongPressActionSheetProps = {
 };
 
 export function LongPressActionSheet({ visible, options, title, onSelect, onClose }: LongPressActionSheetProps): JSX.Element {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const maxWidth = getResponsiveMaxWidth(width);
+
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={modalSheetStyles.overlay}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
+        <View
+          style={[
+            modalSheetStyles.sheetCard,
+            styles.sheet,
+            { paddingBottom: insets.bottom + spacingTokens.md, width: '100%', maxWidth, alignSelf: 'center' },
+          ]}
+        >
           {title ? <Text style={styles.title}>{title}</Text> : null}
           {options.map((option) => (
             <Pressable
@@ -35,9 +49,11 @@ export function LongPressActionSheet({ visible, options, title, onSelect, onClos
               <Text style={[styles.label, option.destructive ? styles.destructiveLabel : null]}>{option.label}</Text>
             </Pressable>
           ))}
-          <Pressable style={styles.cancelRow} accessibilityRole="button" onPress={onClose}>
-            <Text style={styles.cancelLabel}>Cancel</Text>
-          </Pressable>
+          <View style={styles.cancelRow}>
+            <Button variant="secondary" fullWidth onPress={onClose}>
+              Cancel
+            </Button>
+          </View>
         </View>
       </View>
     </Modal>
@@ -45,22 +61,12 @@ export function LongPressActionSheet({ visible, options, title, onSelect, onClos
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(61, 60, 79, 0.3)',
-  },
   backdrop: {
     flex: 1,
   },
   sheet: {
-    backgroundColor: colorTokens.card,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    paddingHorizontal: spacingTokens.lg,
-    paddingTop: spacingTokens.md,
     paddingBottom: 24,
-    gap: 2,
+    gap: spacingTokens.xs,
   },
   title: {
     fontSize: 13,
@@ -80,14 +86,8 @@ const styles = StyleSheet.create({
   },
   cancelRow: {
     marginTop: 8,
-    paddingVertical: 14,
     borderTopWidth: 1,
     borderTopColor: colorTokens.border,
-  },
-  cancelLabel: {
-    color: colorTokens.textMuted,
-    fontSize: 16,
-    textAlign: 'center',
-    fontWeight: '600',
+    paddingTop: spacingTokens.sm,
   },
 });
