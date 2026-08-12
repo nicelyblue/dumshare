@@ -8,7 +8,7 @@ function readProjectFile(path: string): string {
 
 describe('phase 05 UI screen parity signals', () => {
   test('add expense and split surfaces expose required headings and CTA copy', () => {
-    const addExpense = readProjectFile('app/(tabs)/add-expense.tsx');
+    const addExpense = readProjectFile('app/add-expense.tsx');
     const splitEditor = readProjectFile('src/mobile/components/ExpenseSplitEditor.tsx');
 
     expect(addExpense).toContain('Add Expense');

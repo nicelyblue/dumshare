@@ -19,6 +19,10 @@ notes.txt
 build/
 dist/
 coverage/
+playwright-report/
+test-results/
+e2e/.web-build/
+.playwright-mcp/
 .gradle/
 android/.gradle/
 android/app/build/

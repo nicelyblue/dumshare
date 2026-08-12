@@ -96,8 +96,15 @@ export type ExpenseSplitPayload =
   | PercentageSplitPayload;
 
 export type ExpenseAmendmentSubmittedPayload = {
-  amendmentId: striDeletedPayload = {
-  expenseId
+  amendmentId: string;
+  targetExpenseId: string;
+  reason: string;
+  proposedExpense: ExpenseCreatedPayload;
+};
+
+export type ExpenseDeletedPayload = {
+  expenseId: string;
+};
 
 export type EventInput = {
   id: string;

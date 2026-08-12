@@ -181,6 +181,7 @@ export const Button = forwardRef<View, ButtonProps>(
     return (
       <Pressable
         ref={ref}
+        accessibilityRole="button"
         disabled={isDisabled}
         onPress={loading ? undefined : onPress}
         style={({ pressed }) => [
@@ -269,6 +270,7 @@ export const IconButton = forwardRef<View, IconButtonProps>(
     return (
       <Pressable
         ref={ref}
+        accessibilityRole="button"
         disabled={disabled}
         onPress={onPress}
         style={({ pressed }) => [containerStyle, pressed && !disabled && styles.pressed]}

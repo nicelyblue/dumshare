@@ -167,17 +167,6 @@ export default function TabsLayout(): JSX.Element {
           }}
         />
         <Tabs.Screen
-          name="add-expense"
-          options={{
-            href: null,
-            title: 'Add Expense',
-            headerShown: false,
-            tabBarStyle: { display: 'none' },
-            tabBarLabel: 'Add Expense',
-            tabBarIcon: ({ color, size }) => <Ionicons name="add-circle-outline" size={size} color={color} />,
-          }}
-        />
-        <Tabs.Screen
           name="ledger"
           options={{
             title: 'Ledger',

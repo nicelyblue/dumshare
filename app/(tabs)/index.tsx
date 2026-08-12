@@ -339,7 +339,7 @@ export default function HomeScreen(): JSX.Element {
 
         {model.shareTitle ? (
           <>
-            <Pressable style={dynamicStyles.primaryButton} accessibilityRole="button" onPress={() => router.push('/(tabs)/add-expense')}>
+            <Pressable style={dynamicStyles.primaryButton} accessibilityRole="button" onPress={() => router.push('/add-expense')}>
               <Text style={dynamicStyles.primaryButtonText}>+  Add New Expense</Text>
             </Pressable>
 

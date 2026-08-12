@@ -5,10 +5,13 @@
   "main": "expo-router/entry",
   "type": "module",
   "scripts": {
+    "build:web": "expo export --platform web --output-dir e2e/.web-build --clear",
     "test": "vitest run",
+    "test:e2e": "npm run build:web && playwright test",
     "db:push": "drizzle-kit push --force"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.7.0",
     "@types/react": "~19.2.10",
@@ -19,23 +22,24 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^3.1.0",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "currency-codes": "^2.2.0",
-    "expo": "^55.0.23",
+    "expo": "~55.0.28",
     "expo-constants": "~55.0.16",
-    "expo-file-system": "^56.0.7",
-    "expo-linking": "~55.0.15",
-    "expo-media-library": "^56.0.6",
-    "expo-router": "~55.0.14",
-    "expo-sharing": "^56.0.13",
+    "expo-file-system": "~55.0.24",
+    "expo-linking": "~55.0.16",
+    "expo-media-library": "~55.0.19",
+    "expo-router": "~55.0.17",
+    "expo-sharing": "~55.0.22",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-native": "0.83.6",
+    "react-native": "0.83.10",
     "react-native-gesture-handler": "~2.30.0",
     "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
-    "react-native-view-shot": "^5.1.0",
+    "react-native-view-shot": "4.0.3",
+    "react-native-web": "^0.21.2",
     "react-native-worklets": "0.7.4"
   }
 }

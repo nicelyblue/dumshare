@@ -208,7 +208,7 @@ export default function LedgerScreen(): JSX.Element {
 
            if (key === 'edit') {
              setPendingExpenseDraft({ expenseId: selectedExpenseId, selectedLedgerId: activeShareId });
-             router.navigate('/(tabs)/add-expense');
+             router.navigate('/add-expense');
              return;
            }
 
