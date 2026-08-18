@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 import type { ThemePreference } from '../state/preferencesStore';
-import type { lightColorTokens } from './tokens';
+import { lightColorTokens, type ColorTokens } from './tokens';
 
 /**
  * Theme context value structure
@@ -26,7 +26,7 @@ export interface ThemeContextValue {
   /**
    * Color tokens for the current theme
    */
-  colors: typeof lightColorTokens;
+  colors: ColorTokens;
 
   /**
    * Update user's theme preference
@@ -43,6 +43,6 @@ export const ThemeContext = createContext<ThemeContextValue>({
   currentTheme: 'light',
   themePreference: 'system',
   isDark: false,
-  colors: {} as typeof lightColorTokens,
+  colors: lightColorTokens,
   setThemePreference: () => {},
 });

@@ -2,14 +2,15 @@ import { createLedgerAppService } from '../../src/mobile/services/ledgerAppServi
 import { createSetupController } from '../../src/mobile/controllers/setupController';
 import { getDefaultParticipantIcon } from '../../src/mobile/utils/participantIcons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colorTokens, radiusTokens, spacingTokens } from '../../src/mobile/theme/tokens';
+import { radiusTokens, spacingTokens } from '../../src/mobile/theme/tokens';
 import { FormTextInput } from '../../src/mobile/components/FormFields';
 import { Button } from '../../src/mobile/components/Button';
 import { BottomActionBar, ScreenScroll } from '../../src/mobile/components/AppScaffold';
 import { layoutTokens } from '../../src/mobile/theme/layout';
 import { ScreenHeader } from '../../src/mobile/components/ScreenHeader';
+import { useTheme } from '../../src/mobile/theme/useTheme';
 
 const controller = createSetupController(createLedgerAppService());
 const appService = createLedgerAppService();
@@ -25,6 +26,7 @@ function removeParticipantDraftAt(index: number): string[] {
 
 export default function ParticipantsScreen(): JSX.Element {
   const router = useRouter();
+  const { colors } = useTheme();
   const params = useLocalSearchParams<{ ledgerId?: string; ownerName?: string }>();
   const ownerName = (params.ownerName ?? '').trim();
   const selectedLedgerId = (params.ledgerId ?? '').trim();
@@ -34,6 +36,81 @@ export default function ParticipantsScreen(): JSX.Element {
     Array<{ participantId: string; displayName: string; isOwner: boolean }>
   >([]);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const styles = useMemo(() => StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.appBackground,
+    },
+    totalInline: {
+      color: colors.textMuted,
+      fontSize: 14,
+      marginTop: spacingTokens.xs,
+    },
+    addRow: {
+      flexDirection: 'row',
+      gap: spacingTokens.sm,
+      alignItems: 'center',
+    },
+    inputWrap: {
+      flex: 1,
+    },
+    input: {
+      marginBottom: 0,
+    },
+    addButton: {
+      minWidth: 84,
+    },
+    participantCard: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radiusTokens.md,
+      backgroundColor: colors.card,
+      padding: spacingTokens.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacingTokens.sm,
+    },
+    avatar: {
+      height: 36,
+      width: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.subtleSurface,
+    },
+    avatarText: {
+      fontSize: 20,
+    },
+    participantTextWrap: {
+      flex: 1,
+      gap: 2,
+    },
+    participantName: {
+      color: colors.textPrimary,
+      fontSize: 18,
+    },
+    participantHint: {
+      color: colors.textMuted,
+    },
+    ownerBadge: {
+      color: colors.textMuted,
+      fontSize: 18,
+    },
+    removeButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    removeIcon: {
+      color: colors.destructive,
+      fontSize: 20,
+    },
+    error: {
+      color: colors.destructive,
+    },
+  }), [colors]);
 
   const totalParticipants = (existingParticipants.length > 0 ? existingParticipants.length : ownerName ? 1 : 0) + participantDrafts.length;
 
@@ -77,12 +154,18 @@ export default function ParticipantsScreen(): JSX.Element {
   }
 
   async function onContinuePress(): Promise<void> {
+    if (isSubmitting) {
+      return;
+    }
     try {
+      setIsSubmitting(true);
       setError(null);
       await controller.commitParticipantDrafts(selectedLedgerId);
       router.replace('/(tabs)');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to continue');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -136,12 +219,14 @@ export default function ParticipantsScreen(): JSX.Element {
               {participant.isOwner ? (
                 <Text style={styles.ownerBadge}>♛</Text>
               ) : (
-                <Pressable
+                 <Pressable
                   onPress={() => {
                     void onRemoveExistingParticipantPress(participant.participantId);
                   }}
-                  hitSlop={10}
-                  accessibilityRole="button"
+                   hitSlop={10}
+                   accessibilityRole="button"
+                   accessibilityLabel={`Remove ${participant.displayName}`}
+                   style={styles.removeButton}
                 >
                   <Text style={styles.removeIcon}>✕</Text>
                 </Pressable>
@@ -169,7 +254,12 @@ export default function ParticipantsScreen(): JSX.Element {
           <View style={styles.participantTextWrap}>
             <Text style={styles.participantName}>{participant}</Text>
           </View>
-          <Pressable onPress={() => onRemoveDraftPress(index)} hitSlop={10} accessibilityRole="button">
+          <Pressable
+            onPress={() => onRemoveDraftPress(index)}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${participant}`}
+            style={styles.removeButton}
+          >
             <Text style={styles.removeIcon}>✕</Text>
           </Pressable>
         </View>
@@ -180,84 +270,8 @@ export default function ParticipantsScreen(): JSX.Element {
       </ScreenScroll>
 
       <BottomActionBar>
-        <Button fullWidth onPress={onContinuePress}>Done</Button>
+        <Button fullWidth loading={isSubmitting} onPress={onContinuePress}>Done</Button>
       </BottomActionBar>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colorTokens.card,
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: colorTokens.card,
-  },
-  content: {
-    gap: spacingTokens.md,
-  },
-  totalInline: {
-    color: colorTokens.textMuted,
-    fontSize: 14,
-    marginTop: spacingTokens.xs,
-  },
-  addRow: {
-    flexDirection: 'row',
-    gap: spacingTokens.sm,
-    alignItems: 'center',
-  },
-  inputWrap: {
-    flex: 1,
-  },
-  input: {
-    marginBottom: 0,
-  },
-  addButton: {
-    minWidth: 84,
-  },
-  participantCard: {
-    borderWidth: 1,
-    borderColor: colorTokens.border,
-    borderRadius: radiusTokens.lg,
-    backgroundColor: colorTokens.card,
-    padding: spacingTokens.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacingTokens.sm,
-  },
-  avatar: {
-    height: 36,
-    width: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colorTokens.subtleSurface,
-  },
-  avatarText: {
-    fontSize: 20,
-  },
-  participantTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  participantName: {
-    color: colorTokens.textPrimary,
-    fontSize: 18,
-  },
-  participantHint: {
-    color: colorTokens.textMuted,
-  },
-  ownerBadge: {
-    color: colorTokens.textMuted,
-    fontSize: 18,
-  },
-  removeIcon: {
-    color: colorTokens.textMuted,
-    fontSize: 20,
-  },
-  error: {
-    color: colorTokens.destructive,
-  },
-});

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, StyleSheet, Text, View, Image, useWindowDimensions } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createSettleUpFlowController } from '../../src/mobile/controllers/settleUpFlowController';
@@ -27,7 +27,8 @@ export default function SettleUpScreen(): JSX.Element {
    const [currencyQuery, setCurrencyQuery] = useState('');
    const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
    const [isCalculating, setIsCalculating] = useState(false);
-   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [error, setError] = useState<string | null>(null);
    const [previewModalVisible, setPreviewModalVisible] = useState(false);
    const [settlementImageUri, setSettlementImageUri] = useState<string | null>(null);
    const [model, setModel] = useState(flowController.getState());
@@ -36,10 +37,30 @@ export default function SettleUpScreen(): JSX.Element {
 
    const dynamicStyles = useMemo(
      () => StyleSheet.create({
-        screen: {
-          flex: 1,
-          backgroundColor: colors.appBackground,
-          gap: 0,
+         screen: {
+           flex: 1,
+           backgroundColor: colors.appBackground,
+         },
+        scrollContent: {
+          paddingHorizontal: spacingTokens.lg,
+          paddingTop: spacingTokens.lg,
+          gap: spacingTokens.md,
+        },
+        content: {
+          width: '100%',
+          alignSelf: 'center',
+          gap: spacingTokens.md,
+        },
+        bottomAction: {
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          backgroundColor: colors.card,
+          paddingHorizontal: spacingTokens.lg,
+          paddingTop: spacingTokens.md,
+        },
+        error: {
+          color: colors.destructive,
+          fontSize: 14,
         },
        title: {
          ...typographyTokens.heading,
@@ -132,7 +153,7 @@ export default function SettleUpScreen(): JSX.Element {
        modalOverlay: {
          flex: 1,
          justifyContent: 'flex-end',
-         backgroundColor: 'rgba(16, 17, 20, 0.3)',
+          backgroundColor: colors.scrim,
        },
        modalBackdrop: {
          flex: 1,
@@ -179,7 +200,7 @@ export default function SettleUpScreen(): JSX.Element {
        previewOverlay: {
          flex: 1,
          justifyContent: 'center',
-         backgroundColor: 'rgba(16, 17, 20, 0.5)',
+          backgroundColor: colors.scrim,
        },
        previewBackdrop: {
          flex: 1,
@@ -220,18 +241,31 @@ export default function SettleUpScreen(): JSX.Element {
   async function reload(nextShareId: string | null, nextSelectedCurrencyCode?: string): Promise<void> {
     requestVersion.current += 1;
     const version = requestVersion.current;
-    const nextModel = await flowController.load({ selectedLedgerId: nextShareId, selectedCurrencyCode: nextSelectedCurrencyCode });
-    if (version !== requestVersion.current) {
-      return;
+    setIsCalculating(true);
+    try {
+      const nextModel = await flowController.load({ selectedLedgerId: nextShareId, selectedCurrencyCode: nextSelectedCurrencyCode });
+      if (version !== requestVersion.current) {
+        return;
+      }
+      setModel(nextModel);
+      const recommendations = await flowController.generateRecommendations();
+      if (version === requestVersion.current) {
+        setModel(recommendations);
+        setError(null);
+      }
+    } catch {
+      if (version === requestVersion.current) {
+        setError('Could not calculate settlement recommendations. Try again.');
+      }
+    } finally {
+      if (version === requestVersion.current) {
+        setIsCalculating(false);
+      }
     }
-    setModel(nextModel);
   }
 
   useEffect(() => {
-    void reload(activeShareId).then(() => {
-      // Auto-calculate settlement when screen loads
-      void flowController.generateRecommendations().then(setModel);
-    });
+    void reload(activeShareId);
   }, [activeShareId]);
 
   function closeCurrencyPicker(): void {
@@ -243,11 +277,15 @@ export default function SettleUpScreen(): JSX.Element {
   }
 
     return (
-       <View style={[dynamicStyles.screen, { paddingTop: insets.top + spacingTokens.lg, paddingBottom: insets.bottom + spacingTokens.lg, paddingHorizontal: spacingTokens.lg }]}>
-         <View style={{ width: '100%', maxWidth, alignSelf: 'center', gap: spacingTokens.md }}>
-         <Text style={dynamicStyles.currencyLabel}>CURRENCY SELECTION</Text>
+       <View style={dynamicStyles.screen}>
+        <ScrollView
+          contentContainerStyle={[dynamicStyles.scrollContent, { paddingBottom: spacingTokens.xl }]}
+          keyboardShouldPersistTaps="handled"
+        >
+         <View style={[dynamicStyles.content, { maxWidth }]}>
+          <Text style={dynamicStyles.currencyLabel}>SETTLEMENT CURRENCY</Text>
         <View style={dynamicStyles.card}>
-          <Text style={dynamicStyles.hint}>Select the settlement currency to calculate amounts</Text>
+           <Text style={dynamicStyles.hint}>Choose the currency for these recommendations.</Text>
           <Pressable style={dynamicStyles.selectLike} accessibilityRole="button" onPress={() => setCurrencyPickerOpen(true)}>
             <Text style={dynamicStyles.selectValue}>{model.selectedCurrencyCode}</Text>
             <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
@@ -270,13 +308,10 @@ export default function SettleUpScreen(): JSX.Element {
             setCurrencyQuery('');
             setIsCalculating(true);
             try {
-              const nextModel = await flowController.load({ selectedLedgerId: activeShareId, selectedCurrencyCode: code });
-              setModel(nextModel);
-              if (nextModel.recommendations.length > 0) {
-                const recalculated = await flowController.generateRecommendations();
-                setModel(recalculated);
-              }
-            } finally {
+               await reload(activeShareId, code);
+             } catch {
+               setError('Could not calculate settlement recommendations. Try again.');
+             } finally {
               setIsCalculating(false);
             }
           }}
@@ -287,39 +322,24 @@ export default function SettleUpScreen(): JSX.Element {
           <EmptyStateBlock title="No active share" message="Create or select a share to generate settlement recommendations." />
         ) : (
          <View style={dynamicStyles.requiredPaymentsWrap}>
-           <Text style={dynamicStyles.requiredPaymentsLabel}>REQUIRED PAYMENTS</Text>
-           <SettlementRecommendationList model={{ recommendations: model.recommendations }} />
-         </View>
-        )}
-
-         <Button
-           fullWidth
-           loading={isGeneratingImage}
-           onPress={async () => {
-             if (model.recommendations.length === 0) {
-               return;
-             }
-             setIsGeneratingImage(true);
-            try {
-              const imageUri = await generateSettlementImage(viewShotRef);
-              setSettlementImageUri(imageUri);
-              setPreviewModalVisible(true);
-            } catch (error) {
-              console.error('Error generating settlement image:', error);
-            } finally {
-              setIsGeneratingImage(false);
-            }
-           }}
-         >
-           Share settlement
-         </Button>
+            <Text style={dynamicStyles.requiredPaymentsLabel}>RECOMMENDED TRANSFERS</Text>
+            {isCalculating ? <Text style={dynamicStyles.hint}>Calculating recommendations...</Text> : null}
+            <SettlementRecommendationList model={{ recommendations: model.recommendations }} />
+          </View>
+         )}
+          {error ? (
+            <View style={dynamicStyles.card}>
+              <Text style={dynamicStyles.error}>{error}</Text>
+              <Button variant="secondary" onPress={() => void reload(activeShareId, model.selectedCurrencyCode)}>Retry</Button>
+            </View>
+          ) : null}
 
          {/* Preview modal with share options */}
          <Modal transparent visible={previewModalVisible} animationType="fade" onRequestClose={() => setPreviewModalVisible(false)}>
            <View style={dynamicStyles.previewOverlay}>
              <Pressable style={dynamicStyles.previewBackdrop} onPress={() => setPreviewModalVisible(false)} />
              <View style={dynamicStyles.previewSheet}>
-               <Text style={dynamicStyles.previewTitle}>Settlement Preview</Text>
+                <Text style={dynamicStyles.previewTitle}>Recommendations Preview</Text>
                {settlementImageUri ? (
                   <Image
                     source={{ uri: settlementImageUri }}
@@ -327,12 +347,14 @@ export default function SettleUpScreen(): JSX.Element {
                     resizeMode="contain"
                   />
                 ) : null}
-                 <Button leftIcon={<Ionicons name="share-social" size={20} color={colors.card} />} fullWidth onPress={async () => {
-                   if (!settlementImageUri) return;
-                   try {
-                     await shareSettlementImage(settlementImageUri);
-                   } catch (error) {
-                     console.error('Error sharing settlement:', error);
+                  <Button leftIcon={<Ionicons name="share-social" size={20} color={colors.accentForeground} />} fullWidth onPress={async () => {
+                    if (!settlementImageUri) return;
+                    try {
+                      await shareSettlementImage(settlementImageUri);
+                      setError(null);
+                    } catch {
+                      setPreviewModalVisible(false);
+                      setError('Could not share the recommendations image. Try again.');
                    }
                  }}>
                    Share image
@@ -345,15 +367,40 @@ export default function SettleUpScreen(): JSX.Element {
            </Modal>
 
          {/* Hidden component for capturing settlement as PNG */}
-         <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+          <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
            <ShareableSettlementList
              ref={viewShotRef}
              model={{
                currency: model.selectedCurrencyCode,
                recommendations: model.recommendations,
              }}
-           />
+            />
+          </View>
          </View>
+        </ScrollView>
+        <View style={[dynamicStyles.bottomAction, { paddingBottom: insets.bottom + spacingTokens.sm }]}>
+          <View style={{ width: '100%', maxWidth, alignSelf: 'center' }}>
+            <Button
+              fullWidth
+              loading={isGeneratingImage}
+              disabled={model.recommendations.length === 0 || isCalculating}
+              onPress={async () => {
+                setIsGeneratingImage(true);
+                try {
+                  const imageUri = await generateSettlementImage(viewShotRef);
+                  setSettlementImageUri(imageUri);
+                  setPreviewModalVisible(true);
+                  setError(null);
+                } catch {
+                  setError('Could not create the recommendations image. Try again.');
+                } finally {
+                  setIsGeneratingImage(false);
+                }
+              }}
+            >
+              Share Recommendations
+            </Button>
+          </View>
         </View>
        </View>
       );

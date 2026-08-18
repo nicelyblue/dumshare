@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
+import { radiusTokens, spacingTokens } from '../theme/tokens';
 import { typographyTokens } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
 
@@ -17,7 +17,7 @@ type SelectionRowProps = {
 export function SelectionRow({ label, title, subtitle, onPress, leading }: SelectionRowProps): JSX.Element {
   const { colors } = useTheme();
 
-  const dynamicStyles = useMemo(() => ({
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     root: {
       gap: spacingTokens.sm,
     },

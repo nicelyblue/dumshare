@@ -57,22 +57,6 @@ export function createSettleUpFlowController(deps?: { loadSettlementModel?: Load
     return state;
   }
 
-  function buildCompletionRoute(): {
-    pathname: '/settlement-complete';
-    params: { currency: string; recommendationCount: string; summary: string };
-  } {
-    const first = state.recommendations[0];
-    const summary = first ? `${first.fromLabel} pays ${first.toLabel} ${first.amountLabel}` : 'No transfer required';
-    return {
-      pathname: '/settlement-complete',
-      params: {
-        currency: state.selectedCurrencyCode,
-        recommendationCount: `${state.recommendations.length}`,
-        summary,
-      },
-    };
-  }
-
   function getState(): FlowState {
     return state;
   }
@@ -81,7 +65,6 @@ export function createSettleUpFlowController(deps?: { loadSettlementModel?: Load
     load,
     searchAndSelectCurrency,
     generateRecommendations,
-    buildCompletionRoute,
     getState,
   };
 }

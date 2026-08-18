@@ -29,7 +29,8 @@ export default function LedgerScreen(): JSX.Element {
      },
      entries: [],
    });
-   const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
    const [refreshing, setRefreshing] = useState(false);
    const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
    const [actionSheetVisible, setActionSheetVisible] = useState(false);
@@ -125,6 +126,7 @@ export default function LedgerScreen(): JSX.Element {
     const version = requestVersion.current;
 
     try {
+      setIsLoading(true);
       const nextModel = await loadLedgerHistoryModel({ selectedLedgerId: nextShareId });
       if (version !== requestVersion.current) {
         return;
@@ -136,6 +138,10 @@ export default function LedgerScreen(): JSX.Element {
         return;
       }
       setError('Could not load share snapshot. Pull to refresh or switch share from the menu.');
+    } finally {
+      if (version === requestVersion.current) {
+        setIsLoading(false);
+      }
     }
   }
 
@@ -153,7 +159,7 @@ export default function LedgerScreen(): JSX.Element {
    return (
       <ScrollView
         style={dynamicStyles.screen}
-        contentContainerStyle={[dynamicStyles.content, { paddingTop: insets.top, paddingBottom: insets.bottom + spacingTokens.xl, maxWidth, alignSelf: 'center', width: '100%' }]}
+        contentContainerStyle={[dynamicStyles.content, { paddingBottom: insets.bottom + spacingTokens.xl, maxWidth, alignSelf: 'center', width: '100%' }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -167,7 +173,12 @@ export default function LedgerScreen(): JSX.Element {
           />
         }
       >
-       {error ? <Text style={dynamicStyles.error}>{error}</Text> : null}
+        {error ? (
+          <View style={dynamicStyles.confirmCard}>
+            <Text style={dynamicStyles.error}>{error}</Text>
+            <Button variant="secondary" onPress={() => void reload(activeShareId)}>Retry</Button>
+          </View>
+        ) : null}
        <View style={dynamicStyles.summaryCard}>
          <Text style={dynamicStyles.summaryLabel}>Total Expenses</Text>
          {model.summary.currencyTotals.length === 0 ? (
@@ -183,16 +194,19 @@ export default function LedgerScreen(): JSX.Element {
            </View>
          )}
        </View>
-       {model.entries.length === 0 ? (
-         <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
-        ) : (
-         <LedgerHistoryList
+        {isLoading ? (
+          <Text style={dynamicStyles.confirmBody}>Loading expenses…</Text>
+        ) : !error && model.entries.length === 0 ? (
+          <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
+         ) : !error ? (
+          <LedgerHistoryList
            model={model}
            highlightedExpenseId={params.expenseId ?? null}
            onPressEntry={openEntryDetail}
-           onLongPressEntry={openEntryActions}
-         />
-       )}
+            onLongPressEntry={openEntryActions}
+            onPressEntryActions={openEntryActions}
+          />
+        ) : null}
        <LongPressActionSheet
          visible={actionSheetVisible}
          onClose={() => setActionSheetVisible(false)}

@@ -13,7 +13,6 @@ import {
   TextInput,
   useWindowDimensions,
   View,
-  type GestureResponderEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -40,6 +39,71 @@ import { ThemedAlertDialog, type ThemedAlertButton } from '../src/mobile/compone
 
 type PickerMode = 'none' | 'currency' | 'paidBy' | 'splitBetween' | 'splitType';
 type SplitMethod = 'exact' | 'percent';
+type SplitMode = 'equal' | SplitMethod;
+
+export function formatLocalExpenseDate(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function isValidExpenseDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return false;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
+export function allocatePercentageSplitMinor(
+  totalMinor: number,
+  participantIds: string[],
+  percentValues: Record<string, string>,
+): Record<string, number> {
+  const rows = participantIds.map((participantId, order) => {
+    const percentageBps = Math.max(0, Math.round(Number.parseFloat(percentValues[participantId] || '0') * 100));
+    const numerator = totalMinor * percentageBps;
+    return {
+      participantId,
+      order,
+      owedAmountMinor: Math.floor(numerator / 10000),
+      remainder: numerator % 10000,
+    };
+  });
+  let remainderMinor = totalMinor - rows.reduce((sum, row) => sum + row.owedAmountMinor, 0);
+  const rankedRows = rows.slice().sort((left, right) => right.remainder - left.remainder || left.order - right.order);
+  for (let index = 0; remainderMinor > 0 && rankedRows.length > 0; index += 1) {
+    rankedRows[index % rankedRows.length].owedAmountMinor += 1;
+    remainderMinor -= 1;
+  }
+  return Object.fromEntries(rows.map((row) => [row.participantId, row.owedAmountMinor]));
+}
+
+function derivePercentValues(
+  totalMinor: number,
+  participantIds: string[],
+  exactAmountsMinor: Record<string, number>,
+): Record<string, string> {
+  if (totalMinor <= 0) {
+    return {};
+  }
+  const rows = participantIds.map((participantId, order) => {
+    const rawBps = ((exactAmountsMinor[participantId] ?? 0) * 10000) / totalMinor;
+    return { participantId, order, bps: Math.floor(rawBps), remainder: rawBps - Math.floor(rawBps) };
+  });
+  let remainderBps = 10000 - rows.reduce((sum, row) => sum + row.bps, 0);
+  const rankedRows = rows.slice().sort((left, right) => right.remainder - left.remainder || left.order - right.order);
+  for (let index = 0; remainderBps > 0 && rankedRows.length > 0; index += 1) {
+    rankedRows[index % rankedRows.length].bps += 1;
+    remainderBps -= 1;
+  }
+  return Object.fromEntries(rows.map((row) => [row.participantId, `${row.bps / 100}`]));
+}
 
 export default function AddExpenseScreen(): JSX.Element {
    const router = useRouter();
@@ -50,10 +114,12 @@ export default function AddExpenseScreen(): JSX.Element {
    const [description, setDescription] = useState('');
    const [amount, setAmount] = useState('');
    const [currency, setCurrency] = useState('USD');
-   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
-   const [splitMode, setSplitMode] = useState<'equal' | 'exact'>('equal');
-   const [exactValues, setExactValues] = useState<Record<string, string>>({});
-   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+    const [expenseDate, setExpenseDate] = useState(formatLocalExpenseDate());
+    const [splitMode, setSplitMode] = useState<SplitMode>('equal');
+    const [exactValues, setExactValues] = useState<Record<string, string>>({});
+    const [percentValues, setPercentValues] = useState<Record<string, string>>({});
+    const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+    const [editingLedgerId, setEditingLedgerId] = useState<string | null>(null);
    const [shareTitle, setShareTitle] = useState('');
    const [participants, setParticipants] = useState<Array<{ participantId: string; displayName: string }>>([]);
    const [payerParticipantId, setPayerParticipantId] = useState<string>('');
@@ -65,9 +131,6 @@ export default function AddExpenseScreen(): JSX.Element {
    const [configParticipantIds, setConfigParticipantIds] = useState<string[]>([]);
    const [configExactValues, setConfigExactValues] = useState<Record<string, string>>({});
    const [configPercentValues, setConfigPercentValues] = useState<Record<string, string>>({});
-   const sliderWidthByParticipantIdRef = useRef<Record<string, number>>({});
-   const pendingSliderUpdateRef = useRef<{ participantId: string; requestedPercent: number } | null>(null);
-   const sliderFrameRef = useRef<number | null>(null);
    const [isSaving, setIsSaving] = useState(false);
    const [alertDialog, setAlertDialog] = useState<{ title: string; message: string; buttons: ThemedAlertButton[] } | null>(null);
 
@@ -359,26 +422,6 @@ export default function AddExpenseScreen(): JSX.Element {
            ...typographyTokens.body,
            fontWeight: '600',
          },
-         sliderTrack: {
-           marginTop: 6,
-           height: 16,
-           borderRadius: 999,
-           backgroundColor: colors.subtleSurface,
-           overflow: 'hidden',
-           shadowColor: '#000',
-           shadowOffset: { width: 0, height: 1 },
-           shadowOpacity: 0.05,
-           shadowRadius: 2,
-           elevation: 1,
-         },
-         sliderTrackDisabled: {
-           opacity: 0.5,
-         },
-         sliderFill: {
-           height: '100%',
-           backgroundColor: colors.inverse,
-           borderRadius: 999,
-         },
          balanceTitle: {
            ...typographyTokens.body,
            fontWeight: '600',
@@ -446,40 +489,62 @@ export default function AddExpenseScreen(): JSX.Element {
 
   useEffect(() => {
     const pending = consumePendingExpenseDraft();
+    const selectedLedgerId = pending?.selectedLedgerId ?? getActiveShareState().activeShareId;
+    const service = createLedgerAppService();
+    let cancelled = false;
 
-    void createLedgerAppService()
-      .loadHomeSnapshot({ selectedLedgerId: pending?.selectedLedgerId ?? getActiveShareState().activeShareId })
-      .then((snapshot) => {
+    void Promise.all([
+      service.loadHomeSnapshot({ selectedLedgerId }),
+      pending ? loadExpenseFormModel({ selectedLedgerId, editExpenseId: pending.expenseId }) : Promise.resolve(null),
+      pending ? service.loadLedgerExpenseDetails({ selectedLedgerId, expenseId: pending.expenseId }) : Promise.resolve(null),
+    ])
+      .then(([snapshot, model, details]) => {
+        if (cancelled) {
+          return;
+        }
         setShareTitle(snapshot.title);
         const nextParticipants = snapshot.balanceSummary.participants.map((participant) => ({
           participantId: participant.participantId,
           displayName: participant.displayName,
         }));
         setParticipants(nextParticipants);
-        setSplitParticipantIds(nextParticipants.map((participant) => participant.participantId));
-        if (nextParticipants[0]) {
-          setPayerParticipantId(nextParticipants[0].participantId);
+        if (!pending || !model) {
+          setSplitParticipantIds(nextParticipants.map((participant) => participant.participantId));
+          setPayerParticipantId(nextParticipants[0]?.participantId ?? '');
+          return;
+        }
+        setEditingExpenseId(pending.expenseId);
+        setEditingLedgerId(selectedLedgerId ?? null);
+        setDescription(model.defaults.description);
+        setAmount(model.defaults.totalAmountInput);
+        setCurrency(model.defaults.currency);
+        setExpenseDate(model.defaults.expenseDate);
+        setSplitMode(details?.splitMode === 'percentage' ? 'percent' : model.defaults.splitMode);
+        setPayerParticipantId(model.defaults.payerParticipantId);
+        setSplitParticipantIds(model.defaults.splitParticipantIds);
+        setExactValues(
+          Object.fromEntries(
+            Object.entries(model.defaults.splitExactAmountsMinor).map(([participantId, owedAmountMinor]) => [participantId, (owedAmountMinor / 100).toFixed(2)]),
+          ),
+        );
+        if (details?.splitMode === 'percentage') {
+          setPercentValues(
+            derivePercentValues(details.totalAmountMinor, model.defaults.splitParticipantIds, model.defaults.splitExactAmountsMinor),
+          );
+        }
+      })
+      .catch((caught) => {
+        if (!cancelled) {
+          setAlertDialog({
+            title: 'Load expense',
+            message: caught instanceof Error ? caught.message : 'Unable to load expense.',
+            buttons: [{ label: 'OK' }],
+          });
         }
       });
-
-    if (!pending) {
-      return;
-    }
-    setEditingExpenseId(pending.expenseId);
-    void loadExpenseFormModel({ selectedLedgerId: pending.selectedLedgerId, editExpenseId: pending.expenseId }).then((model) => {
-      setDescription(model.defaults.description);
-      setAmount(model.defaults.totalAmountInput);
-      setCurrency(model.defaults.currency);
-      setExpenseDate(model.defaults.expenseDate);
-      setSplitMode(model.defaults.splitMode);
-      setPayerParticipantId(model.defaults.payerParticipantId);
-      setSplitParticipantIds(model.defaults.splitParticipantIds);
-      setExactValues(
-        Object.fromEntries(
-          Object.entries(model.defaults.splitExactAmountsMinor).map(([participantId, owedAmountMinor]) => [participantId, (owedAmountMinor / 100).toFixed(2)]),
-       ),
-       );
-    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Animate modal on open/close
@@ -552,6 +617,7 @@ export default function AddExpenseScreen(): JSX.Element {
     splitParticipantIds.length > 0 && Number.parseFloat(amount) > 0
       ? `${formatAmountWithCurrency(Number.parseFloat(amount) / splitParticipantIds.length)} per person`
       : 'Set amount to preview per-person share';
+  const expenseDateError = expenseDate.length > 0 && !isValidExpenseDate(expenseDate) ? 'Use a valid date in YYYY-MM-DD format.' : undefined;
 
   function formatAmountWithCurrency(value: number): string {
     return `${value.toFixed(2)} ${currency}`;
@@ -585,32 +651,39 @@ export default function AddExpenseScreen(): JSX.Element {
     });
   }
 
-  function buildExactSplitAmountsMinor(): Record<string, number> {
-    const ids = splitParticipantIds.length > 0 ? splitParticipantIds : participants.map((participant) => participant.participantId);
+  function buildSubmittedSplitAmountsMinor(): Record<string, number> {
+    const ids = splitParticipantIds;
     const totalMinor = Math.round(Number.parseFloat(amount || '0') * 100);
     if (ids.length === 0 || totalMinor <= 0) {
       return {};
     }
-    const each = Math.floor(totalMinor / ids.length);
-    const remainder = totalMinor - each * ids.length;
-    const allocations: Record<string, number> = {};
-    ids.forEach((id, index) => {
-      allocations[id] = each + (index < remainder ? 1 : 0);
-    });
+    if (splitMode === 'percent') {
+      return allocatePercentageSplitMinor(totalMinor, ids, percentValues);
+    }
+    const allocations = Object.fromEntries(
+      ids.map((id) => [id, Math.round(Number.parseFloat(exactValues[id] || '0') * 100)]),
+    );
+    const differenceMinor = totalMinor - Object.values(allocations).reduce((sum, value) => sum + value, 0);
+    if (Math.abs(differenceMinor) <= 1) {
+      allocations[ids[0]] += differenceMinor;
+    }
     return allocations;
   }
 
   function openSplitConfig(): void {
-    const ids = splitParticipantIds.length > 0 ? splitParticipantIds : participants.map((participant) => participant.participantId);
-    const baseAmount = Number.parseFloat(amount || '0');
-    const equalShare = ids.length > 0 && baseAmount > 0 ? (baseAmount / ids.length).toFixed(2) : '0.00';
+    const ids = splitParticipantIds;
+    const totalMinor = Math.round(Number.parseFloat(amount || '0') * 100);
+    const equalMinor = ids.length > 0 ? Math.floor(totalMinor / ids.length) : 0;
+    const equalRemainder = ids.length > 0 ? totalMinor - equalMinor * ids.length : 0;
+    const equalPercentBps = ids.length > 0 ? Math.floor(10000 / ids.length) : 0;
+    const percentRemainderBps = ids.length > 0 ? 10000 - equalPercentBps * ids.length : 0;
     const nextExact: Record<string, string> = {};
     const nextPercent: Record<string, string> = {};
-    ids.forEach((id) => {
-      nextExact[id] = exactValues[id] ?? equalShare;
-      nextPercent[id] = ids.length > 0 ? (100 / ids.length).toFixed(0) : '0';
+    ids.forEach((id, index) => {
+      nextExact[id] = exactValues[id] ?? ((equalMinor + (index < equalRemainder ? 1 : 0)) / 100).toFixed(2);
+      nextPercent[id] = percentValues[id] ?? `${(equalPercentBps + (index < percentRemainderBps ? 1 : 0)) / 100}`;
     });
-    setConfigMethod(splitMode === 'exact' ? 'exact' : 'percent');
+    setConfigMethod(splitMode === 'percent' ? 'percent' : 'exact');
     setConfigParticipantIds(ids);
     setConfigExactValues(nextExact);
     setConfigPercentValues(nextPercent);
@@ -635,97 +708,22 @@ export default function AddExpenseScreen(): JSX.Element {
       setSplitMode('exact');
       setExactValues(configExactValues);
     } else {
-      const total = Number.parseFloat(amount || '0');
-      const derivedExact: Record<string, string> = {};
-      ids.forEach((id) => {
-        const percent = Number.parseFloat(configPercentValues[id] || '0');
-        derivedExact[id] = ((total * percent) / 100).toFixed(2);
-      });
-      setSplitMode('exact');
-      setExactValues(derivedExact);
+      setSplitMode('percent');
+      setPercentValues(configPercentValues);
     }
     setSplitConfigVisible(false);
-  }
-
-  function applyPercentRebalance(participantId: string, requestedPercent: number): void {
-    setConfigPercentValues((prev) => {
-      const selectedIds = [...configParticipantIds];
-      if (!selectedIds.includes(participantId)) {
-        return prev;
-      }
-
-      const otherIds = selectedIds.filter((id) => id !== participantId);
-      if (otherIds.length === 0) {
-        if (prev[participantId] === '100') {
-          return prev;
-        }
-        return { ...prev, [participantId]: '100' };
-      }
-
-      const clampedTarget = Math.max(0, Math.min(100, requestedPercent));
-      const remaining = 100 - clampedTarget;
-      const currentOthers = otherIds.map((id) => Math.max(0, Number.parseFloat(prev[id] || '0')));
-      const currentOthersTotal = currentOthers.reduce((sum, value) => sum + value, 0);
-
-      let nextOtherPercents: number[];
-      if (currentOthersTotal <= 0) {
-        const base = Math.floor(remaining / otherIds.length);
-        let leftover = remaining - base * otherIds.length;
-        nextOtherPercents = otherIds.map(() => {
-          const plus = leftover > 0 ? 1 : 0;
-          leftover -= plus;
-          return base + plus;
-        });
-      } else {
-        const raw = currentOthers.map((value) => (value / currentOthersTotal) * remaining);
-        const floored = raw.map((value) => Math.floor(value));
-        let leftover = remaining - floored.reduce((sum, value) => sum + value, 0);
-        const byRemainder = raw
-          .map((value, index) => ({ index, remainder: value - floored[index] }))
-          .sort((a, b) => b.remainder - a.remainder);
-        for (let index = 0; index < byRemainder.length && leftover > 0; index += 1) {
-          floored[byRemainder[index].index] += 1;
-          leftover -= 1;
-        }
-        nextOtherPercents = floored;
-      }
-
-      const next = { ...prev, [participantId]: `${clampedTarget}` };
-      otherIds.forEach((id, index) => {
-        next[id] = `${nextOtherPercents[index] ?? 0}`;
-      });
-
-      const unchanged = selectedIds.every((id) => (prev[id] ?? '0') === (next[id] ?? '0'));
-      return unchanged ? prev : next;
-    });
-  }
-
-  function updatePercentFromGesture(participantId: string, event: GestureResponderEvent): void {
-    const width = sliderWidthByParticipantIdRef.current[participantId] ?? 1;
-    const ratio = Math.max(0, Math.min(1, event.nativeEvent.locationX / width));
-    const requestedPercent = Math.round(ratio * 100);
-    pendingSliderUpdateRef.current = { participantId, requestedPercent };
-    if (sliderFrameRef.current !== null) {
-      return;
-    }
-    sliderFrameRef.current = requestAnimationFrame(() => {
-      sliderFrameRef.current = null;
-      const pending = pendingSliderUpdateRef.current;
-      if (!pending) {
-        return;
-      }
-      applyPercentRebalance(pending.participantId, pending.requestedPercent);
-    });
   }
 
   function resetExpenseForm(): void {
     setDescription('');
     setAmount('');
     setCurrency('USD');
-    setExpenseDate(new Date().toISOString().slice(0, 10));
+    setExpenseDate(formatLocalExpenseDate());
     setSplitMode('equal');
     setExactValues({});
+    setPercentValues({});
     setEditingExpenseId(null);
+    setEditingLedgerId(null);
     setPickerMode('none');
     setSearchQuery('');
     setSplitConfigVisible(false);
@@ -740,30 +738,44 @@ export default function AddExpenseScreen(): JSX.Element {
     if (isSaving) {
       return;
     }
+    if (splitParticipantIds.length === 0) {
+      setAlertDialog({ title: 'Save expense', message: 'Select at least one split participant.', buttons: [{ label: 'OK' }] });
+      return;
+    }
+    if (!isValidExpenseDate(expenseDate)) {
+      setAlertDialog({ title: 'Save expense', message: 'Enter a valid expense date in YYYY-MM-DD format.', buttons: [{ label: 'OK' }] });
+      return;
+    }
+    const splitExactAmountsMinor = splitMode === 'equal' ? {} : buildSubmittedSplitAmountsMinor();
+    const totalAmountMinor = Math.round(Number.parseFloat(amount || '0') * 100);
+    if (
+      splitMode !== 'equal' &&
+      Object.values(splitExactAmountsMinor).reduce((sum, value) => sum + value, 0) !== totalAmountMinor
+    ) {
+      setAlertDialog({ title: 'Save expense', message: 'The assigned split must match the expense total.', buttons: [{ label: 'OK' }] });
+      return;
+    }
     try {
       setIsSaving(true);
-      await submitExpenseForm({
-        selectedLedgerId: getActiveShareState().activeShareId,
+      const result = await submitExpenseForm({
+        selectedLedgerId: editingLedgerId ?? getActiveShareState().activeShareId,
         editExpenseId: editingExpenseId,
         description,
         totalAmountInput: amount,
         currency,
         expenseDate,
         payerParticipantId: payerParticipantId || participants[0]?.participantId || '',
-        splitMode,
-        splitParticipantIds:
-          splitParticipantIds.length > 0
-            ? splitParticipantIds
-            : participants.length > 0
-              ? participants.map((participant) => participant.participantId)
-              : [payerParticipantId || 'participant-1'],
-        splitExactAmountsMinor: splitMode === 'exact' ? buildExactSplitAmountsMinor() : {},
+        splitMode: splitMode === 'equal' ? 'equal' : 'exact',
+        splitParticipantIds,
+        splitExactAmountsMinor,
       });
+      const wasEditing = editingExpenseId !== null;
       resetExpenseForm();
-      router.replace({
-        pathname: '/(tabs)',
-        params: { refreshToken: `${Date.now()}` },
-      });
+      router.replace(
+        wasEditing
+          ? { pathname: '/(tabs)/ledger', params: { expenseId: result.expenseId } }
+          : { pathname: '/(tabs)', params: { refreshToken: `${Date.now()}` } },
+      );
     } catch (caught) {
       setAlertDialog({
         title: 'Save expense',
@@ -775,22 +787,20 @@ export default function AddExpenseScreen(): JSX.Element {
     }
   }
 
-  useEffect(
-    () => () => {
-      if (sliderFrameRef.current !== null) {
-        cancelAnimationFrame(sliderFrameRef.current);
-      }
-    },
-    [],
-  );
+  const configuredAssignedAmount = calculateAssignedAmount();
+  const configuredTotalMinor = Math.round(Number.parseFloat(amount || '0') * 100);
+  const canConfirmSplit =
+    configParticipantIds.length > 0 &&
+    configuredTotalMinor > 0 &&
+    Math.abs(Math.round(configuredAssignedAmount * 100) - configuredTotalMinor) <= 1;
 
    return (
      <View style={dynamicStyles.screen}>
        <ScreenScroll topInsetOffset={spacingTokens.lg} bottomInsetOffset={spacingTokens.xl}>
          <View style={[dynamicStyles.content, { maxWidth, alignSelf: 'center', width: '100%' }]}>
-         <ScreenHeader
-           title="Add Expense"
-           subtitle="Track a new expense for this share"
+          <ScreenHeader
+            title={editingExpenseId ? 'Edit Expense' : 'Add Expense'}
+            subtitle={editingExpenseId ? 'Update this expense for the share' : 'Track a new expense for this share'}
            badge={shareTitle || 'Untitled Share'}
            onBack={() => router.back()}
          />
@@ -819,9 +829,19 @@ export default function AddExpenseScreen(): JSX.Element {
                <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
              </Pressable>
            </View>
-         </View>
+          </View>
 
-         <SelectionRow
+          <FormTextInput
+            label="Expense Date"
+            value={expenseDate}
+            onChangeText={setExpenseDate}
+            placeholder="YYYY-MM-DD"
+            autoCapitalize="none"
+            autoCorrect={false}
+            error={expenseDateError}
+          />
+
+          <SelectionRow
            label="Paid By"
            title={payerName}
            onPress={() => openPicker('paidBy')}
@@ -850,15 +870,15 @@ export default function AddExpenseScreen(): JSX.Element {
            }
          />
 
-         <SelectionRow
-           label="Split Type"
-           title={splitMode === 'equal' ? 'Split Equally' : 'Split by Exact Amounts'}
+          <SelectionRow
+            label="Split Type"
+            title={splitMode === 'equal' ? 'Split Equally' : splitMode === 'exact' ? 'Split by Exact Amounts' : 'Split by Percentage'}
            subtitle={perPersonLabel}
            onPress={openSplitConfig}
          />
 
-         <Button fullWidth loading={isSaving} onPress={() => void onSaveExpensePress()}>
-           Save Expense
+          <Button fullWidth loading={isSaving} onPress={() => void onSaveExpensePress()}>
+            {editingExpenseId ? 'Update Expense' : 'Save Expense'}
          </Button>
          </View>
        </ScreenScroll>
@@ -937,9 +957,11 @@ export default function AddExpenseScreen(): JSX.Element {
                      return (
                        <Pressable
                          key={participant.participantId}
-                         style={dynamicStyles.modalRow}
-                         accessibilityRole="button"
-                         onPress={() => toggleSplitParticipant(participant.participantId)}
+                          style={dynamicStyles.modalRow}
+                          accessibilityRole="button"
+                          accessibilityState={{ checked: selected }}
+                          accessibilityLabel={`${selected ? 'Remove' : 'Add'} ${participant.displayName} ${selected ? 'from' : 'to'} split`}
+                          onPress={() => toggleSplitParticipant(participant.participantId)}
                        >
                          <View style={dynamicStyles.modalParticipantLabel}>
                            <ParticipantAvatar name={participant.displayName} size="sm" />
@@ -991,8 +1013,10 @@ export default function AddExpenseScreen(): JSX.Element {
               ]}
             >
              <View style={dynamicStyles.splitHeader}>
-               <Pressable
-                 onPress={() => setSplitConfigVisible(false)}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close split editor"
+                  onPress={() => setSplitConfigVisible(false)}
                  style={({ pressed }) => [
                    dynamicStyles.splitCloseButton,
                    pressed && dynamicStyles.splitCloseButtonPressed,
@@ -1027,8 +1051,10 @@ export default function AddExpenseScreen(): JSX.Element {
 
              <View style={dynamicStyles.participantHeader}>
                <Text style={dynamicStyles.splitSectionTitle}>Participants ({participants.length})</Text>
-               <Pressable
-                 onPress={() =>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={configParticipantIds.length === participants.length ? 'Clear all participants' : 'Select all participants'}
+                  onPress={() =>
                    setConfigParticipantIds(
                      configParticipantIds.length === participants.length ? [] : participants.map((participant) => participant.participantId),
                    )
@@ -1079,8 +1105,10 @@ export default function AddExpenseScreen(): JSX.Element {
                          dynamicStyles.checkbox,
                          pressed && dynamicStyles.checkboxPressed,
                        ]}
-                       accessibilityRole="button"
-                       onPress={() =>
+                        accessibilityRole="button"
+                        accessibilityLabel={`${selected ? 'Remove' : 'Add'} ${participant.displayName} ${selected ? 'from' : 'to'} split`}
+                        accessibilityState={{ checked: selected }}
+                        onPress={() =>
                          setConfigParticipantIds((prev) =>
                            prev.includes(participant.participantId)
                              ? prev.filter((id) => id !== participant.participantId)
@@ -1098,8 +1126,9 @@ export default function AddExpenseScreen(): JSX.Element {
                      <View style={dynamicStyles.participantBody}>
                        <Text style={dynamicStyles.participantName}>{participant.displayName}</Text>
                        {configMethod === 'exact' ? (
-                         <TextInput
-                           editable={selected}
+                          <TextInput
+                            accessibilityLabel={`${participant.displayName} exact amount`}
+                            editable={selected}
                            style={[dynamicStyles.participantInput, selected ? null : dynamicStyles.participantInputDisabled]}
                            value={configExactValues[participant.participantId] ?? equalAmount}
                            onChangeText={(value) => {
@@ -1108,28 +1137,19 @@ export default function AddExpenseScreen(): JSX.Element {
                            keyboardType="decimal-pad"
                            placeholderTextColor={colors.textMuted}
                          />
-                       ) : (
-                         <View
-                           style={[dynamicStyles.sliderTrack, selected ? null : dynamicStyles.sliderTrackDisabled]}
-                           onLayout={(event) => {
-                             const width = event.nativeEvent.layout.width;
-                             sliderWidthByParticipantIdRef.current[participant.participantId] = width;
-                           }}
-                           onStartShouldSetResponder={() => selected}
-                           onMoveShouldSetResponder={() => selected}
-                           onResponderGrant={(event) => updatePercentFromGesture(participant.participantId, event)}
-                           onResponderMove={(event) => updatePercentFromGesture(participant.participantId, event)}
-                         >
-                           <Animated.View
-                             style={[
-                               dynamicStyles.sliderFill,
-                               {
-                                 width: `${Math.max(0, Math.min(100, Number.parseFloat(configPercentValues[participant.participantId] || '0')))}%`,
-                               },
-                             ]}
-                           />
-                         </View>
-                       )}
+                        ) : (
+                          <TextInput
+                            accessibilityLabel={`${participant.displayName} percentage`}
+                            editable={selected}
+                            style={[dynamicStyles.participantInput, selected ? null : dynamicStyles.participantInputDisabled]}
+                            value={configPercentValues[participant.participantId] ?? '0'}
+                            onChangeText={(value) => {
+                              setConfigPercentValues((prev) => ({ ...prev, [participant.participantId]: value }));
+                            }}
+                            keyboardType="decimal-pad"
+                            placeholderTextColor={colors.textMuted}
+                          />
+                        )}
                      </View>
                      <View style={dynamicStyles.shareBlock}>
                        <Text style={dynamicStyles.shareLabel}>Share</Text>
@@ -1140,25 +1160,25 @@ export default function AddExpenseScreen(): JSX.Element {
                })}
              </ScrollView>
 
-             <View style={[dynamicStyles.balanceCard, Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? dynamicStyles.balanceCardSuccess : dynamicStyles.balanceCardWarning]}>
-               <View style={[dynamicStyles.balanceCheck, Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? dynamicStyles.balanceCheckSuccess : dynamicStyles.balanceCheckWarning]}>
-                 <Ionicons
-                   name={Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? 'checkmark' : 'alert-circle'}
+              <View style={[dynamicStyles.balanceCard, canConfirmSplit ? dynamicStyles.balanceCardSuccess : dynamicStyles.balanceCardWarning]}>
+                <View style={[dynamicStyles.balanceCheck, canConfirmSplit ? dynamicStyles.balanceCheckSuccess : dynamicStyles.balanceCheckWarning]}>
+                  <Ionicons
+                    name={canConfirmSplit ? 'checkmark' : 'alert-circle'}
                    size={14}
                    color={colors.card}
                  />
                </View>
                <View>
-                 <Text style={dynamicStyles.balanceTitle}>
-                   Split is {Math.abs(calculateAssignedAmount() - Number.parseFloat(amount || '0')) < 0.01 ? 'balanced' : 'not balanced'}
-                 </Text>
-                 <Text style={dynamicStyles.balanceMeta}>
-                   Total assigned: {formatAmountWithCurrency(calculateAssignedAmount())} / {formatAmountWithCurrency((Number.parseFloat(amount || '0') || 0))}
+                  <Text style={dynamicStyles.balanceTitle}>
+                    Split is {canConfirmSplit ? 'balanced' : 'not balanced'}
+                  </Text>
+                  <Text style={dynamicStyles.balanceMeta}>
+                    Total assigned: {formatAmountWithCurrency(configuredAssignedAmount)} / {formatAmountWithCurrency((Number.parseFloat(amount || '0') || 0))}
                  </Text>
                </View>
              </View>
 
-             <Button fullWidth onPress={confirmSplitConfig}>
+              <Button fullWidth disabled={!canConfirmSplit} onPress={confirmSplitConfig}>
                Confirm Split
              </Button>
              <Button variant="secondary" fullWidth onPress={() => setSplitConfigVisible(false)}>

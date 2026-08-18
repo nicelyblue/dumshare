@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import type { LedgerHistoryModel } from '../controllers/ledgerHistoryController';
-import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
+import { radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
 import { textStyles } from '../theme/styles';
 import { useTheme } from '../theme/useTheme';
 import { ParticipantAvatar } from './ParticipantAvatar';
@@ -23,14 +24,15 @@ function iconForTitle(title: string): string {
 export function LedgerHistoryList(props: {
    model: LedgerHistoryModel;
    highlightedExpenseId?: string | null;
-   onPressEntry: (expenseId: string) => void;
-   onLongPressEntry: (expenseId: string) => void;
+    onPressEntry: (expenseId: string) => void;
+    onLongPressEntry: (expenseId: string) => void;
+    onPressEntryActions: (expenseId: string) => void;
  }): JSX.Element {
    const { colors } = useTheme();
    const { width } = useWindowDimensions();
    const isTablet = width >= 840;
 
-   const dynamicStyles = useMemo(() => ({
+   const dynamicStyles = useMemo(() => StyleSheet.create({
      root: { gap: spacingTokens.md },
      card: {
        borderWidth: 1,
@@ -61,7 +63,14 @@ export function LedgerHistoryList(props: {
      iconText: { fontSize: 28 },
      mainColumn: { flex: 1, gap: spacingTokens.sm },
      title: { fontWeight: '600', color: colors.textPrimary, fontSize: 16 },
-     amount: { color: colors.inverse, fontWeight: '700', fontSize: 18 },
+      amount: { color: colors.textPrimary, fontWeight: '700', fontSize: 18 },
+      actionsButton: {
+        width: touchTarget.minimum,
+        height: touchTarget.minimum,
+        borderRadius: radiusTokens.sm,
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
      meta: { color: colors.textMuted },
      payerRow: {
        flexDirection: 'row',
@@ -84,7 +93,7 @@ export function LedgerHistoryList(props: {
      avatarShift: { marginLeft: -8 },
      participantText: { marginLeft: 10, color: colors.textMuted, fontSize: 14 },
      time: { color: colors.mutedSubtleText, fontSize: 13, minWidth: 60, textAlign: 'right' },
-   }), [colors, isTablet]);
+    }), [colors, isTablet]);
 
   return (
     <View style={dynamicStyles.root}>
@@ -112,6 +121,18 @@ export function LedgerHistoryList(props: {
                 <Text style={dynamicStyles.meta}>{entry.payerLabel}</Text>
               )}
             </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Actions for ${entry.title}`}
+              hitSlop={4}
+              style={dynamicStyles.actionsButton}
+              onPress={(event) => {
+                event.stopPropagation();
+                props.onPressEntryActions(entry.expenseId);
+              }}
+            >
+              <Ionicons name="ellipsis-horizontal" size={20} color={colors.textMuted} />
+            </Pressable>
           </View>
           <View style={dynamicStyles.divider} />
           <View style={dynamicStyles.bottomRow}>
@@ -134,4 +155,3 @@ export function LedgerHistoryList(props: {
 const styles = StyleSheet.create({
   // Spacing and layout
 });
-

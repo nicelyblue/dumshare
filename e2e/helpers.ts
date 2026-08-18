@@ -15,7 +15,7 @@ export async function createShare(
   }: CreateShareOptions = {},
 ): Promise<void> {
   await page.goto("/");
-  await page.getByRole("link", { name: "+" }).click();
+  await page.getByRole("link", { name: "Create a Share" }).click();
   await page.getByRole("textbox", { name: "Share title" }).fill(title);
   await page.getByRole("textbox", { name: "Organizer name" }).fill(organizer);
   await page.getByRole("button", { name: "Create Share" }).click();

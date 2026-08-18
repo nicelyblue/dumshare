@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getDefaultParticipantIcon } from '../utils/participantIcons';
-import { colorTokens, radiusTokens } from '../theme/tokens';
+import { radiusTokens } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 
 type ParticipantAvatarProps = {
@@ -12,7 +12,7 @@ type ParticipantAvatarProps = {
 export function ParticipantAvatar({ name, size = 'md' }: ParticipantAvatarProps): JSX.Element {
   const { colors } = useTheme();
 
-  const dynamicStyles = useMemo(() => ({
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     avatar: {
       borderRadius: radiusTokens.pill,
       backgroundColor: colors.subtleSurface,

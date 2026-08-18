@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
+import { radiusTokens, spacingTokens } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import { ParticipantAvatar } from './ParticipantAvatar';
 
 export function SettlementRow({ fromLabel, toLabel, amount }: { fromLabel: string; toLabel: string; amount: string }): JSX.Element {
   const { colors } = useTheme();
 
-  const dynamicStyles = useMemo(() => ({
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     row: {
       padding: spacingTokens.md,
       borderRadius: radiusTokens.md,
@@ -32,7 +32,9 @@ export function SettlementRow({ fromLabel, toLabel, amount }: { fromLabel: strin
       fontSize: 14,
     },
     amount: {
-      color: colors.textMuted,
+      color: colors.textPrimary,
+      fontSize: 20,
+      fontWeight: '700',
     },
   }), [colors]);
 
@@ -53,7 +55,7 @@ export function SettlementRow({ fromLabel, toLabel, amount }: { fromLabel: strin
 export function SettlementEmptyState({ title = 'No transfers needed' }: { title?: string } = {}): JSX.Element {
   const { colors } = useTheme();
 
-  const dynamicStyles = useMemo(() => ({
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     emptyState: {
       borderRadius: radiusTokens.md,
       padding: spacingTokens.md,

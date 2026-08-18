@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ShareDrawerContent from '../../src/mobile/components/ShareDrawerContent';
 import { radiusTokens, shellLayoutTokens, spacingTokens } from '../../src/mobile/theme/tokens';
@@ -81,9 +81,7 @@ export default function TabsLayout(): JSX.Element {
           textAlign: 'center',
         },
         overlay: {
-          position: 'absolute',
-          inset: 0,
-          zIndex: 50,
+          flex: 1,
         },
         backdrop: {
           position: 'absolute',
@@ -99,7 +97,8 @@ export default function TabsLayout(): JSX.Element {
           backgroundColor: colors.card,
           borderRightWidth: 1,
           borderRightColor: colors.border,
-          paddingTop: 40,
+          paddingTop: insets.top + spacingTokens.sm,
+          paddingBottom: insets.bottom + spacingTokens.md,
           paddingHorizontal: spacingTokens.lg,
         },
         tabBarStyle: {
@@ -154,7 +153,7 @@ export default function TabsLayout(): JSX.Element {
             fontSize: 11,
             lineHeight: 14,
           },
-          tabBarActiveTintColor: colors.inverse,
+          tabBarActiveTintColor: colors.accent,
           tabBarInactiveTintColor: colors.textMuted,
         }}
       >
@@ -183,14 +182,24 @@ export default function TabsLayout(): JSX.Element {
           }}
         />
       </Tabs>
-      {isDrawerOpen ? (
+      <Modal
+        transparent
+        visible={isDrawerOpen}
+        animationType="fade"
+        onRequestClose={() => setDrawerOpen(false)}
+      >
         <View style={dynamicStyles.overlay}>
-          <Pressable style={dynamicStyles.backdrop} onPress={() => setDrawerOpen(false)} />
-          <View style={dynamicStyles.drawer}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close share drawer"
+            style={dynamicStyles.backdrop}
+            onPress={() => setDrawerOpen(false)}
+          />
+          <View accessibilityViewIsModal style={dynamicStyles.drawer}>
             <ShareDrawerContent onClose={() => setDrawerOpen(false)} />
           </View>
         </View>
-      ) : null}
+      </Modal>
     </>
   );
 }

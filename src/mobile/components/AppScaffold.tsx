@@ -2,9 +2,8 @@ import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colorTokens, spacingTokens } from '../theme/tokens';
+import { spacingTokens } from '../theme/tokens';
 import { getResponsiveMaxWidth, layoutTokens } from '../theme/layout';
-import { cardStyles, textStyles } from '../theme/styles';
 import { useTheme } from '../theme/useTheme';
 
 type ScreenScrollProps = {
@@ -67,7 +66,7 @@ export function BottomActionBar({ children }: BottomActionBarProps): JSX.Element
       borderTopWidth: 1,
       borderTopColor: colors.subtleBorder,
       backgroundColor: colors.card,
-      alignItems: 'center',
+      alignItems: 'center' as const,
       paddingBottom: insets.bottom + spacingTokens.md,
     },
   }), [colors, insets]);
@@ -123,7 +122,7 @@ export function EmptyStateBlock({ title, message }: EmptyStateBlockProps): JSX.E
     message: {
       fontSize: 13,
       lineHeight: 18,
-      color: colors.textPrimary,
+      color: colors.textSecondary,
     },
   }), [colors]);
 

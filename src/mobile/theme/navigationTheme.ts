@@ -1,15 +1,16 @@
-import type { Theme } from '@react-navigation/native';
-import type { lightColorTokens } from './tokens';
+import { DefaultTheme, type Theme } from '@react-navigation/native';
+import type { ColorTokens } from './tokens';
 
 /**
  * Create a React Navigation theme from our color tokens
  * Ensures navigation chrome (header, tab bar) matches app theme
  */
 export function createNavigationTheme(
-  colors: typeof lightColorTokens,
+  colors: ColorTokens,
   isDark: boolean
 ): Theme {
   return {
+    ...DefaultTheme,
     dark: isDark,
     colors: {
       primary: colors.accent,

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colorTokens, radiusTokens, spacingTokens } from '../theme/tokens';
+import { radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
 import { typographyTokens } from '../theme/typography';
 import { useTheme } from '../theme/useTheme';
 
@@ -16,18 +16,18 @@ export function ScreenHeader({ title, subtitle, badge, onBack }: ScreenHeaderPro
 
   const dynamicStyles = useMemo(() => ({
     backButton: {
-      width: 40,
-      minHeight: 40,
+      width: touchTarget.minimum,
+      minHeight: touchTarget.minimum,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: radiusTokens.md,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       backgroundColor: colors.card,
       marginBottom: spacingTokens.xs,
     },
     backButtonText: {
-      color: colors.textPrimary,
+      color: colors.textSecondary,
       fontSize: 20,
       lineHeight: 20,
       fontWeight: '600' as const,
@@ -38,7 +38,7 @@ export function ScreenHeader({ title, subtitle, badge, onBack }: ScreenHeaderPro
     },
     subtitle: {
       ...typographyTokens.label,
-      color: colors.textPrimary,
+      color: colors.textSecondary,
     },
     badge: {
       ...typographyTokens.label,

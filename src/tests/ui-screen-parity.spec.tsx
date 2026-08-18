@@ -18,13 +18,12 @@ describe('phase 05 UI screen parity signals', () => {
     expect(splitEditor).toContain('Shares');
   });
 
-  test('settle up and completion surfaces expose required summary labels and completion copy', () => {
+  test('settle up presents recommendations without implying payment completion', () => {
     const settleUp = readProjectFile('app/(tabs)/settle-up.tsx');
-    const completion = readProjectFile('app/settlement-complete.tsx');
 
-    expect(settleUp).toContain('Currency'); // Auto-calculates when currency selected
-    expect(settleUp).toContain('REQUIRED PAYMENTS');
-    expect(completion).toContain('Settlement Calculated!');
+    expect(settleUp).toContain('SETTLEMENT CURRENCY');
+    expect(settleUp).toContain('RECOMMENDED TRANSFERS');
+    expect(settleUp).not.toContain('Recommendations applied');
   });
 
   test('empty-state and destructive confirmation copy remains present', () => {

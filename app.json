@@ -2,7 +2,8 @@
   "expo": {
     "scheme": "dumshare",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-sharing"
     ],
     "extra": {
       "router": {},

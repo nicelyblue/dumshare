@@ -75,22 +75,34 @@ export function ThemedAlertDialog({ visible, title, message, buttons, onClose }:
           fontWeight: '600',
         },
         buttonTextDestructive: {
-          color: colors.card,
+          color: colors.destructiveForeground,
         },
       }),
     [colors],
   );
 
   return (
-    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
       <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{title}</Text>
+        <View
+          accessibilityViewIsModal
+          accessibilityLiveRegion="polite"
+          importantForAccessibility="yes"
+          style={styles.card}
+        >
+          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.buttonRow}>
             {buttons.map((button) => (
               <Pressable
                 key={button.label}
+                accessibilityRole="button"
                 style={[styles.button, button.style === 'destructive' ? styles.buttonDestructive : null]}
                 onPress={() => {
                   onClose();

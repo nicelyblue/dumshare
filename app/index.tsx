@@ -1,19 +1,72 @@
 import { Link } from 'expo-router';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createLedgerAppService } from '../src/mobile/services/ledgerAppService';
 import { bootstrapDummyData } from '../src/mobile/actions/bootstrapDummyData';
-import { colorTokens, radiusTokens, spacingTokens, touchTarget } from '../src/mobile/theme/tokens';
+import { spacingTokens } from '../src/mobile/theme/tokens';
 import { typographyTokens } from '../src/mobile/theme/typography';
+import { useTheme } from '../src/mobile/theme/useTheme';
+import { Button } from '../src/mobile/components/Button';
+import { AppIcon } from '../src/mobile/components/AppIcon';
 
 const appService = createLedgerAppService();
 
 export default function HomeScreen(): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [ready, setReady] = useState(false);
+  const styles = useMemo(() => StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.appBackground,
+    },
+    content: {
+      flexGrow: 1,
+      paddingHorizontal: spacingTokens.lg,
+      paddingBottom: insets.bottom + spacingTokens.xl,
+    },
+    header: {
+      minHeight: 56,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerTitle: {
+      ...typographyTokens.heading,
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    main: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacingTokens.x2l,
+      gap: spacingTokens.xl,
+    },
+    copyWrap: {
+      alignItems: 'center',
+      gap: spacingTokens.sm,
+      maxWidth: 420,
+    },
+    title: {
+      ...typographyTokens.display,
+      color: colors.textPrimary,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...typographyTokens.body,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+    actionWrap: {
+      width: '100%',
+      maxWidth: 360,
+    },
+  }), [colors, insets.bottom]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,121 +98,29 @@ export default function HomeScreen(): JSX.Element {
   }, [router]);
 
   if (!ready) {
-    return <View style={styles.screen} />;
+    return <View accessibilityLabel="Loading Dumshare" style={styles.screen} />;
   }
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + spacingTokens.sm }]}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <View style={styles.headerSpacer} />
         <Text style={styles.headerTitle}>Dumshare</Text>
-        <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.main}>
-        <View style={styles.welcomeIconWrap}>
-          <Text style={styles.welcomeIcon}>Share</Text>
-        </View>
+        <AppIcon size={112} />
 
         <View style={styles.copyWrap}>
-          <Text style={styles.title}>Welcome to Dumshare!</Text>
-          <Text style={styles.subtitle}>You haven't created your first Share yet. Get started by creating a Share to track expenses with friends.</Text>
+          <Text style={styles.title}>Split expenses without the noise</Text>
+          <Text style={styles.subtitle}>Create a share, add the people involved, and keep every balance clear.</Text>
         </View>
 
-        <Link href="/(setup)/create-share" asChild>
-          <Pressable accessibilityRole="button" style={styles.primaryButton}>
-            <Text style={styles.fabIcon}>+</Text>
-          </Pressable>
-        </Link>
-        <Text style={styles.fabLabel}>Create a Share</Text>
-
+        <View style={styles.actionWrap}>
+          <Link href="/(setup)/create-share" asChild>
+            <Button fullWidth>Create a Share</Button>
+          </Link>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colorTokens.appBackground,
-    padding: spacingTokens.lg,
-    gap: spacingTokens.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: spacingTokens.sm,
-  },
-  headerTitle: {
-    ...typographyTokens.heading,
-    color: colorTokens.textPrimary,
-    fontWeight: '500',
-  },
-  headerSpacer: {
-    width: 40,
-    height: 40,
-  },
-  main: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacingTokens.md,
-    paddingBottom: spacingTokens.xl,
-  },
-  welcomeIconWrap: {
-    width: 128,
-    height: 128,
-    borderRadius: radiusTokens.pill,
-    backgroundColor: colorTokens.groupedSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacingTokens.xl,
-  },
-  welcomeIcon: {
-    ...typographyTokens.heading,
-    color: colorTokens.textMuted,
-    fontWeight: '500',
-  },
-  copyWrap: {
-    marginBottom: spacingTokens.x2l,
-    alignItems: 'center',
-  },
-  title: {
-    ...typographyTokens.display,
-    color: colorTokens.textPrimary,
-    marginBottom: spacingTokens.sm,
-    textAlign: 'center',
-  },
-  subtitle: {
-    ...typographyTokens.body,
-    color: colorTokens.textMuted,
-    textAlign: 'center',
-    maxWidth: 280,
-  },
-  primaryButton: {
-    width: 64,
-    height: 64,
-    borderRadius: radiusTokens.pill,
-    backgroundColor: colorTokens.inverse,
-    minHeight: touchTarget.minimum,
-    minWidth: touchTarget.minimum,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  fabIcon: {
-    color: colorTokens.card,
-    fontSize: 32,
-    lineHeight: 32,
-  },
-  fabLabel: {
-    marginTop: spacingTokens.sm,
-    ...typographyTokens.body,
-    color: colorTokens.textMuted,
-  },
-});

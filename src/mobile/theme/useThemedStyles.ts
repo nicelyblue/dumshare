@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from './useTheme';
-import type { lightColorTokens } from './tokens';
+import type { ColorTokens } from './tokens';
 
 /**
  * Helper function to create theme-aware styles
@@ -17,7 +17,7 @@ import type { lightColorTokens } from './tokens';
  * ```
  */
 export function useThemedStyles<T extends Record<string, any>>(
-  styleFactory: (colors: typeof lightColorTokens) => T
+  styleFactory: (colors: ColorTokens) => T
 ): T {
   const { colors } = useTheme();
   return useMemo(() => styleFactory(colors), [colors]);
@@ -39,7 +39,7 @@ export function useThemedStyles<T extends Record<string, any>>(
  * ```
  */
 export function makeThemedStyle<T extends StyleProp<ViewStyle>>(
-  styleFactory: (colors: typeof lightColorTokens) => T
-): (colors: typeof lightColorTokens) => T {
+  styleFactory: (colors: ColorTokens) => T
+): (colors: ColorTokens) => T {
   return styleFactory;
 }

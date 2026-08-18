@@ -171,7 +171,6 @@ export const textStyles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '600' as const,
-    color: colorTokens.textPrimary,
   },
   // Body text (default reading text)
   body: {
@@ -181,7 +180,6 @@ export const textStyles = StyleSheet.create({
   bodySmall: {
     fontSize: 14,
     lineHeight: 20,
-    color: colorTokens.textPrimary,
   },
   // Label (emphasized, muted)
   label: {
@@ -195,13 +193,11 @@ export const textStyles = StyleSheet.create({
   caption: {
     fontSize: 12,
     lineHeight: 16,
-    color: colorTokens.textMuted,
   },
   // Caption with subtle color (even more muted)
   captionSubtle: {
     fontSize: 12,
     lineHeight: 16,
-    color: colorTokens.mutedSubtleText,
   },
   // Money amounts (uses tabular figures)
   money: {
@@ -211,17 +207,14 @@ export const textStyles = StyleSheet.create({
   },
   // Error/destructive text
   error: {
-    color: colorTokens.destructive,
     fontSize: 14,
   },
   // Success text
   success: {
-    color: colorTokens.success,
     fontSize: 14,
   },
   // Accent text
   accent: {
-    color: colorTokens.accent,
     fontSize: 14,
   },
 });

@@ -13,6 +13,7 @@ import { getResponsiveMaxWidth } from '../../src/mobile/theme/layout';
 import { useTheme } from '../../src/mobile/theme/useTheme';
 import { EmptyStateBlock } from '../../src/mobile/components/AppScaffold';
 import { AppIcon } from '../../src/mobile/components/AppIcon';
+import { Button } from '../../src/mobile/components/Button';
 
 export default function HomeScreen(): JSX.Element {
    const router = useRouter();
@@ -118,19 +119,6 @@ export default function HomeScreen(): JSX.Element {
        balanceAmountStack: {
          alignItems: 'flex-end',
          gap: spacingTokens.xs,
-       },
-        primaryButton: {
-          marginTop: spacingTokens.md,
-          minHeight: touchTarget.minimum,
-          backgroundColor: colors.inverse,
-          borderRadius: radiusTokens.md,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-       primaryButtonText: {
-         color: colors.card,
-         fontSize: 16,
-         fontWeight: '600',
        },
        latestExpenseCard: {
          backgroundColor: colors.card,
@@ -269,10 +257,10 @@ export default function HomeScreen(): JSX.Element {
       return 'Mixed by currency';
     }
     if (statusLabel === 'owes') {
-      return 'You owe';
+      return 'Owes the group';
     }
     if (statusLabel === 'is owed') {
-      return 'You are owed';
+      return 'Is owed by the group';
     }
     return 'All settled up';
   }
@@ -280,7 +268,7 @@ export default function HomeScreen(): JSX.Element {
    return (
       <ScrollView
         style={dynamicStyles.screen}
-        contentContainerStyle={[dynamicStyles.content, { paddingTop: insets.top, paddingBottom: insets.bottom + spacingTokens.xl, maxWidth, alignSelf: 'center', width: '100%' }]}
+        contentContainerStyle={[dynamicStyles.content, { paddingBottom: insets.bottom + spacingTokens.xl, maxWidth, alignSelf: 'center', width: '100%' }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -297,6 +285,16 @@ export default function HomeScreen(): JSX.Element {
 
         {error ? <Text style={dynamicStyles.helper}>{error}</Text> : null}
 
+        {model.shareTitle ? (
+          <View style={dynamicStyles.shareTitleBlock}>
+            <Text style={dynamicStyles.helper}>ACTIVE SHARE</Text>
+            <Text style={dynamicStyles.shareTitle}>{model.shareTitle}</Text>
+            <Button fullWidth onPress={() => router.push('/add-expense')}>
+              Add Expense
+            </Button>
+          </View>
+        ) : null}
+
         {!model.shareTitle ? (
           <View style={{ alignItems: 'center', gap: spacingTokens.lg, marginVertical: spacingTokens.xl }}>
             <AppIcon size={80} />
@@ -307,9 +305,16 @@ export default function HomeScreen(): JSX.Element {
           </View>
         ) : null}
 
-        {model.participantRows.length === 0 && model.shareTitle ? (
-          <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
-        ) : model.participantRows.length > 0 ? (
+        {model.expenseCount === 0 && model.shareTitle ? (
+          <View style={dynamicStyles.section}>
+            <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
+            <Button variant="secondary" fullWidth onPress={() => router.push('/add-expense')}>
+              Add First Expense
+            </Button>
+          </View>
+        ) : null}
+
+        {model.participantRows.length > 0 ? (
           <View style={dynamicStyles.section}>
             <Text style={dynamicStyles.sectionLabel}>Current Status</Text>
             <View style={dynamicStyles.stack}>
@@ -339,10 +344,6 @@ export default function HomeScreen(): JSX.Element {
 
         {model.shareTitle ? (
           <>
-            <Pressable style={dynamicStyles.primaryButton} accessibilityRole="button" onPress={() => router.push('/add-expense')}>
-              <Text style={dynamicStyles.primaryButtonText}>+  Add New Expense</Text>
-            </Pressable>
-
             {model.latestExpenseCard ? (
               <View style={dynamicStyles.section}>
                 <Text style={dynamicStyles.sectionLabel}>Last Entered Expense</Text>

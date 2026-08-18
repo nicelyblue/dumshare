@@ -2,22 +2,54 @@
  * Light mode color tokens
  * Primary palette for light theme (backgrounds are light, text is dark)
  */
+export type ColorTokens = {
+  appBackground: string;
+  groupedSurface: string;
+  card: string;
+  inputBackground: string;
+  border: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  primary: string;
+  accent: string;
+  accentForeground: string;
+  accentAlt: string;
+  subtleSurface: string;
+  subtleBorder: string;
+  destructive: string;
+  destructiveForeground: string;
+  success: string;
+  successForeground: string;
+  scrim: string;
+  inverse: string;
+  inverseSoft: string;
+  inverseBorder: string;
+  inverseMuted: string;
+  inverseSecondary: string;
+  mutedSubtleText: string;
+};
+
 export const lightColorTokens = {
-  appBackground: '#F8F7FA',
-  groupedSurface: '#DFD9EC',
+  appBackground: '#F6F7F8',
+  groupedSurface: '#E9ECEF',
   card: '#FFFFFF',
-  inputBackground: '#EAE7F0',
-  border: '#CEC9D9',
-  textPrimary: '#16151D',
-  textSecondary: '#2C2A36',
-  textMuted: '#4B495A',
-  accent: '#8A79AB',
-  accentAlt: '#E6A5B8',
-  subtleSurface: '#F1F0F4',
-  subtleBorder: '#ECEAF2',
-  destructive: '#D95C5C',
-  success: '#4F9C77',
-  scrim: 'rgba(61, 60, 79, 0.3)',
+  inputBackground: '#FFFFFF',
+  border: '#C9CED3',
+  textPrimary: '#1D2329',
+  textSecondary: '#3D464F',
+  textMuted: '#5D6872',
+  primary: '#365F7D',
+  accent: '#365F7D',
+  accentForeground: '#FFFFFF',
+  accentAlt: '#DCE7EF',
+  subtleSurface: '#F0F2F4',
+  subtleBorder: '#DDE1E5',
+  destructive: '#B33A3A',
+  destructiveForeground: '#FFFFFF',
+  success: '#347353',
+  successForeground: '#FFFFFF',
+  scrim: 'rgba(20, 26, 31, 0.42)',
   // Legacy aliases for backward compatibility
   inverse: '#000000',
   inverseSoft: '#101114',
@@ -25,7 +57,7 @@ export const lightColorTokens = {
   inverseMuted: '#9B9EA7',
   inverseSecondary: '#B3B5BE',
   mutedSubtleText: '#A09DAE',
-} as const;
+} as const satisfies ColorTokens;
 
 /**
  * Dark mode color tokens
@@ -33,20 +65,24 @@ export const lightColorTokens = {
  * Carefully tuned for readability and visual hierarchy
  */
 export const darkColorTokens = {
-  appBackground: '#0D0C14',
-  groupedSurface: '#1A1922',
-  card: '#16151D',
-  inputBackground: '#1F1E27',
-  border: '#2F2D37',
-  textPrimary: '#F7F6FB',
-  textSecondary: '#E3E0EC',
-  textMuted: '#CAC5D8',
-  accent: '#B49DC8',
-  accentAlt: '#E6A5B8',
-  subtleSurface: '#1F1E27',
-  subtleBorder: '#2A2833',
-  destructive: '#FF6B6B',
-  success: '#5ECB7F',
+  appBackground: '#111519',
+  groupedSurface: '#20262B',
+  card: '#191E23',
+  inputBackground: '#20262B',
+  border: '#394149',
+  textPrimary: '#F2F4F5',
+  textSecondary: '#D1D6DA',
+  textMuted: '#AEB7BE',
+  primary: '#A9C5D8',
+  accent: '#A9C5D8',
+  accentForeground: '#142532',
+  accentAlt: '#293C49',
+  subtleSurface: '#20262B',
+  subtleBorder: '#30373E',
+  destructive: '#E77A7A',
+  destructiveForeground: '#2D1111',
+  success: '#75C69A',
+  successForeground: '#10271B',
   scrim: 'rgba(0, 0, 0, 0.5)',
   // Legacy aliases for backward compatibility
   inverse: '#FFFFFF',
@@ -55,7 +91,7 @@ export const darkColorTokens = {
   inverseMuted: '#8F8A9A',
   inverseSecondary: '#A89FB5',
   mutedSubtleText: '#8F8A9A',
-} as const;
+} as const satisfies ColorTokens;
 
 /**
  * Default export for backward compatibility (light mode)
@@ -67,7 +103,7 @@ export const colorTokens = lightColorTokens;
  */
 export function getColorTokensByTheme(
   theme: 'light' | 'dark'
-): typeof lightColorTokens {
+): ColorTokens {
   return theme === 'light' ? lightColorTokens : darkColorTokens;
 }
 

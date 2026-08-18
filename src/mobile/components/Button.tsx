@@ -5,6 +5,7 @@
 
 import { forwardRef, type ReactNode, useMemo } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   Text,
   View,
@@ -12,8 +13,7 @@ import {
   type PressableProps,
   type ViewStyle,
 } from 'react-native';
-import { buttonStyles, textStyles } from '../theme/styles';
-import { colorTokens, spacingTokens, touchTarget } from '../theme/tokens';
+import { radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 
 // ============================================================================
@@ -50,6 +50,7 @@ export const Button = forwardRef<View, ButtonProps>(
       rightIcon,
       style,
       onPress,
+      accessibilityState,
       ...pressableProps
     },
     ref,
@@ -60,79 +61,27 @@ export const Button = forwardRef<View, ButtonProps>(
     const dynamicStyles = useMemo(() => {
       return {
         primary: {
-          minHeight: touchTarget.minimum,
-          backgroundColor: colors.inverse,
-          borderRadius: 8,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: spacingTokens.lg,
-          paddingVertical: spacingTokens.md,
+          backgroundColor: colors.accent,
+          borderColor: colors.accent,
         },
         secondary: {
-          minHeight: touchTarget.minimum,
           backgroundColor: colors.card,
-          borderRadius: 8,
-          borderWidth: 1,
           borderColor: colors.border,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: spacingTokens.lg,
-          paddingVertical: spacingTokens.md,
         },
         tertiary: {
-          minHeight: touchTarget.minimum,
           backgroundColor: 'transparent',
-          borderRadius: 8,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: spacingTokens.lg,
-          paddingVertical: spacingTokens.md,
+          borderColor: 'transparent',
         },
         destructive: {
-          minHeight: touchTarget.minimum,
           backgroundColor: colors.destructive,
-          borderRadius: 8,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: spacingTokens.lg,
-          paddingVertical: spacingTokens.md,
+          borderColor: colors.destructive,
         },
         success: {
-          minHeight: touchTarget.minimum,
           backgroundColor: colors.success,
-          borderRadius: 8,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: spacingTokens.lg,
-          paddingVertical: spacingTokens.md,
-        },
-        compact: {
-          minHeight: 36,
-          backgroundColor: colors.inverse,
-          borderRadius: 8,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: spacingTokens.md,
-          paddingVertical: spacingTokens.sm,
+          borderColor: colors.success,
         },
       };
     }, [colors]);
-
-    let baseStyle: ViewStyle;
-
-    switch (size) {
-      case 'compact':
-        baseStyle = dynamicStyles.compact;
-        break;
-      case 'medium':
-        baseStyle = dynamicStyles.primary;
-        baseStyle = { ...baseStyle, paddingVertical: spacingTokens.sm };
-        break;
-      case 'large':
-      default:
-        baseStyle = dynamicStyles.primary;
-        break;
-    }
 
     // Get variant-specific style
     let variantStyle: ViewStyle;
@@ -163,35 +112,41 @@ export const Button = forwardRef<View, ButtonProps>(
         textColor = colors.textPrimary;
         break;
       case 'destructive':
+        textColor = colors.destructiveForeground;
+        break;
       case 'success':
+        textColor = colors.successForeground;
+        break;
       case 'primary':
       default:
-        textColor = colors.card;
+        textColor = colors.accentForeground;
         break;
     }
 
     const containerStyle = [
-      baseStyle,
+      styles.base,
+      styles[size],
       variantStyle,
       fullWidth && styles.fullWidth,
       isDisabled && styles.disabled,
-      style,
     ];
 
     return (
       <Pressable
         ref={ref}
         accessibilityRole="button"
+        accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
         disabled={isDisabled}
         onPress={loading ? undefined : onPress}
-        style={({ pressed }) => [
+        style={(state) => [
           containerStyle,
-          pressed && !isDisabled && styles.pressed,
+          state.pressed && !isDisabled && styles.pressed,
+          typeof style === 'function' ? style(state) : style,
         ]}
         {...pressableProps}
       >
         <View style={styles.content}>
-          {leftIcon}
+          {loading ? <ActivityIndicator color={textColor} size="small" /> : leftIcon}
           {typeof children === 'string' ? (
             <Text
               style={[
@@ -199,15 +154,14 @@ export const Button = forwardRef<View, ButtonProps>(
                 {
                   color: textColor,
                 },
-                isDisabled && styles.labelDisabled,
               ]}
             >
               {loading ? 'Loading...' : children}
             </Text>
           ) : (
-            children
+            loading ? null : children
           )}
-          {rightIcon}
+          {loading ? null : rightIcon}
         </View>
       </Pressable>
     );
@@ -241,6 +195,7 @@ export const IconButton = forwardRef<View, IconButtonProps>(
       backgroundColor,
       style,
       onPress,
+      accessibilityState,
       ...pressableProps
     },
     ref,
@@ -248,7 +203,7 @@ export const IconButton = forwardRef<View, IconButtonProps>(
     const { colors } = useTheme();
 
     const sizeStyle = {
-      small: { width: 36, height: 36 },
+      small: { width: touchTarget.minimum, height: touchTarget.minimum },
       medium: { width: 44, height: 44 },
       large: { width: 52, height: 52 },
     }[size];
@@ -259,21 +214,31 @@ export const IconButton = forwardRef<View, IconButtonProps>(
       {
         backgroundColor:
           backgroundColor ??
-          (variant === 'primary' ? colors.inverse : colors.card),
+          (variant === 'primary'
+            ? colors.accent
+            : variant === 'destructive'
+              ? colors.destructive
+              : variant === 'success'
+                ? colors.success
+                : colors.card),
         borderColor:
           variant === 'secondary' ? colors.border : 'transparent',
       },
       disabled && styles.disabled,
-      style,
     ];
 
     return (
       <Pressable
         ref={ref}
         accessibilityRole="button"
+        accessibilityState={{ ...accessibilityState, disabled }}
         disabled={disabled}
         onPress={onPress}
-        style={({ pressed }) => [containerStyle, pressed && !disabled && styles.pressed]}
+        style={(state) => [
+          containerStyle,
+          state.pressed && !disabled && styles.pressed,
+          typeof style === 'function' ? style(state) : style,
+        ]}
         {...pressableProps}
       >
         {icon}
@@ -325,8 +290,8 @@ export function ButtonGroup({
       minHeight: touchTarget.minimum,
     },
     groupButtonSelected: {
-      backgroundColor: colors.inverse,
-      borderColor: colors.inverse,
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
     },
     groupButtonText: {
       fontSize: 14,
@@ -334,7 +299,7 @@ export function ButtonGroup({
       color: colors.textPrimary,
     },
     groupButtonTextSelected: {
-      color: colors.card,
+      color: colors.accentForeground,
     },
   }), [colors]);
   
@@ -349,6 +314,8 @@ export function ButtonGroup({
           <Pressable
             key={button.value}
             disabled={button.disabled}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: button.disabled, selected: isSelected }}
             onPress={() => onSelect(button.value)}
             style={[
               dynamicGroupStyles.groupButton,
@@ -397,33 +364,39 @@ export const FAB = forwardRef<View, FABProps>(
       disabled = false,
       style,
       onPress,
+      accessibilityState,
       ...pressableProps
     },
     ref,
   ) => {
     const { colors } = useTheme();
     
-    const backgroundColor =
-      variant === 'primary' ? colors.inverse : colors.accent;
+    const backgroundColor = variant === 'primary' ? colors.accent : colors.card;
+    const foregroundColor = variant === 'primary' ? colors.accentForeground : colors.textPrimary;
 
     const containerStyle = [
       styles.fab,
       { backgroundColor },
       disabled && styles.disabled,
-      style,
     ];
 
     return (
       <Pressable
         ref={ref}
+        accessibilityRole="button"
+        accessibilityState={{ ...accessibilityState, disabled }}
         disabled={disabled}
         onPress={onPress}
-        style={({ pressed }) => [containerStyle, pressed && !disabled && styles.fabPressed]}
+        style={(state) => [
+          containerStyle,
+          state.pressed && !disabled && styles.fabPressed,
+          typeof style === 'function' ? style(state) : style,
+        ]}
         {...pressableProps}
       >
         <View style={styles.fabContent}>
           {icon}
-          {label ? <Text style={[styles.fabLabel, { color: colors.card }]}>{label}</Text> : null}
+          {label ? <Text style={[styles.fabLabel, { color: foregroundColor }]}>{label}</Text> : null}
         </View>
       </Pressable>
     );
@@ -437,6 +410,25 @@ FAB.displayName = 'FAB';
 // ============================================================================
 
 const styles = StyleSheet.create({
+  base: {
+    minHeight: touchTarget.minimum,
+    borderRadius: radiusTokens.sm,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacingTokens.lg,
+  },
+  large: {
+    paddingVertical: spacingTokens.md,
+  },
+  medium: {
+    paddingVertical: spacingTokens.sm,
+  },
+  compact: {
+    minHeight: touchTarget.minimum,
+    paddingHorizontal: spacingTokens.md,
+    paddingVertical: spacingTokens.xs,
+  },
   // Button content layout
   content: {
     flexDirection: 'row',
@@ -448,9 +440,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600' as const,
-  },
-  labelDisabled: {
-    opacity: 0.5,
   },
   // Pressed state opacity
   pressed: {

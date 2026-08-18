@@ -10,12 +10,9 @@ import {
   Text,
   TextInput,
   View,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
   type TextInputProps,
 } from 'react-native';
-import { colorTokens, spacingTokens } from '../theme/tokens';
-import { inputStyles, textStyles } from '../theme/styles';
+import { radiusTokens, spacingTokens, touchTarget } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 
 // ============================================================================
@@ -53,12 +50,12 @@ export const FormTextInput = forwardRef<TextInput, FormTextInputProps>(
     const { colors } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
 
-    function handleFocus(e: NativeSyntheticEvent<TextInputFocusEventData>) {
+    function handleFocus(e: Parameters<NonNullable<TextInputProps['onFocus']>>[0]) {
       setIsFocused(true);
       onFocus?.(e);
     }
 
-    function handleBlur(e: NativeSyntheticEvent<TextInputFocusEventData>) {
+    function handleBlur(e: Parameters<NonNullable<TextInputProps['onBlur']>>[0]) {
       setIsFocused(false);
       onBlur?.(e);
     }
@@ -102,11 +99,11 @@ export const FormTextInput = forwardRef<TextInput, FormTextInputProps>(
     ];
 
     return (
-      <View style={inputStyles.container}>
+      <View style={styles.fieldContainer}>
         {label ? (
           <Text style={[styles.label, { color: colors.textPrimary }]}>
             {label}
-            {required ? <Text style={[styles.required, { color: colors.destructive }]}> *</Text> : null}
+            {required ? <Text style={{ color: colors.destructive }}> *</Text> : null}
           </Text>
         ) : null}
         <TextInput
@@ -116,11 +113,12 @@ export const FormTextInput = forwardRef<TextInput, FormTextInputProps>(
           onFocus={handleFocus}
           onBlur={handleBlur}
           editable={editable}
+          accessibilityState={{ disabled: !editable }}
           style={inputStyle}
           {...textInputProps}
         />
         {error ? (
-          <Text style={dynamicInputStyles.errorMessage}>{error}</Text>
+          <Text accessibilityLiveRegion="polite" style={dynamicInputStyles.errorMessage}>{error}</Text>
         ) : helper ? (
           <Text style={dynamicInputStyles.helper}>{helper}</Text>
         ) : null}
@@ -219,7 +217,14 @@ export function FormSelect({
       color: colors.destructive,
     },
     selectField: {
-      justifyContent: 'center',
+      minHeight: touchTarget.minimum,
+      paddingHorizontal: spacingTokens.md,
+      paddingVertical: spacingTokens.sm,
+      backgroundColor: colors.inputBackground,
+      borderRadius: radiusTokens.sm,
+      borderWidth: 1,
+      borderColor: error ? colors.destructive : colors.subtleBorder,
+      justifyContent: 'center' as const,
     },
     selectText: {
       color: colors.textPrimary,
@@ -236,10 +241,10 @@ export function FormSelect({
       fontSize: 13,
       color: colors.textMuted,
     },
-  }), [colors]);
+  }), [colors, error]);
 
   return (
-    <View style={inputStyles.container}>
+    <View style={styles.fieldContainer}>
       {label ? (
         <Text style={dynamicSelectStyles.label}>
           {label}
@@ -249,10 +254,10 @@ export function FormSelect({
       <Pressable
         onPress={() => !disabled && onSelect(value ?? '')}
         disabled={disabled}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
         style={[
-          inputStyles.input,
           dynamicSelectStyles.selectField,
-          error && inputStyles.inputError,
           disabled && styles.disabled,
         ]}
       >
@@ -261,7 +266,7 @@ export function FormSelect({
         </Text>
       </Pressable>
       {error ? (
-        <Text style={dynamicSelectStyles.errorMessage}>{error}</Text>
+        <Text accessibilityLiveRegion="polite" style={dynamicSelectStyles.errorMessage}>{error}</Text>
       ) : helper ? (
         <Text style={dynamicSelectStyles.helper}>{helper}</Text>
       ) : null}
@@ -314,7 +319,7 @@ export function FormCheckbox({
       borderColor: colors.destructive,
     },
     checkboxCheck: {
-      color: colors.card,
+      color: colors.accentForeground,
       fontSize: 14,
       fontWeight: '700' as const,
     },
@@ -339,6 +344,8 @@ export function FormCheckbox({
       <Pressable
         onPress={() => !disabled && onChange(!value)}
         disabled={disabled}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: value, disabled }}
         style={styles.checkboxRow}
       >
         <View
@@ -354,7 +361,7 @@ export function FormCheckbox({
         {label ? <Text style={dynamicCheckboxStyles.checkboxLabel}>{label}</Text> : null}
       </Pressable>
       {error ? (
-        <Text style={dynamicCheckboxStyles.errorMessage}>{error}</Text>
+        <Text accessibilityLiveRegion="polite" style={dynamicCheckboxStyles.errorMessage}>{error}</Text>
       ) : helper ? (
         <Text style={dynamicCheckboxStyles.helper}>{helper}</Text>
       ) : null}
@@ -367,6 +374,9 @@ export function FormCheckbox({
 // ============================================================================
 
 const styles = StyleSheet.create({
+  fieldContainer: {
+    gap: spacingTokens.sm,
+  },
   label: {
     fontSize: 12,
     fontWeight: '500' as const,
@@ -374,13 +384,11 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
-  selectField: {
-    justifyContent: 'center',
-  },
   checkboxContainer: {
     gap: spacingTokens.sm,
   },
   checkboxRow: {
+    minHeight: touchTarget.minimum,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacingTokens.md,
