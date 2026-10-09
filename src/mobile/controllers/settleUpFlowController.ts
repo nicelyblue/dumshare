@@ -1,4 +1,5 @@
 import { loadSettlementModel, type SettlementModel } from './settlementController';
+import { createLedgerAppService } from '../services/ledgerAppService';
 
 type LoadSettlementModelFn = typeof loadSettlementModel;
 
@@ -7,8 +8,17 @@ type FlowState = SettlementModel & {
   currencyQuery: string;
 };
 
-export function createSettleUpFlowController(deps?: { loadSettlementModel?: LoadSettlementModelFn }) {
+export function createSettleUpFlowController(deps?: {
+  loadSettlementModel?: LoadSettlementModelFn;
+  loadDefaultCurrency?: (selectedLedgerId: string | null) => Promise<string | undefined>;
+}) {
   const loadModel = deps?.loadSettlementModel ?? loadSettlementModel;
+  const loadDefaultCurrency = deps?.loadDefaultCurrency ?? (async (selectedLedgerId) => {
+    if (!selectedLedgerId) {
+      return undefined;
+    }
+    return (await createLedgerAppService().loadHomeSnapshot({ selectedLedgerId })).defaultCurrency;
+  });
   let state: FlowState = {
     hasLedger: false,
     selectedLedgerId: null,
@@ -19,7 +29,10 @@ export function createSettleUpFlowController(deps?: { loadSettlementModel?: Load
   };
 
   async function load(input: { selectedLedgerId: string | null; selectedCurrencyCode?: string }): Promise<FlowState> {
-    const nextCurrencyCode = input.selectedCurrencyCode ?? state.selectedCurrencyCode;
+    const nextCurrencyCode =
+      input.selectedCurrencyCode ??
+      (await loadDefaultCurrency(input.selectedLedgerId)) ??
+      state.selectedCurrencyCode;
     const model = await loadModel({
       selectedLedgerId: input.selectedLedgerId,
       selectedCurrencyCode: nextCurrencyCode,

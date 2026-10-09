@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacingTokens } from '../theme/tokens';
 import { getResponsiveMaxWidth, layoutTokens } from '../theme/layout';
@@ -56,6 +56,12 @@ export function BottomActionBar({ children }: BottomActionBarProps): JSX.Element
   const maxWidth = getResponsiveMaxWidth(width);
 
   const dynamicBottomBarStyles = useMemo(() => ({
+    keyboardAvoiding: {
+      position: 'absolute' as const,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
     bottomBar: {
       position: 'absolute' as const,
       left: 0,
@@ -72,9 +78,16 @@ export function BottomActionBar({ children }: BottomActionBarProps): JSX.Element
   }), [colors, insets]);
 
   return (
-    <View style={dynamicBottomBarStyles.bottomBar}>
-      <View style={{ width: '100%', maxWidth }}>{children}</View>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={insets.bottom}
+      pointerEvents="box-none"
+      style={dynamicBottomBarStyles.keyboardAvoiding}
+    >
+      <View style={dynamicBottomBarStyles.bottomBar}>
+        <View style={{ width: '100%', maxWidth }}>{children}</View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 

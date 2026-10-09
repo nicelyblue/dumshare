@@ -1,4 +1,5 @@
 import { createLedgerAppService } from '../services/ledgerAppService';
+import { DEFAULT_CURRENCY_CODE } from '../../domain/currency/catalog';
 
 export type ExpenseFormModel = {
   ledgerId: string | null;
@@ -20,12 +21,15 @@ export async function loadExpenseFormModel(input: {
   editExpenseId?: string | null;
 }): Promise<ExpenseFormModel> {
   if (!input.editExpenseId) {
+    const defaultCurrency = input.selectedLedgerId
+      ? (await createLedgerAppService().loadHomeSnapshot({ selectedLedgerId: input.selectedLedgerId })).defaultCurrency
+      : undefined;
     return {
       ledgerId: input.selectedLedgerId ?? null,
       defaults: {
         description: '',
         totalAmountInput: '',
-        currency: 'EUR',
+        currency: defaultCurrency ?? DEFAULT_CURRENCY_CODE,
         expenseDate: new Date().toISOString().slice(0, 10),
         payerParticipantId: '',
         splitMode: 'equal',
