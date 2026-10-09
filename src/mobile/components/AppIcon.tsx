@@ -19,15 +19,15 @@ export function AppIcon({ size = 64 }: AppIconProps): JSX.Element {
       overflow: 'hidden',
     },
     icon: {
-      width: size * 0.6,
-      height: size * 0.6,
+      width: size,
+      height: size,
     },
   });
 
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../../dumshare.png')}
+        source={require('../../../assets/dumshare-mark.png')}
         style={styles.icon}
         resizeMode="contain"
       />
