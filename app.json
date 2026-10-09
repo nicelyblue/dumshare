@@ -1,6 +1,7 @@
 {
   "expo": {
     "scheme": "dumshare",
+    "icon": "./assets/dumshare-icon.png",
     "plugins": [
       "expo-router",
       "expo-sharing"
@@ -13,7 +14,11 @@
     },
     "owner": "somewhatjesus",
     "android": {
-      "package": "com.dumshare.app"
+      "package": "com.dumshare.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/dumshare-adaptive-foreground.png",
+        "backgroundColor": "#365F7D"
+      }
     }
   }
 }
