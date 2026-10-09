@@ -1,11 +1,12 @@
 type CreateShareArgs = {
   title: string;
   organizerName: string;
+  defaultCurrency?: string;
   nextStep?: 'add-now' | 'later';
 };
 
 type SetupService = {
-  createShare: (input: { title: string; organizerName: string }) => Promise<string>;
+  createShare: (input: { title: string; organizerName: string; defaultCurrency?: string }) => Promise<string>;
   addParticipant: (input: { displayName: string; selectedLedgerId?: string | null }) => Promise<string>;
 };
 
@@ -30,7 +31,7 @@ export function createSetupController(service: SetupService) {
     async handleCreateShare(input: CreateShareArgs): Promise<CreateShareResult> {
       const title = requireValue(input.title, 'Share title');
       const organizerName = requireValue(input.organizerName, 'Organizer name');
-      const ledgerId = await service.createShare({ title, organizerName });
+      const ledgerId = await service.createShare({ title, organizerName, defaultCurrency: input.defaultCurrency });
       participantDrafts.length = 0;
 
       return {

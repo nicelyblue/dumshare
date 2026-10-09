@@ -14,8 +14,9 @@ describe('setupController', () => {
   });
 
   it('creates share and returns add-now branch token', async () => {
+    const createShare = vi.fn().mockResolvedValue('ledger-1');
     const controller = createSetupController({
-      createShare: vi.fn().mockResolvedValue('ledger-1'),
+      createShare,
       addParticipant: vi.fn(),
     });
 
@@ -27,6 +28,31 @@ describe('setupController', () => {
 
     expect(result.ledgerId).toBe('ledger-1');
     expect(result.nextStep).toBe('add-now');
+    expect(createShare).toHaveBeenCalledWith({
+      title: 'Trip',
+      organizerName: 'M',
+      defaultCurrency: undefined,
+    });
+  });
+
+  it('passes a selected default currency to share creation', async () => {
+    const createShare = vi.fn().mockResolvedValue('ledger-2');
+    const controller = createSetupController({
+      createShare,
+      addParticipant: vi.fn(),
+    });
+
+    await controller.handleCreateShare({
+      title: 'Trip',
+      organizerName: 'M',
+      defaultCurrency: 'USD',
+    });
+
+    expect(createShare).toHaveBeenCalledWith({
+      title: 'Trip',
+      organizerName: 'M',
+      defaultCurrency: 'USD',
+    });
   });
 
   it('clears stale drafts when starting a new share', async () => {

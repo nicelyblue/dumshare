@@ -37,6 +37,7 @@ export default function HomeScreen(): JSX.Element {
      latestExpenseCard: null,
    });
    const [error, setError] = useState<string | null>(null);
+   const [isLoading, setIsLoading] = useState(true);
    const [refreshing, setRefreshing] = useState(false);
    const requestVersion = useRef(0);
 
@@ -219,6 +220,11 @@ export default function HomeScreen(): JSX.Element {
     requestVersion.current += 1;
     const version = requestVersion.current;
 
+    if (!nextShareId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
     try {
       const nextModel = await loadHomeSnapshotModel({ selectedLedgerId: nextShareId });
       if (version !== requestVersion.current) {
@@ -231,6 +237,10 @@ export default function HomeScreen(): JSX.Element {
         return;
       }
       setError('Could not load share snapshot. Pull to refresh or switch share from the menu.');
+    } finally {
+      if (version === requestVersion.current) {
+        setIsLoading(false);
+      }
     }
   }
 
@@ -283,9 +293,22 @@ export default function HomeScreen(): JSX.Element {
         }
       >
 
-        {error ? <Text style={dynamicStyles.helper}>{error}</Text> : null}
+        {isLoading ? (
+          <View accessibilityLiveRegion="polite" style={dynamicStyles.section}>
+            <Text style={dynamicStyles.helper}>Loading share details...</Text>
+          </View>
+        ) : null}
 
-        {model.shareTitle ? (
+        {error ? (
+          <View accessibilityLiveRegion="polite" style={dynamicStyles.section}>
+            <Text style={dynamicStyles.helper}>{error}</Text>
+            <Button variant="secondary" onPress={() => void reload(activeShareId)}>
+              Try Again
+            </Button>
+          </View>
+        ) : null}
+
+        {!isLoading && model.shareTitle ? (
           <View style={dynamicStyles.shareTitleBlock}>
             <Text style={dynamicStyles.helper}>ACTIVE SHARE</Text>
             <Text style={dynamicStyles.shareTitle}>{model.shareTitle}</Text>
@@ -295,7 +318,7 @@ export default function HomeScreen(): JSX.Element {
           </View>
         ) : null}
 
-        {!model.shareTitle ? (
+        {!isLoading && !model.shareTitle ? (
           <View style={{ alignItems: 'center', gap: spacingTokens.lg, marginVertical: spacingTokens.xl }}>
             <AppIcon size={80} />
             <View style={{ alignItems: 'center', gap: spacingTokens.sm }}>
@@ -305,7 +328,7 @@ export default function HomeScreen(): JSX.Element {
           </View>
         ) : null}
 
-        {model.expenseCount === 0 && model.shareTitle ? (
+        {!isLoading && model.expenseCount === 0 && model.shareTitle ? (
           <View style={dynamicStyles.section}>
             <EmptyStateBlock title="No expenses yet" message="Add the first expense to see who owes what and how the split works." />
             <Button variant="secondary" fullWidth onPress={() => router.push('/add-expense')}>
@@ -314,7 +337,7 @@ export default function HomeScreen(): JSX.Element {
           </View>
         ) : null}
 
-        {model.participantRows.length > 0 ? (
+        {!isLoading && model.participantRows.length > 0 ? (
           <View style={dynamicStyles.section}>
             <Text style={dynamicStyles.sectionLabel}>Current Status</Text>
             <View style={dynamicStyles.stack}>
@@ -325,7 +348,7 @@ export default function HomeScreen(): JSX.Element {
                       <Text style={dynamicStyles.avatarIcon}>{getDefaultParticipantIcon(row.participantName)}</Text>
                     </View>
                     <View>
-                      <Text style={dynamicStyles.balanceName}>{row.participantName}</Text>
+                      <Text numberOfLines={2} style={dynamicStyles.balanceName}>{row.participantName}</Text>
                       <Text style={dynamicStyles.balanceStatus}>{rowStatus(row.statusLabel)}</Text>
                     </View>
                   </View>
@@ -342,7 +365,7 @@ export default function HomeScreen(): JSX.Element {
           </View>
         ) : null}
 
-        {model.shareTitle ? (
+        {!isLoading && model.shareTitle ? (
           <>
             {model.latestExpenseCard ? (
               <View style={dynamicStyles.section}>

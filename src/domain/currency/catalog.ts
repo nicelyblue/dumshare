@@ -5,6 +5,8 @@ export type CurrencyOption = {
   label: string;
 };
 
+export const DEFAULT_CURRENCY_CODE = 'EUR';
+
 export const CURRENCY_OPTIONS: CurrencyOption[] = currencyCodes.data
   .map((item) => ({
     code: item.code.trim().toUpperCase(),

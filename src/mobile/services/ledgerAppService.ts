@@ -1,9 +1,12 @@
+import { DEFAULT_CURRENCY_CODE, isSupportedCurrencyCode } from '../../domain/currency/catalog';
+
 export type LedgerDashboardSnapshot = {
   ledgerId: string;
   hasLedger: boolean;
   title: string;
   organizerName: string;
   organizerParticipantId: string | null;
+  defaultCurrency?: string;
   participantCount: number;
   latestActivityLabel: string;
   latestActivityAt: string;
@@ -71,6 +74,7 @@ export type SettlementSnapshot = {
 type CreateShareInput = {
   title: string;
   organizerName: string;
+  defaultCurrency?: string;
 };
 
 type AddParticipantInput = {
@@ -170,6 +174,7 @@ export type LedgerAppService = {
 };
 
 type InMemoryLedger = LedgerListItem & {
+  defaultCurrency: string;
   organizerParticipantId: string;
   participants: Array<{ id: string; displayName: string }>;
   expenses: Array<{
@@ -192,6 +197,11 @@ const inMemoryByDb = new Map<string, { ledgers: InMemoryLedger[] }>();
 
 const FALLBACK_USD_PER_UNIT: Record<string, number> = {
   USD: 1,
+};
+
+const TEST_EXCHANGE_RATES: Record<string, Record<string, number>> = {
+  EUR: { USD: 1.162, EUR: 1, AFN: 125.0 },
+  USD: { USD: 1, EUR: 0.861, AFN: 107.5 },
 };
 
 let cachedRates: Record<string, Record<string, number>> | null = null;
@@ -311,6 +321,9 @@ function parseUsdPerUnitOverrides(): Record<string, number> {
 
 async function fetchExchangeRates(baseCurrency: string): Promise<Record<string, number>> {
   const normalized = baseCurrency.trim().toUpperCase();
+  if (process.env.NODE_ENV === 'test') {
+    return TEST_EXCHANGE_RATES[normalized] ?? {};
+  }
   const now = Date.now();
 
   if (cachedRates && cachedRates[normalized] && now - cacheTimestamp < CACHE_DURATION_MS) {
@@ -426,6 +439,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
         title: '',
         organizerName: '',
         organizerParticipantId: null,
+        defaultCurrency: DEFAULT_CURRENCY_CODE,
         participantCount: 0,
         latestActivityLabel: 'No activity',
         latestActivityAt: '',
@@ -474,6 +488,7 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
       title: target.title,
       organizerName: target.organizerName,
       organizerParticipantId: target.organizerParticipantId,
+      defaultCurrency: target.defaultCurrency,
       participantCount: target.participants.length,
       latestActivityLabel: 'No expenses yet',
       latestActivityAt: '',
@@ -763,12 +778,17 @@ export function createLedgerAppService(dbName = 'dumshare-ui'): LedgerAppService
     createShare: async (input) => {
       const title = validateRequiredField(input.title, 'Share title');
       const organizerName = validateRequiredField(input.organizerName, 'Organizer name');
+      const defaultCurrency = (input.defaultCurrency ?? DEFAULT_CURRENCY_CODE).trim().toUpperCase();
+      if (!isSupportedCurrencyCode(defaultCurrency)) {
+        throw new Error('Select a supported default currency');
+      }
       const id = createId('ledger');
       const organizerParticipantId = createId('participant');
       store.ledgers.push({
         id,
         title,
         organizerName,
+        defaultCurrency,
         organizerParticipantId,
         participants: [{ id: organizerParticipantId, displayName: organizerName }],
         expenses: [],
